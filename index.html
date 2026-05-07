@@ -1028,7 +1028,7 @@ function App({user}){
 
       {showTutorPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutorPanel(false)}/>}
       {showAnagrafica&&<AnagraficaPanel avvisi={avvisi} onClose={()=>setShowAnagrafica(false)}/>}
-      {showUsersPanel&&<UsersPanel onClose={()=>setShowUsersPanel(false)}/>}
+      {showUsersPanel&&isAdminUser&&<UsersPanel onClose={()=>setShowUsersPanel(false)}/>}
       {modal&&(
         <AddModal
           mode={modal.mode||view} prefill={modal.prefill}
