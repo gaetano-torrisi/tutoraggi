@@ -23,16 +23,43 @@
       height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; background: #1a3a5c;
     }
-    #login-screen h1 { color: #fff; font-size: 24px; margin-bottom: 8px; }
-    #login-screen p  { color: rgba(255,255,255,0.6); margin-bottom: 32px; font-size: 14px; }
-    #login-btn {
-      background: #fff; color: #1a3a5c; border: none; border-radius: 10px;
-      padding: 14px 28px; font-size: 16px; font-weight: 700; cursor: pointer;
-      display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    #login-screen h1 { color: #fff; font-size: 24px; margin-bottom: 24px; }
+    #login-box {
+      background: rgba(255,255,255,0.08); border-radius: 14px;
+      padding: 28px; width: 340px; border: 1px solid rgba(255,255,255,0.15);
     }
-    #login-btn:hover { background: #f0f4f8; }
-    #login-btn img { width: 22px; height: 22px; }
-    #login-error { color: #ff8a80; margin-top: 16px; font-size: 13px; }
+    #login-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+    .login-tab {
+      flex: 1; padding: 9px; border: none; cursor: pointer; font-size: 14px; font-weight: 600;
+      background: transparent; color: rgba(255,255,255,0.5); transition: all .2s;
+    }
+    .login-tab.active { background: #4f86c6; color: #fff; }
+    #login-box input {
+      display: block; width: 100%; margin-bottom: 10px; padding: 10px 12px;
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1); color: #fff; font-size: 14px;
+      box-sizing: border-box; outline: none;
+    }
+    #login-box input::placeholder { color: rgba(255,255,255,0.4); }
+    #login-box input:focus { border-color: #4f86c6; background: rgba(255,255,255,0.15); }
+    #login-email-btn, #register-btn {
+      width: 100%; padding: 11px; border: none; border-radius: 8px;
+      background: #4f86c6; color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-bottom: 12px;
+    }
+    #login-email-btn:hover, #register-btn:hover { background: #3a6fa8; }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; }
+    .divider::before, .divider::after { content:""; flex:1; height:1px; background: rgba(255,255,255,0.2); }
+    .divider span { color: rgba(255,255,255,0.4); font-size: 12px; }
+    #login-google-btn {
+      width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px; background: #fff; color: #1a3a5c; font-size: 14px;
+      font-weight: 700; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+    }
+    #login-google-btn:hover { background: #f0f4f8; }
+    #login-google-btn img { width: 20px; height: 20px; }
+    #login-error { color: #ff8a80; margin-top: 14px; font-size: 13px; text-align: center; max-width: 340px; }
     #saving-indicator {
       position: fixed; bottom: 16px; right: 16px; background: #1a3a5c;
       color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px;
@@ -46,11 +73,33 @@
 <!-- Login screen -->
 <div id="login-screen">
   <h1>📅 Calendario Tutoraggi</h1>
-  <p>Accedi con il tuo account Google aziendale</p>
-  <button id="login-btn">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
-    Accedi con Google
-  </button>
+  <div id="login-box">
+    <div id="login-tabs">
+      <button class="login-tab active" onclick="showTab('login')">Accedi</button>
+      <button class="login-tab" onclick="showTab('register')">Registrati</button>
+    </div>
+    <!-- Login form -->
+    <div id="tab-login">
+      <input id="login-email" type="email" placeholder="Email" autocomplete="email"/>
+      <input id="login-password" type="password" placeholder="Password" autocomplete="current-password"/>
+      <button id="login-email-btn">Accedi</button>
+      <div class="divider"><span>oppure</span></div>
+      <button id="login-google-btn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+        Accedi con Google
+      </button>
+    </div>
+    <!-- Register form -->
+    <div id="tab-register" style="display:none">
+      <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px">
+        La registrazione è su invito. Inserisci l'email con cui sei stato autorizzato.
+      </p>
+      <input id="reg-email" type="email" placeholder="Email autorizzata" autocomplete="email"/>
+      <input id="reg-password" type="password" placeholder="Scegli una password (min. 6 caratteri)" autocomplete="new-password"/>
+      <input id="reg-password2" type="password" placeholder="Conferma password" autocomplete="new-password"/>
+      <button id="register-btn">Crea account</button>
+    </div>
+  </div>
   <div id="login-error"></div>
 </div>
 
@@ -76,12 +125,57 @@
   const auth = firebase.auth();
   const db   = firebase.firestore();
 
-  // ── AUTH ─────────────────────────────────────────────────────────────────
-  document.getElementById("login-btn").addEventListener("click", () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(err => {
-      document.getElementById("login-error").textContent = "Errore: " + err.message;
+  function showError(msg){ document.getElementById("login-error").textContent = msg; }
+  function showTab(tab){
+    document.getElementById("tab-login").style.display   = tab==="login"    ? "block" : "none";
+    document.getElementById("tab-register").style.display = tab==="register" ? "block" : "none";
+    document.querySelectorAll(".login-tab").forEach((b,i)=>{
+      b.classList.toggle("active", (tab==="login"&&i===0)||(tab==="register"&&i===1));
     });
+    showError("");
+  }
+
+  // Google login
+  document.getElementById("login-google-btn").addEventListener("click", () => {
+    showError("");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => showError("Errore Google: " + err.message));
+  });
+
+  // Email/password login
+  document.getElementById("login-email-btn").addEventListener("click", async () => {
+    showError("");
+    const email = document.getElementById("login-email").value.trim();
+    const pass  = document.getElementById("login-password").value;
+    if(!email||!pass){ showError("Inserisci email e password."); return; }
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+    } catch(err) {
+      if(err.code==="auth/user-not-found") showError("Account non trovato.");
+      else if(err.code==="auth/wrong-password") showError("Password errata.");
+      else showError("Errore: " + err.message);
+    }
+  });
+
+  // Registration with invite check
+  document.getElementById("register-btn").addEventListener("click", async () => {
+    showError("");
+    const email = document.getElementById("reg-email").value.trim().toLowerCase();
+    const pass  = document.getElementById("reg-password").value;
+    const pass2 = document.getElementById("reg-password2").value;
+    if(!email||!pass){ showError("Compila tutti i campi."); return; }
+    if(pass.length < 6){ showError("La password deve essere di almeno 6 caratteri."); return; }
+    if(pass !== pass2){ showError("Le password non coincidono."); return; }
+    try {
+      // Check if email is authorized
+      const snap = await db.collection("authorizedEmails").doc(email).get();
+      if(!snap.exists){ showError("Questa email non è autorizzata. Contatta l'amministratore."); return; }
+      // Create account
+      await auth.createUserWithEmailAndPassword(email, pass);
+    } catch(err) {
+      if(err.code==="auth/email-already-in-use") showError("Account già esistente. Usa il tab Accedi.");
+      else showError("Errore: " + err.message);
+    }
   });
 
   auth.onAuthStateChanged(user => {
@@ -624,6 +718,8 @@ function App({user}){
   const [modal,setModal]=useState(null);
   const [showAnagrafica,setShowAnagrafica]=useState(false);
   const [showTutorPanel,setShowTutorPanel]=useState(false);
+  const [showUsersPanel,setShowUsersPanel]=useState(false);
+  const [isAdminUser,setIsAdminUser]=useState(false);
   const [loading,setLoading]=useState(true);
   const [importError,setImportError]=useState("");
   const importRef=useRef();
@@ -637,6 +733,7 @@ function App({user}){
       setActiveAvvisi(new Set(a.map(x=>x.id)));
       setLoading(false);
     });
+    isAdmin().then(setIsAdminUser);
   },[]);
 
   const month=MONTHS[monthIdx];
@@ -798,6 +895,12 @@ function App({user}){
           style={{background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600}}>
           📋 Avvisi/Progetti
         </button>
+        {isAdminUser&&(
+          <button onClick={()=>setShowUsersPanel(true)}
+            style={{background:"rgba(231,76,60,0.25)",border:"1.5px solid rgba(231,76,60,0.6)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600}}>
+            🔐 Utenti
+          </button>
+        )}
         <div style={{display:"flex",gap:6}}>
           <button onClick={()=>exportData(avvisi,tutors,tutEvents)}
             style={{background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600}}>
@@ -916,6 +1019,7 @@ function App({user}){
 
       {showTutorPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutorPanel(false)}/>}
       {showAnagrafica&&<AnagraficaPanel avvisi={avvisi} onClose={()=>setShowAnagrafica(false)}/>}
+      {showUsersPanel&&<UsersPanel onClose={()=>setShowUsersPanel(false)}/>}
       {modal&&(
         <AddModal
           mode={modal.mode||view} prefill={modal.prefill}
