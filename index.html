@@ -733,7 +733,7 @@ function App({user}){
       setActiveAvvisi(new Set(a.map(x=>x.id)));
       setLoading(false);
     });
-    isAdmin().then(setIsAdminUser);
+    checkIsAdmin().then(setIsAdminUser);
   },[]);
 
   const month=MONTHS[monthIdx];
