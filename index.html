@@ -724,6 +724,15 @@ function App({user}){
   const [importError,setImportError]=useState("");
   const importRef=useRef();
 
+  async function checkIsAdmin(){
+    try{
+      const u=firebase.auth().currentUser;
+      if(!u) return false;
+      const snap=await firebase.firestore().collection("authorizedEmails").doc(u.email.toLowerCase()).get();
+      return snap.exists && snap.data().role==="admin";
+    }catch(e){return false;}
+  }
+
   // Load from Firestore on mount
   useEffect(()=>{
     loadData().then(({avvisi:a,tutors:t,tutEvents:te})=>{
