@@ -191,12 +191,11 @@ function exportJSON(avvisi,tutors,tutEvents){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
-// ── FIRESTORE OPS ─────────────────────────────────────────────────────────────
+// ── FIRESTORE ─────────────────────────────────────────────────────────────────
 async function fsLoadData(){
   try{
     const[av,tu,te]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get()]);
-    const tutEvents={};
-    te.docs.forEach(d=>{tutEvents[d.id]=d.data();});
+    const tutEvents={};te.docs.forEach(d=>{tutEvents[d.id]=d.data();});
     return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents};
   }catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{}};}
 }
@@ -221,23 +220,36 @@ async function fsSaveTutEvents(tutorId,monthKey,events){
   await db.collection("tutEvents").doc(tutorId).set({[monthKey]:events},{merge:true});
 }
 
-// ── UI HELPERS ────────────────────────────────────────────────────────────────
-function MiniCalendar({monthData,selected,onSelect}){
-  const{year,month,days}=monthData;
+// ── MINI CALENDAR (navigable) ─────────────────────────────────────────────────
+function MiniCalendar({initialMonthIdx,selected,onSelect}){
+  const[mIdx,setMIdx]=useState(initialMonthIdx);
+  const md=MONTHS[mIdx];
+  const{year,month,days}=md;
   const firstDow=new Date(year,month,1).getDay();
   const offset=firstDow===0?6:firstDow-1;
   const cells=[];for(let i=0;i<offset;i++)cells.push(null);
   for(let d=1;d<=days;d++)cells.push(d);
   while(cells.length%7!==0)cells.push(null);
   return(
-    <div style={{background:"#fff",border:"1px solid #dde",borderRadius:10,padding:10,boxShadow:"0 4px 16px rgba(0,0,0,0.13)",position:"absolute",zIndex:400,top:"100%",left:0,marginTop:4,width:220}}>
+    <div style={{background:"#fff",border:"1px solid #dde",borderRadius:10,padding:10,
+      boxShadow:"0 4px 16px rgba(0,0,0,0.13)",position:"absolute",zIndex:400,top:"100%",left:0,marginTop:4,width:240}}>
+      {/* Month navigation */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+        <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0}
+          style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:mIdx===0?"#ccc":"#555",padding:"0 4px"}}>‹</button>
+        <span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>{md.label}</span>
+        <button onClick={()=>setMIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={mIdx===MONTHS.length-1}
+          style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:mIdx===MONTHS.length-1?"#ccc":"#555",padding:"0 4px"}}>›</button>
+      </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
         {DAY_NAMES_SHORT.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:"#888",padding:"2px 0"}}>{d}</div>)}
         {cells.map((d,i)=>{
-          const isSel=d===selected,dow=i%7,isWk=dow===5||dow===6;
-          return(<div key={i} onClick={()=>d&&onSelect(d)}
+          const isSel=d===selected&&mIdx===initialMonthIdx;
+          const dow=i%7,isWk=dow===5||dow===6;
+          return(<div key={i} onClick={()=>d&&onSelect(d,mIdx)}
             style={{textAlign:"center",fontSize:12,padding:"4px 2px",borderRadius:6,cursor:d?"pointer":"default",
-              background:isSel?"#4f86c6":"transparent",color:isSel?"#fff":isWk?"#9b59b6":d?"#333":"transparent",fontWeight:isSel?700:400}}
+              background:isSel?"#4f86c6":"transparent",
+              color:isSel?"#fff":isWk?"#9b59b6":d?"#333":"transparent",fontWeight:isSel?700:400}}
             onMouseEnter={e=>{if(d&&!isSel)e.currentTarget.style.background="#f0f4f8";}}
             onMouseLeave={e=>{if(d&&!isSel)e.currentTarget.style.background="transparent";}}>
             {d||""}
@@ -247,19 +259,24 @@ function MiniCalendar({monthData,selected,onSelect}){
     </div>
   );
 }
-function DayPicker({monthData,value,onChange}){
+
+function DayPicker({initialMonthIdx,value,selectedMonthIdx,onChange}){
   const[open,setOpen]=useState(false);
+  const mLabel=MONTHS[selectedMonthIdx??initialMonthIdx]?.label||"";
   return(
     <div style={{position:"relative",marginBottom:10}}>
       <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Giorno</label>
       <button type="button" onClick={()=>setOpen(o=>!o)}
-        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:"1px solid #ccc",background:"#fff",cursor:"pointer",textAlign:"left",fontSize:13,display:"flex",justifyContent:"space-between",alignItems:"center",boxSizing:"border-box"}}>
-        <span>{value?`${value} ${monthData.label}`:"Seleziona giorno"}</span><span>📅</span>
+        style={{width:"100%",padding:"7px 10px",borderRadius:6,border:"1px solid #ccc",background:"#fff",cursor:"pointer",
+          textAlign:"left",fontSize:13,display:"flex",justifyContent:"space-between",alignItems:"center",boxSizing:"border-box"}}>
+        <span>{value?`${value} ${mLabel}`:"Seleziona giorno"}</span><span>📅</span>
       </button>
-      {open&&<MiniCalendar monthData={monthData} selected={value} onSelect={d=>{onChange(d);setOpen(false);}}/>}
+      {open&&<MiniCalendar initialMonthIdx={initialMonthIdx} selected={value}
+        onSelect={(d,mIdx)=>{onChange(d,mIdx);setOpen(false);}}/>}
     </div>
   );
 }
+
 function TimePicker({label,value,onChange}){
   const[hh,mm]=value.split(":").map(Number);
   return(
@@ -279,6 +296,7 @@ function TimePicker({label,value,onChange}){
     </div>
   );
 }
+
 function ColorPicker({value,onChange}){
   const[open,setOpen]=useState(false);
   return(
@@ -295,7 +313,8 @@ function ColorPicker({value,onChange}){
         <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:8,background:"#f8f8f8",borderRadius:8,padding:8,border:"1px solid #eee"}}>
           {PALETTE.map(c=>(
             <div key={c} onClick={()=>{onChange(c);setOpen(false);}}
-              style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:value===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>
+              style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",
+                border:value===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>
           ))}
         </div>
       )}
@@ -312,14 +331,11 @@ function UsersPanel({onClose}){
   const[saving,setSaving]=useState(false);
   const[error,setError]=useState("");
   const inp={display:"block",width:"100%",marginBottom:8,padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
-
   useEffect(()=>{
     db.collection("authorizedEmails").get().then(snap=>{
-      setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));
-      setLoading(false);
+      setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);
     });
   },[]);
-
   async function handleAdd(){
     if(!newEmail.trim()){setError("Inserisci un'email.");return;}
     if(!/^[^@]+@[^@]+\.[^@]+$/.test(newEmail)){setError("Email non valida.");return;}
@@ -334,7 +350,6 @@ function UsersPanel({onClose}){
     await db.collection("authorizedEmails").doc(email).delete();
     setEmails(prev=>prev.filter(e=>e.email!==email));
   }
-
   return(
     <div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}>
       <div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
@@ -367,8 +382,7 @@ function UsersPanel({onClose}){
                 <div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div>
                 <div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div>
               </div>
-              <button onClick={()=>handleRemove(e.email)}
-                style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button>
+              <button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button>
             </div>
           ))}
         </div>
@@ -498,27 +512,35 @@ function AnagraficaPanel({avvisi,onClose}){
   );
 }
 
-function AddModal({mode,prefill,monthKey,avvisi,tutors,editTarget,onAddTut,onEditTut,onAddAv,onEditAv,onClose}){
-  const mData=MONTHS.find(m=>m.key===monthKey);
+// ── ADD / EDIT MODAL ──────────────────────────────────────────────────────────
+function AddModal({mode,prefill,currentMonthIdx,avvisi,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose}){
   const isEdit=!!editTarget;
   const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
+
+  // tutoraggio fields
   const fAv=avvisi[0];
   const[tutName,setTutName]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.name:(fAv?.name||""));
   const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
   const[tutDay,setTutDay]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.day:(prefill?.day||1));
+  const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
   const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
   const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
+
+  // avviso fields
   const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(fAv?.id||"__new__"));
   const[avColor,setAvColor]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.color:PALETTE[5]);
   const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
+  const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
   const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
   const[avEnd,setAvEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.end:(prefill?.end||13)));
   const[newAvName,setNewAvName]=useState("");
+
   const inp={display:"block",width:"100%",marginBottom:10,padding:"6px 8px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   const tabBtn=(t,lbl)=>(
     <button onClick={()=>setTab(t)} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontWeight:600,fontSize:13,borderRadius:6,background:tab===t?"#4f86c6":"#f0f4f8",color:tab===t?"#fff":"#555"}}>{lbl}</button>
   );
   const selT=tutors.find(t=>t.id===tutTutor);
+
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{background:"#fff",borderRadius:14,padding:24,width:370,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",maxHeight:"90vh",overflowY:"auto"}}>
@@ -527,6 +549,7 @@ function AddModal({mode,prefill,monthKey,avvisi,tutors,editTarget,onAddTut,onEdi
           <button onClick={onClose} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:"#888"}}>✕</button>
         </div>
         {!isEdit&&<div style={{display:"flex",gap:6,marginBottom:16}}>{tabBtn("tutoraggio","📌 Tutoraggio")}{tabBtn("avviso","📋 Avviso/Progetto")}</div>}
+
         {tab==="tutoraggio"&&(<>
           <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
           <select value={tutName} onChange={e=>setTutName(e.target.value)} style={inp}>
@@ -539,17 +562,30 @@ function AddModal({mode,prefill,monthKey,avvisi,tutors,editTarget,onAddTut,onEdi
           {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:hexToRgba(selT.color||"#4f86c6",0.12)}}>
             <div style={{width:14,height:14,borderRadius:3,background:selT.color||"#4f86c6"}}/><span style={{fontSize:12,color:"#555"}}>Colore tutor</span>
           </div>}
-          <DayPicker monthData={mData} value={tutDay} onChange={setTutDay}/>
+          <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx}
+            onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
           <div style={{display:"flex",gap:10,marginBottom:14}}>
             <TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/>
             <TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/>
           </div>
-          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-            <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-            <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(tutName&&e>s&&tutTutor){isEdit?onEditTut(editTarget.ev.id,{day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor}):onAddTut({day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor});onClose();}}}
-              style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
+          <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+            {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo tutoraggio?"))onDeleteTut(editTarget.ev.id);onClose();}}
+              style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
+            <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
+              <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+              <button onClick={()=>{
+                const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);
+                if(tutName&&e>s&&tutTutor){
+                  const monthKey=MONTHS[tutMonthIdx].key;
+                  isEdit?onEditTut(editTarget.ev.id,{day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},monthKey)
+                        :onAddTut({day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},monthKey);
+                  onClose();
+                }
+              }} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
+            </div>
           </div>
         </>)}
+
         {tab==="avviso"&&(<>
           <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
           <select value={avId} onChange={e=>{setAvId(e.target.value);if(e.target.value!=="__new__"){const f=avvisi.find(a=>a.id===e.target.value);if(f)setAvColor(f.color);}}} style={inp}>
@@ -558,16 +594,28 @@ function AddModal({mode,prefill,monthKey,avvisi,tutors,editTarget,onAddTut,onEdi
           </select>
           {avId==="__new__"&&<input value={newAvName} onChange={e=>setNewAvName(e.target.value)} placeholder="Nome nuovo avviso..." style={inp}/>}
           <ColorPicker value={avColor} onChange={setAvColor}/>
-          <DayPicker monthData={mData} value={avDay} onChange={setAvDay}/>
+          <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx}
+            onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
           <div style={{display:"flex",gap:10,marginBottom:10}}>
             <TimePicker label="Inizio" value={avStart} onChange={setAvStart}/>
             <TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/>
           </div>
-          <p style={{fontSize:11,color:"#888",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>
-          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-            <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-            <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s)return;const evData={month:monthKey,day:avDay,start:s,end:e,ore:e-s};if(isEdit){onEditAv(editTarget.avviso.id,editTarget.ev.id,evData,avColor);}else if(avId==="__new__"&&newAvName){onAddAv({name:newAvName,color:avColor,...evData});}else if(avId!=="__new__"){onAddAv({existingId:avId,...evData});}onClose();}}
-              style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
+          {!isEdit&&<p style={{fontSize:11,color:"#888",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
+          <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+            {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo appuntamento?"))onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}
+              style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
+            <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
+              <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+              <button onClick={()=>{
+                const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s)return;
+                const monthKey=MONTHS[avMonthIdx].key;
+                const evData={month:monthKey,day:avDay,start:s,end:e,ore:e-s};
+                if(isEdit){onEditAv(editTarget.avviso.id,editTarget.ev.id,evData,avColor);}
+                else if(avId==="__new__"&&newAvName){onAddAv({name:newAvName,color:avColor,...evData});}
+                else if(avId!=="__new__"){onAddAv({existingId:avId,...evData});}
+                onClose();
+              }} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
+            </div>
           </div>
         </>)}
       </div>
@@ -575,32 +623,82 @@ function AddModal({mode,prefill,monthKey,avvisi,tutors,editTarget,onAddTut,onEdi
   );
 }
 
-function EventBlock({ev,col,numCols,color,isAvviso,tutorLabel,onEdit,onClick}){
+// ── EVENT BLOCKS ──────────────────────────────────────────────────────────────
+// Tutoraggio block (slightly narrowed when overlay active)
+function TutBlock({ev,col,numCols,color,tutorLabel,overlayActive,onEdit,onClick}){
   const top=(ev.start-8)*SLOT_H;
   const h=Math.max((ev.end-ev.start)*SLOT_H,20);
-  const w=`calc(${100/numCols}% - 3px)`;
-  const left=`calc(${(col/numCols)*100}% + 1px)`;
-  const label=isAvviso?(ev.avvisoName||ev.name):ev.name;
-  const bg=isAvviso?hexToRgba(color,0.4):(color||"#4f86c6");
+  // Slightly narrower when overlay active to reveal avviso border behind
+  const pad=overlayActive?5:1;
+  const w=`calc(${100/numCols}% - ${pad*2+2}px)`;
+  const left=`calc(${(col/numCols)*100}% + ${pad+1}px)`;
   return(
-    <div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"hidden",boxSizing:"border-box",zIndex:2,background:bg,border:isAvviso?`1.5px dashed ${hexToRgba(color,0.8)}`:"none"}}
-      title={`${label}\n${fmt(ev.start)}–${fmt(ev.end)} (${ev.ore}h)${tutorLabel?"\n"+tutorLabel:""}`}>
+    <div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"hidden",
+      boxSizing:"border-box",zIndex:3,background:color||"#4f86c6"}}
+      title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)} (${ev.ore}h)${tutorLabel?"\n"+tutorLabel:""}`}>
       <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}}
-        style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,lineHeight:1.3,color:isAvviso?"#444":"#fff",background:"rgba(0,0,0,0.08)",borderBottom:isAvviso?"1px dashed rgba(0,0,0,0.15)":"1px solid rgba(255,255,255,0.2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-        ✏️ {label}
+        style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,lineHeight:1.3,color:"#fff",
+          background:"rgba(0,0,0,0.08)",borderBottom:"1px solid rgba(255,255,255,0.2)",
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+        ✏️ {ev.name}
       </div>
       <div onClick={e=>{e.stopPropagation();onClick&&onClick();}}
-        style={{padding:"1px 5px",fontSize:10,color:isAvviso?"#555":"rgba(255,255,255,0.9)",cursor:"crosshair",height:"calc(100% - 22px)"}}>
+        style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,0.9)",cursor:"crosshair",height:"calc(100% - 22px)"}}>
         {fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}
       </div>
     </div>
   );
 }
 
-function CalendarGrid({month,evsByDay,footerByDay,onGridClick}){
+// Avviso overlay block (outline only, no fill)
+function AvOverlayBlock({ev,col,numCols,color}){
+  const top=(ev.start-8)*SLOT_H;
+  const h=Math.max((ev.end-ev.start)*SLOT_H,20);
+  const w=`calc(${100/numCols}% - 3px)`;
+  const left=`calc(${(col/numCols)*100}% + 1px)`;
+  return(
+    <div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,
+      boxSizing:"border-box",zIndex:2,background:"transparent",
+      border:`2.5px solid ${color}`,pointerEvents:"none"}}
+      title={`${ev.avvisoName}\n${fmt(ev.start)}–${fmt(ev.end)} (${ev.ore}h)`}>
+      <div style={{padding:"2px 5px",fontSize:9,fontWeight:700,color:color,
+        whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",opacity:0.85}}>
+        {ev.avvisoName}
+      </div>
+    </div>
+  );
+}
+
+// Avviso block (full, for avvisi calendar)
+function AvBlock({ev,col,numCols,color,onEdit,onClick}){
+  const top=(ev.start-8)*SLOT_H;
+  const h=Math.max((ev.end-ev.start)*SLOT_H,20);
+  const w=`calc(${100/numCols}% - 3px)`;
+  const left=`calc(${(col/numCols)*100}% + 1px)`;
+  return(
+    <div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"hidden",
+      boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.4),border:`1.5px dashed ${color}`}}
+      title={`${ev.avvisoName}\n${fmt(ev.start)}–${fmt(ev.end)} (${ev.ore}h)`}>
+      <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}}
+        style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,lineHeight:1.3,color:"#444",
+          background:"rgba(0,0,0,0.07)",borderBottom:"1px dashed rgba(0,0,0,0.15)",
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+        ✏️ {ev.avvisoName}
+      </div>
+      <div onClick={e=>{e.stopPropagation();onClick&&onClick();}}
+        style={{padding:"1px 5px",fontSize:10,color:"#555",cursor:"crosshair",height:"calc(100% - 22px)"}}>
+        {fmt(ev.start)}–{fmt(ev.end)}
+      </div>
+    </div>
+  );
+}
+
+// ── CALENDAR GRID ─────────────────────────────────────────────────────────────
+function CalendarGrid({month,tutByDay,avOverlayByDay,avByDay,footerByDay,overlayActive,onGridClick}){
   const daysArr=Array.from({length:month.days},(_,i)=>i+1);
   const isWeekend=d=>[0,6].includes(new Date(month.year,month.month,d).getDay());
   const getDayName=d=>DAY_NAMES[new Date(month.year,month.month,d).getDay()];
+
   return(
     <div style={{flex:1,overflowX:"auto",overflowY:"auto"}}>
       <div style={{display:"flex",minWidth:TIME_W+month.days*DAY_W}}>
@@ -613,17 +711,32 @@ function CalendarGrid({month,evsByDay,footerByDay,onGridClick}){
         </div>
         {daysArr.map(d=>{
           const wk=isWeekend(d);
-          const laid=layoutEvents(evsByDay[d]||[]);
           const footer=footerByDay?.[d];
+          // Layout tut events and av overlay events separately
+          const tutEvs=tutByDay?.[d]||[];
+          const avOvEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
+          const avEvs=avByDay?.[d]||[];
+          const laidTut=layoutEvents(tutEvs);
+          const laidAvOv=layoutEvents(avOvEvs);
+          const laidAv=layoutEvents(avEvs);
           return(
             <div key={d} style={{width:DAY_W,flexShrink:0,borderRight:"1px solid #dde"}}>
-              <div style={{height:40,background:wk?"#e8e0f0":"#e8edf3",borderBottom:"1px solid #ccc",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
+              <div style={{height:40,background:wk?"#e8e0f0":"#e8edf3",borderBottom:"1px solid #ccc",
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
                 <span style={{fontSize:11,color:wk?"#9b59b6":"#555"}}>{getDayName(d)}</span>
                 <span style={{fontWeight:700,fontSize:14,color:wk?"#9b59b6":"#1a3a5c"}}>{d}</span>
               </div>
-              <div onClick={e=>onGridClick&&onGridClick(d,e)} style={{position:"relative",height:12*SLOT_H,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"crosshair"}}>
+              <div onClick={e=>onGridClick&&onGridClick(d,e)}
+                style={{position:"relative",height:12*SLOT_H,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"crosshair"}}>
                 {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*SLOT_H,left:0,right:0,height:SLOT_H,borderTop:"1px solid #f0f0f0"}}/>)}
-                {laid.map(({ev,col,numCols},i)=>ev.render({col,numCols,key:i}))}
+                {/* Avviso overlay outlines (behind tut blocks) */}
+                {laidAvOv.map(({ev,col,numCols},i)=>(
+                  <AvOverlayBlock key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor}/>
+                ))}
+                {/* Tutoraggio blocks */}
+                {laidTut.map(({ev,col,numCols},i)=>ev.render({col,numCols,key:"t"+i}))}
+                {/* Avvisi calendar blocks */}
+                {laidAv.map(({ev,col,numCols},i)=>ev.render({col,numCols,key:"a"+i}))}
               </div>
               <div style={{height:20,background:wk?"#f0ebf8":"#f5f8fc",borderTop:"1px solid #dde",display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {footer?<span style={{fontSize:10,fontWeight:700,color:"#1a3a5c"}}>{footer}</span>:<span style={{fontSize:10,color:"#ccc"}}>—</span>}
@@ -645,6 +758,7 @@ function App({user}){
   const[avvisi,setAvvisi]=useState([]);
   const[activeAvvisi,setActiveAvvisi]=useState(new Set());
   const[tutEvents,setTutEvents]=useState({});
+  const[showAvvisiOverlay,setShowAvvisiOverlay]=useState(false);
   const[modal,setModal]=useState(null);
   const[showAnagrafica,setShowAnagrafica]=useState(false);
   const[showTutorPanel,setShowTutorPanel]=useState(false);
@@ -660,19 +774,22 @@ function App({user}){
       setActiveAvvisi(new Set(a.map(x=>x.id)));
       setLoading(false);
     });
-    // Check admin
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get()
       .then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdminUser(true);})
       .catch(()=>{});
   },[]);
 
   const month=MONTHS[monthIdx];
+
+  // Tutoraggio events
   const allTutEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
   const visibleTutEvs=activeTutorIds===null?allTutEvs:allTutEvs.filter(e=>activeTutorIds.has(e.tutorId));
   const avvisiNamesInMonth=new Set(allTutEvs.map(e=>e.name));
   const avvisiForTutBar=avvisi.filter(av=>avvisiNamesInMonth.has(av.name));
   const dayTutOre={};for(const ev of allTutEvs)dayTutOre[ev.day]=(dayTutOre[ev.day]||0)+ev.ore;
   const totalTutOre=visibleTutEvs.reduce((a,e)=>a+e.ore,0);
+
+  // Avvisi events
   const avEvs=avvisi.flatMap(av=>av.events.filter(e=>e.month===month.key).map(e=>({...e,avvisoId:av.id,avvisoName:av.name,avColor:av.color})));
   const avvisiThisMonth=avvisi.filter(av=>av.events.some(e=>e.month===month.key));
   const visibleAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
@@ -681,16 +798,27 @@ function App({user}){
   function getTutorColor(id){const t=tutors.find(x=>x.id===id);return t?.color||"#4f86c6";}
   function getTutorLabel(id){const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";}
 
+  // Build byDay maps
   function buildTutByDay(){
     const byDay={};
     for(const ev of visibleTutEvs){
       if(!byDay[ev.day])byDay[ev.day]=[];
       const color=getTutorColor(ev.tutorId),tLabel=getTutorLabel(ev.tutorId);
       byDay[ev.day].push({...ev,render:({col,numCols,key})=>(
-        <EventBlock key={key} ev={ev} col={col} numCols={numCols} color={color} isAvviso={false} tutorLabel={tLabel}
+        <TutBlock key={key} ev={ev} col={col} numCols={numCols} color={color} tutorLabel={tLabel}
+          overlayActive={showAvvisiOverlay}
           onEdit={()=>setModal({type:"edit-tut",ev,monthKey:month.key})}
           onClick={()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}})}/>
       )});
+    }
+    return byDay;
+  }
+  function buildAvOverlayByDay(){
+    // All avvisi events for this month, regardless of filter
+    const byDay={};
+    for(const ev of avEvs){
+      if(!byDay[ev.day])byDay[ev.day]=[];
+      byDay[ev.day].push(ev);
     }
     return byDay;
   }
@@ -699,7 +827,7 @@ function App({user}){
     for(const ev of visibleAvEvs){
       if(!byDay[ev.day])byDay[ev.day]=[];
       byDay[ev.day].push({...ev,render:({col,numCols,key})=>(
-        <EventBlock key={key} ev={ev} col={col} numCols={numCols} color={ev.avColor} isAvviso={true}
+        <AvBlock key={key} ev={ev} col={col} numCols={numCols} color={ev.avColor}
           onEdit={()=>{const av=avvisi.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av,ev,monthKey:month.key});}}
           onClick={()=>setModal({type:"add",mode:"avviso",prefill:{day:ev.day,start:ev.start,end:ev.end}})}/>
       )});
@@ -723,17 +851,29 @@ function App({user}){
     });
   }
 
-  async function addTutoraggio(ev){
+  async function addTutoraggio(ev,monthKey){
+    const mk=monthKey||month.key;
     const id=`tut-${Date.now()}`;const tId=ev.tutorId;
-    const updated={...tutEvents,[tId]:{...(tutEvents[tId]||{}),[month.key]:[...((tutEvents[tId]||{})[month.key]||[]),{...ev,id}]}};
-    setTutEvents(updated);await fsSaveTutEvents(tId,month.key,updated[tId][month.key]);
+    const updated={...tutEvents,[tId]:{...(tutEvents[tId]||{}),[mk]:[...((tutEvents[tId]||{})[mk]||[]),{...ev,id}]}};
+    setTutEvents(updated);await fsSaveTutEvents(tId,mk,updated[tId][mk]);
   }
-  async function editTutoraggio(evId,updated){
+  async function editTutoraggio(evId,updated,monthKey){
     const newState={...tutEvents};
     for(const[tid,months]of Object.entries(newState)){
       for(const[mk,evs]of Object.entries(months)){
         if(evs.find(e=>e.id===evId)){
           newState[tid]={...months,[mk]:evs.map(e=>e.id===evId?{...e,...updated}:e)};
+          setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;
+        }
+      }
+    }
+  }
+  async function deleteTutoraggio(evId){
+    const newState={...tutEvents};
+    for(const[tid,months]of Object.entries(newState)){
+      for(const[mk,evs]of Object.entries(months)){
+        if(evs.find(e=>e.id===evId)){
+          newState[tid]={...months,[mk]:evs.filter(e=>e.id!==evId)};
           setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;
         }
       }
@@ -748,6 +888,10 @@ function App({user}){
   }
   async function editAvviso(avId,evId,evData,color){
     const updated=avvisi.map(av=>av.id!==avId?av:{...av,color,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});
+    setAvvisi(updated);await fsSaveAvvisi(updated);
+  }
+  async function deleteAvviso(avId,evId){
+    const updated=avvisi.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});
     setAvvisi(updated);await fsSaveAvvisi(updated);
   }
   async function handleSaveTutors(list){
@@ -771,7 +915,9 @@ function App({user}){
     reader.readAsText(file);e.target.value="";
   }
 
-  const vBtn=(v,lbl)=>({padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,background:view===v?"#fff":"rgba(255,255,255,0.15)",color:view===v?"#1a3a5c":"#fff",boxShadow:view===v?"0 2px 8px rgba(0,0,0,0.15)":"none",transition:"all .15s"});
+  const vBtn=(v,lbl)=>({padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
+    background:view===v?"#fff":"rgba(255,255,255,0.15)",color:view===v?"#1a3a5c":"#fff",
+    boxShadow:view===v?"0 2px 8px rgba(0,0,0,0.15)":"none",transition:"all .15s"});
 
   if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"#888"}}>⏳ Caricamento...</div>;
 
@@ -817,6 +963,17 @@ function App({user}){
                 return<button key={t.id} onClick={()=>toggleTutorFilter(t.id)} style={{fontSize:11,padding:"3px 10px",borderRadius:20,cursor:"pointer",fontWeight:700,border:`2px solid ${col}`,background:active?col:"transparent",color:active?"#fff":col,opacity:active?1:0.5}}>{t.cognome||t.nome}</button>;
               })
             }
+            <span style={{color:"#ddd"}}>│</span>
+            {/* Overlay toggle */}
+            <button onClick={()=>setShowAvvisiOverlay(o=>!o)} style={{
+              fontSize:11,padding:"3px 12px",borderRadius:20,cursor:"pointer",fontWeight:700,
+              border:"2px solid #e07b39",
+              background:showAvvisiOverlay?"#e07b39":"transparent",
+              color:showAvvisiOverlay?"#fff":"#e07b39",
+              display:"flex",alignItems:"center",gap:5
+            }}>
+              {showAvvisiOverlay?"👁 Nascondi avvisi":"👁 Mostra avvisi"}
+            </button>
           </div>
           <div style={{padding:"5px 20px",borderBottom:"1px solid #f0f0f0",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             <span style={{fontSize:11,fontWeight:700,color:"#888",minWidth:120,flexShrink:0}}>Avvisi/Progetti</span>
@@ -855,8 +1012,11 @@ function App({user}){
 
       <CalendarGrid
         month={month}
-        evsByDay={view==="tutoraggio"?buildTutByDay():buildAvByDay()}
+        tutByDay={view==="tutoraggio"?buildTutByDay():null}
+        avOverlayByDay={view==="tutoraggio"?buildAvOverlayByDay():null}
+        avByDay={view==="avviso"?buildAvByDay():null}
         footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTutOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}}
+        overlayActive={showAvvisiOverlay}
         onGridClick={handleGridClick}
       />
 
@@ -864,12 +1024,13 @@ function App({user}){
       {showAnagrafica&&<AnagraficaPanel avvisi={avvisi} onClose={()=>setShowAnagrafica(false)}/>}
       {showUsersPanel&&<UsersPanel onClose={()=>setShowUsersPanel(false)}/>}
       {modal&&<AddModal
-        mode={modal.mode||view} prefill={modal.prefill}
-        monthKey={modal.monthKey||month.key}
+        mode={modal.mode||view}
+        prefill={modal.prefill}
+        currentMonthIdx={monthIdx}
         avvisi={avvisi} tutors={tutors}
         editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null}
-        onAddTut={addTutoraggio} onEditTut={editTutoraggio}
-        onAddAv={addAvviso} onEditAv={editAvviso}
+        onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio}
+        onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso}
         onClose={()=>setModal(null)}
       />}
     </React.Fragment>
