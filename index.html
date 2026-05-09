@@ -89,7 +89,19 @@ const MONTHS=[{key:"gen-26",label:"Gennaio 2026",year:2026,month:0,days:31},{key
 const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ecc71","#27ae60","#1abc9c","#16a085","#3498db","#2980b9","#9b59b6","#8e44ad","#34495e","#2c3e50","#e91e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688","#4caf50","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#795548","#9e9e9e","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#fff176","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a","#80deea","#c5e1a5","#ffe082"];
 const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
-const FUNNY_PHRASES=["cosa vuoi fare oggi invece di goderti il sole?","cosa ti manca per staccare prima delle 18?","quale riunione avresti potuto essere una email?","quale documento ti ha rovinato la giornata?","cosa importiamo oggi nel calendario del dolore?","quale deadline ti ha svegliato stanotte?","cosa ottimizziamo oggi per non farlo mai più manualmente?","quale foglio Excel vorresti bruciare?","cosa posso fare per renderti la giornata meno lunga?"];
+
+// ── FRASI AI (grammaticalmente corrette, complete) ────────────────────────────
+const FUNNY_PHRASES=[
+  "Cosa importiamo oggi nel calendario del dolore?",
+  "Quale riunione avresti potuto essere una email?",
+  "Quale documento ti ha rovinato la giornata?",
+  "Quale deadline ti ha svegliato stanotte?",
+  "Cosa ottimizziamo oggi per non farlo mai più manualmente?",
+  "Quale foglio Excel vorresti bruciare?",
+  "Cosa posso fare per renderti la giornata meno lunga?",
+  "Cosa ti manca per staccare prima delle 18?",
+  "Cosa vuoi fare oggi invece di goderti il sole?",
+];
 
 function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
 function fmt(h){return `${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
@@ -117,39 +129,59 @@ function generateDemoData(){
   const tutorNames=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
   const tutors=tutorNames.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:TUTOR_COLORS[i]}));
 
-  // Generate weekday dates for each avviso
-  function getWeekdays(monthIdx,count){
-    const m=MONTHS[monthIdx];const days=[];
-    for(let d=1;d<=m.days&&days.length<count;d++){if(isWeekday(m.year,m.month,d))days.push(d);}
-    return days;
+  function getWeekdaysInRange(startMonthIdx,numMonths,perMonth){
+    // Returns array of {monthIdx, day} for weekdays across the range
+    const result=[];
+    for(let mi=startMonthIdx;mi<Math.min(startMonthIdx+numMonths,MONTHS.length);mi++){
+      const m=MONTHS[mi];let count=0;
+      for(let d=1;d<=m.days&&count<perMonth;d++){
+        if(isWeekday(m.year,m.month,d)){result.push({monthIdx:mi,day:d});count++;}
+      }
+    }
+    return result;
   }
 
+  // 5 avvisi distribuiti su tutto l'anno, ognuno dura 3-4 mesi
   const avvisiDefs=[
-    {name:"Avviso 1",color:PALETTE[10],monthIdx:2,startH:9,endH:13,daysCount:6},
-    {name:"Avviso 2",color:PALETTE[2],monthIdx:3,startH:14,endH:18,daysCount:5},
-    {name:"Avviso 3",color:PALETTE[12],monthIdx:4,startH:9.5,endH:13.5,daysCount:7},
-    {name:"Avviso 4",color:PALETTE[0],monthIdx:5,startH:10,endH:14,daysCount:5},
-    {name:"Avviso 5",color:PALETTE[5],monthIdx:6,startH:9,endH:12,daysCount:4},
+    {name:"Avviso 1",color:PALETTE[10],startMonthIdx:0,numMonths:4,perMonth:5,startH:9,endH:13},   // gen–apr
+    {name:"Avviso 2",color:PALETTE[2], startMonthIdx:2,numMonths:3,perMonth:4,startH:14,endH:18},  // mar–mag
+    {name:"Avviso 3",color:PALETTE[12],startMonthIdx:4,numMonths:4,perMonth:6,startH:9.5,endH:13.5}, // mag–ago
+    {name:"Avviso 4",color:PALETTE[0], startMonthIdx:7,numMonths:3,perMonth:5,startH:10,endH:14},  // ago–ott
+    {name:"Avviso 5",color:PALETTE[5], startMonthIdx:9,numMonths:3,perMonth:4,startH:9,endH:12},   // ott–dic
   ];
 
   const avvisi=avvisiDefs.map((def,i)=>{
-    const days=getWeekdays(def.monthIdx,def.daysCount);
-    const mk=MONTHS[def.monthIdx].key;
-    return{id:`av-demo-${i}`,name:def.name,color:def.color,events:days.map((d,j)=>({id:`ave-demo-${i}-${j}`,month:mk,day:d,start:def.startH,end:def.endH,ore:def.endH-def.startH}))};
+    const slots=getWeekdaysInRange(def.startMonthIdx,def.numMonths,def.perMonth);
+    const events=slots.map((s,j)=>({
+      id:`ave-demo-${i}-${j}`,
+      month:MONTHS[s.monthIdx].key,
+      day:s.day,
+      start:def.startH,
+      end:def.endH,
+      ore:def.endH-def.startH,
+    }));
+    return{id:`av-demo-${i}`,name:def.name,color:def.color,events};
   });
 
-  // Generate tutoraggio events
+  // Tutoraggio: 2 tutor per avviso, distribuiti sugli stessi mesi, da gennaio
   const tutEvents={};
   avvisiDefs.forEach((def,ai)=>{
-    const days=getWeekdays(def.monthIdx,def.daysCount);
-    const mk=MONTHS[def.monthIdx].key;
-    // Assign 2 tutors per avviso, alternating days
+    const slots=getWeekdaysInRange(def.startMonthIdx,def.numMonths,def.perMonth);
     [0,1].forEach(ti=>{
       const tId=tutors[ti].id;
       if(!tutEvents[tId])tutEvents[tId]={};
-      if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];
-      days.filter((_,j)=>j%2===ti).forEach((d,j)=>{
-        tutEvents[tId][mk].push({id:`tut-demo-${ai}-${ti}-${j}`,day:d,name:def.name,start:def.startH,end:def.endH-(ti*0.5),ore:(def.endH-def.startH)-(ti*0.5),tutorId:tId});
+      slots.filter((_,j)=>j%2===ti).forEach((s,j)=>{
+        const mk=MONTHS[s.monthIdx].key;
+        if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];
+        tutEvents[tId][mk].push({
+          id:`tut-demo-${ai}-${ti}-${j}`,
+          day:s.day,
+          name:def.name,
+          start:def.startH,
+          end:def.endH-(ti*0.5),
+          ore:(def.endH-def.startH)-(ti*0.5),
+          tutorId:tId,
+        });
       });
     });
   });
@@ -411,17 +443,77 @@ function TutorPanel({tutors,onSave,onClose}){
   </div>);
 }
 
+// ── ANAGRAFICA PANEL (Avvisi/Progetti) ────────────────────────────────────────
 function AnagraficaPanel({avvisi,onClose}){
   const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
+  const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:380,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",overflowY:"auto"}}>
+    <div style={{width:400,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",overflowY:"auto"}}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{padding:"12px 16px",flex:1}}>
         {avvisi.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso.</p>}
-        {avvisi.map(av=>(<div key={av.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-          <div style={{background:hexToRgba(av.color,0.15),borderBottom:"1px solid #eee",padding:"8px 12px",display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:av.color,flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{av.name}</span></div>
-          <div style={{padding:"8px 12px"}}>{av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(av.color,0.12),border:`1px solid ${hexToRgba(av.color,0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
-        </div>))}
+        {avvisi.map(av=>{
+          const totOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
+          return(<div key={av.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+            <div style={{background:hexToRgba(av.color,0.15),borderBottom:"1px solid #eee",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:av.color,flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{av.name}</span></div>
+              <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fmtOre(totOre)} totali</span>
+            </div>
+            <div style={{padding:"8px 12px"}}>{av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(av.color,0.12),border:`1px solid ${hexToRgba(av.color,0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
+          </div>);
+        })}
+      </div>
+    </div>
+  </div>);
+}
+
+// ── TUTORAGGI PANEL (nuovo) ───────────────────────────────────────────────────
+function TutoraggiPanel({tutors,tutEvents,avvisi,onClose}){
+  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
+  const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
+  // Colore avviso per nome
+  const avColorByName={};for(const av of avvisi)avColorByName[av.name]=av.color;
+
+  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
+    <div style={{width:420,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📌 Tutoraggi</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
+        {tutors.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
+        {tutors.map(t=>{
+          const td=tutEvents[t.id]||{};
+          // Calcola ore totali del tutor
+          let totOre=0;
+          const monthEntries=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));
+          for(const[,evs]of monthEntries)for(const ev of evs)totOre+=(ev.ore||0);
+          if(monthEntries.length===0)return null;
+          return(<div key={t.id} style={{marginBottom:16,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+            {/* Header tutor */}
+            <div style={{background:hexToRgba(t.color||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div>
+              <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fmtOre(totOre)} totali</span>
+            </div>
+            {/* Mesi */}
+            <div style={{padding:"8px 12px"}}>
+              {monthEntries.map(([mk,evs])=>{
+                const mOre=evs.reduce((s,e)=>s+(e.ore||0),0);
+                return(<div key={mk} style={{marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span>
+                    <span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fmtOre(mOre)}</span>
+                  </div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {evs.map(ev=>{
+                      const col=avColorByName[ev.name]||t.color||"#4f86c6";
+                      return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>
+                        {ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}
+                      </span>);
+                    })}
+                  </div>
+                </div>);
+              })}
+            </div>
+          </div>);
+        })}
       </div>
     </div>
   </div>);
@@ -430,7 +522,6 @@ function AnagraficaPanel({avvisi,onClose}){
 function RiepilogoPanel({avvisi,tutors,tutEvents,currentMonthKey,onClose}){
   const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
 
-  // Compute intersection hours between tutor events and avviso events
   function getIntersectionOre(tutorId,avvisoName){
     let total=0;
     const av=avvisi.find(a=>a.name===avvisoName);if(!av)return 0;
@@ -440,8 +531,7 @@ function RiepilogoPanel({avvisi,tutors,tutEvents,currentMonthKey,onClose}){
       const avEvs=av.events.filter(e=>e.month===mk);
       for(const tev of tevs){
         if(tev.name!==avvisoName)continue;
-        const avEvsOnDay=avEvs.filter(e=>e.day===tev.day);
-        for(const ae of avEvs.filter(e=>e.month===mk)){
+        for(const ae of avEvs){
           if(ae.day!==tev.day)continue;
           const intStart=Math.max(tev.start,ae.start),intEnd=Math.min(tev.end,ae.end);
           if(intEnd>intStart)total+=intEnd-intStart;
@@ -518,14 +608,10 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
     <div style={{width:440,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>⚙️ Impostazioni</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:20}}>
-
-        {/* AI Section */}
         <div style={{marginBottom:20,padding:16,background:"#f8f9ff",borderRadius:12,border:"1px solid #dde"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c",marginBottom:12}}>🤖 Assistente AI</div>
           <label style={{fontSize:12,color:"#555",display:"block",marginBottom:8}}>Modello predefinito</label>
           <div style={{display:"flex",gap:6,marginBottom:14}}><button style={pBtn("gemini","#1a73e8")} onClick={()=>setAiProvider("gemini")}>✨ Gemini 2.0 Flash</button><button style={pBtn("openai","#10a37f")} onClick={()=>setAiProvider("openai")}>💬 GPT-4o mini</button></div>
-
-          {/* Gemini */}
           <div style={{marginBottom:12,padding:12,borderRadius:8,border:`1px solid ${aiProvider==="gemini"?"#1a73e8":"#e8edf3"}`,background:aiProvider==="gemini"?"#fff":"#fafbfc"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:13,fontWeight:700,color:aiProvider==="gemini"?"#1a73e8":"#aaa"}}>✨ Gemini</span>{aiProvider==="gemini"&&<span style={{fontSize:10,background:"#1a73e8",color:"#fff",padding:"1px 6px",borderRadius:8,fontWeight:600}}>ATTIVO</span>}</div>
             <input type="password" value={geminiKey} onChange={e=>setGeminiKey(e.target.value)} placeholder="AIza..." style={inp}/>
@@ -534,8 +620,6 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
               {testGemini&&<span style={{fontSize:12,color:testGemini.startsWith("✅")?"#27ae60":"#e74c3c"}}>{testGemini}</span>}
             </div>
           </div>
-
-          {/* OpenAI */}
           <div style={{padding:12,borderRadius:8,border:`1px solid ${aiProvider==="openai"?"#10a37f":"#e8edf3"}`,background:aiProvider==="openai"?"#fff":"#fafbfc"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:13,fontWeight:700,color:aiProvider==="openai"?"#10a37f":"#aaa"}}>💬 OpenAI</span>{aiProvider==="openai"&&<span style={{fontSize:10,background:"#10a37f",color:"#fff",padding:"1px 6px",borderRadius:8,fontWeight:600}}>ATTIVO</span>}</div>
             <input type="password" value={openaiKey} onChange={e=>setOpenaiKey(e.target.value)} placeholder="sk-..." style={inp}/>
@@ -546,8 +630,6 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
           </div>
           <p style={{fontSize:11,color:"#aaa",marginTop:10}}>🔒 Chiavi salvate su Firestore, non visibili agli altri utenti.</p>
         </div>
-
-        {/* Admin tools */}
         {isAdmin&&<div style={{padding:16,background:"#fff8f0",borderRadius:12,border:"1px solid #f0c080"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#c0392b",marginBottom:12}}>🛠️ Strumenti Admin</div>
           <button onClick={onLoadDemo} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600,marginBottom:10,fontSize:13}}>🎲 Carica dati demo</button>
@@ -564,14 +646,15 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
   </div>);
 }
 
-// ── AI PANEL (bottom chat) ────────────────────────────────────────────────────
+// ── AI PANEL ──────────────────────────────────────────────────────────────────
 function AiPanel({tutors,avvisi,settings,user,isAdmin,onAddTut,onAddAv,onClose}){
   const[messages,setMessages]=useState([]);const[step,setStep]=useState("welcome");const[importType,setImportType]=useState(null);const[selectedTutor,setSelectedTutor]=useState(tutors[0]?.id||"");const[avName,setAvName]=useState("");const[avColor,setAvColor]=useState(PALETTE[5]);const[pendingEvents,setPendingEvents]=useState([]);const[ambiguities,setAmbiguities]=useState([]);const[loading,setLoading]=useState(false);const[avNameInput,setAvNameInput]=useState("");
   const fileRef=useRef(),bottomRef=useRef();
   const userName=user?.email?.split("@")[0]||"utente";
+  // Selezione frase casuale (completa, grammaticalmente corretta)
   const phrase=FUNNY_PHRASES[Math.floor(Math.random()*FUNNY_PHRASES.length)];
 
-  useEffect(()=>{setMessages([{role:"ai",text:`cosa vuoi fare oggi anziché ${phrase}`,buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);},[]);
+  useEffect(()=>{setMessages([{role:"ai",text:phrase,buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);},[]);
   useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   function addMsg(msg){setMessages(prev=>[...prev,msg]);}
 
@@ -654,19 +737,16 @@ Regole: month="mmm-yy" (mag-26 ecc), start/end ore decimali (9.5=09:30), ore=dur
 
   return(
     <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:"#fff",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)",display:"flex",flexDirection:"column",height:"42vh",borderTop:"2px solid #1a3a5c"}}>
-      {/* Header */}
       <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div>
             <span style={{fontWeight:800,fontSize:18}}>🤖 Ciao, {userName}!</span>
-            <span style={{fontSize:13,opacity:0.8,marginLeft:10}}>{phrase}</span>
           </div>
           <div style={{fontSize:11,opacity:0.6,background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"2px 8px"}}>{settings.aiProvider==="gemini"?"✨ Gemini 2.0 Flash":"💬 GPT-4o mini"}</div>
           {isAdmin&&<button style={{background:"rgba(255,200,0,0.2)",border:"1.5px solid rgba(255,200,0,0.5)",color:"#ffd700",borderRadius:8,padding:"4px 10px",cursor:"not-allowed",fontSize:11,fontWeight:700,opacity:0.7}} title="Funzione in arrivo 🚀">⚡ God Mode</button>}
         </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
       </div>
-      {/* Messages */}
       <div style={{flex:1,overflowY:"auto",padding:"12px 20px",display:"flex",flexDirection:"column"}}>
         {messages.map((m,i)=>renderMsg(m,i))}
         <div ref={bottomRef}/>
@@ -740,11 +820,12 @@ function App({user}){
   const[tutEvents,setTutEvents]=useState({});
   const[settings,setSettings]=useState({});
   const[showAvvisiOverlay,setShowAvvisiOverlay]=useState(false);
-  const[zoomIdx,setZoomIdx]=useState(2); // default 100%
-  const[calView,setCalView]=useState("day"); // "day"|"week"|"month"
+  const[zoomIdx,setZoomIdx]=useState(2);
+  const[calView,setCalView]=useState("day");
   const[weekOffset,setWeekOffset]=useState(0);
   const[modal,setModal]=useState(null);
   const[showAnagrafica,setShowAnagrafica]=useState(false);
+  const[showTutoraggiPanel,setShowTutoraggiPanel]=useState(false);
   const[showTutorPanel,setShowTutorPanel]=useState(false);
   const[showUsersPanel,setShowUsersPanel]=useState(false);
   const[showRiepilogo,setShowRiepilogo]=useState(false);
@@ -765,11 +846,9 @@ function App({user}){
 
   const month=MONTHS[monthIdx];
 
-  // ── Compute visible days based on calView ──
   function getVisibleDays(){
     if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);
     if(calView==="week"){
-      // Find first Monday of month + weekOffset
       const firstDay=new Date(month.year,month.month,1);
       const firstMon=new Date(firstDay);
       const dow=firstDay.getDay()||7;
@@ -788,7 +867,6 @@ function App({user}){
   const visibleDays=getVisibleDays();
   const visibleDayNumbers=visibleDays.map(d=>typeof d==="object"?d.d:d);
 
-  // ── Data derivations ──
   const allTutEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
   const visibleTutEvs=activeTutorIds===null?allTutEvs:allTutEvs.filter(e=>activeTutorIds.has(e.tutorId));
   const avvisiNamesInMonth=new Set(allTutEvs.map(e=>e.name));
@@ -867,6 +945,7 @@ function App({user}){
         <button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button>
       </div>
       <button onClick={()=>setShowTutorPanel(true)} style={hBtn()}>👤 Tutor</button>
+      <button onClick={()=>setShowTutoraggiPanel(true)} style={hBtn()}>📌 Tutoraggi</button>
       <button onClick={()=>setShowAnagrafica(true)} style={hBtn()}>📋 Avvisi/Progetti</button>
       <button onClick={()=>setShowRiepilogo(true)} style={hBtn()}>📊 Riepilogo</button>
       <button onClick={()=>setShowAiPanel(true)} style={hBtn({background:"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>
@@ -938,6 +1017,7 @@ function App({user}){
     <ZoomBar calView={calView} zoomIdx={zoomIdx} weekOffset={weekOffset} onZoomChange={setZoomIdx} onCalViewChange={v=>{setCalView(v);setWeekOffset(0);}} onWeekNav={d=>setWeekOffset(o=>o+d)}/>
 
     {showTutorPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutorPanel(false)}/>}
+    {showTutoraggiPanel&&<TutoraggiPanel tutors={tutors} tutEvents={tutEvents} avvisi={avvisi} onClose={()=>setShowTutoraggiPanel(false)}/>}
     {showAnagrafica&&<AnagraficaPanel avvisi={avvisi} onClose={()=>setShowAnagrafica(false)}/>}
     {showUsersPanel&&<UsersPanel onClose={()=>setShowUsersPanel(false)}/>}
     {showRiepilogo&&<RiepilogoPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowRiepilogo(false)}/>}
