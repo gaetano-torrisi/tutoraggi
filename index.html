@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+async function fsSaveTutors(tutors){showSaving();const batch=db.batch();const snap=await db.collection("tutors").get();snap.docs.forEach(d=>batch.delete(d.ref));tutors.forEach(t=>batch.set(db.collection("tutors").doc(t.id),t));await batch.commit();}<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8"/>
@@ -128,10 +128,43 @@ function exportJSON(avvisi,tutors,tutEvents){
 }
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────────
-async function fsLoadData(){try{const[av,tu,te,set]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get()]);const tutEvents={};te.docs.forEach(d=>{tutEvents[d.id]=d.data();});return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents,settings:set.exists?set.data():{}};}catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{}};}}
-async function fsSaveAvvisi(avvisi){showSaving();const batch=db.batch();const snap=await db.collection("avvisi").get();snap.docs.forEach(d=>batch.delete(d.ref));avvisi.forEach(av=>batch.set(db.collection("avvisi").doc(av.id),av));await batch.commit();}
-async function fsSaveTutors(tutors){showSaving();const batch=db.batch();const snap=await db.collection("tutors").get();snap.docs.forEach(d=>batch.delete(d.ref));tutors.forEach(t=>batch.set(db.collection("tutors").doc(t.id),t));await batch.commit();}
-async function fsSaveTutEvents(tutorId,monthKey,events){showSaving();await db.collection("tutEvents").doc(tutorId).set({[monthKey]:events},{merge:true});}
+async function fsLoadData(){
+  try{
+    const[av,tu,te,set]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get()]);
+    const tutEvents={};
+    te.docs.forEach(d=>{tutEvents[d.id]=d.data();});
+    console.log("[LOAD] avvisi:",av.docs.length,"tutors:",tu.docs.length,"tutEvents docs:",te.docs.length);
+    console.log("[LOAD] tutEvents raw:",JSON.stringify(tutEvents).substring(0,400));
+    return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents,settings:set.exists?set.data():{}};
+  }catch(e){
+    console.error("[LOAD] ❌ Errore:",e);
+    return{avvisi:[],tutors:[],tutEvents:{},settings:{}};
+  }
+}}
+async function fsSaveTutEvents(tutorId,monthKey,events){
+  showSaving();
+  console.log("[SAVE] fsSaveTutEvents →",tutorId,monthKey,"events:",events.length,events);
+  try{
+    await db.collection("tutEvents").doc(tutorId).set({[monthKey]:events},{merge:true});
+    console.log("[SAVE] ✅ Firestore scritto correttamente");
+  }catch(e){
+    console.error("[SAVE] ❌ Errore Firestore:",e);
+  }
+}
+async function fsSaveAvvisi(avvisi){
+  showSaving();
+  console.log("[SAVE] fsSaveAvvisi → avvisi:",avvisi.length);
+  try{
+    const batch=db.batch();
+    const snap=await db.collection("avvisi").get();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    avvisi.forEach(av=>batch.set(db.collection("avvisi").doc(av.id),av));
+    await batch.commit();
+    console.log("[SAVE] ✅ avvisi salvati");
+  }catch(e){
+    console.error("[SAVE] ❌ Errore avvisi:",e);
+  }
+}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsClearAll(){showSaving();const colls=["avvisi","tutors","tutEvents","settings"];for(const c of colls){const snap=await db.collection(c).get();const batch=db.batch();snap.docs.forEach(d=>batch.delete(d.ref));await batch.commit();}}
 
@@ -1057,16 +1090,20 @@ function App({user}){
   }
   async function editTutoraggio(evId,updated){
     const cur=JSON.parse(JSON.stringify(tutEventsRef.current));
+    console.log("[EDIT-TUT] cercando evId:",evId,"in tutEventsRef con keys:",Object.keys(cur));
     for(const[tid,months]of Object.entries(cur)){
       for(const[mk,evs]of Object.entries(months)){
         const idx=evs.findIndex(e=>e.id===evId);
         if(idx>=0){
+          console.log("[EDIT-TUT] trovato in tutor:",tid,"mese:",mk,"idx:",idx,"aggiorno con:",updated);
           cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};
           tutEventsRef.current=cur;setTutEvents(cur);
-          await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;
+          await fsSaveTutEvents(tid,mk,cur[tid][mk]);
+          return;
         }
       }
     }
+    console.warn("[EDIT-TUT] ⚠️ evId NON trovato:",evId);
   }
   async function deleteTutoraggio(evId){
     const cur=JSON.parse(JSON.stringify(tutEventsRef.current));
