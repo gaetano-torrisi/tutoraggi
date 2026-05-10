@@ -141,7 +141,11 @@ async function fsSaveAvvisi(avvisi){
   const batch=db.batch();
   const snap=await db.collection("avvisi").get();
   snap.docs.forEach(d=>batch.delete(d.ref));
-  avvisi.forEach(av=>batch.set(db.collection("avvisi").doc(av.id),av));
+  // Rimuovi proprietà non serializzabili prima di scrivere
+  avvisi.forEach(av=>{
+    const clean={...av,events:av.events.map(({_onEdit,_onClick,avColor,avvisoId,avvisoName,...rest})=>rest)};
+    batch.set(db.collection("avvisi").doc(av.id),clean);
+  });
   await batch.commit();
 }
 async function fsSaveTutors(tutors){
@@ -154,7 +158,9 @@ async function fsSaveTutors(tutors){
 }
 async function fsSaveTutEvents(tutorId,monthKey,events){
   showSaving();
-  await db.collection("tutEvents").doc(tutorId).set({[monthKey]:events},{merge:true});
+  // Serializza gli eventi rimuovendo le proprietà non serializzabili (funzioni _onEdit ecc.)
+  const clean=events.map(({_color,_tutorLabel,_onEdit,_onClick,...rest})=>rest);
+  await db.collection("tutEvents").doc(tutorId).set({[monthKey]:clean},{merge:true});
 }
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsClearAll(){
