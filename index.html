@@ -103,6 +103,10 @@ const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c",
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quale riunione avresti potuto essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?"];
 const DRAG_THRESHOLD_PX=5,DRAG_THRESHOLD_MS=150;
+// Flag globale: blocca il prossimo click sulla griglia se c'è stato un drag
+let _dragJustHappened=false;
+function markDragDone(){_dragJustHappened=true;setTimeout(()=>{_dragJustHappened=false;},50);}
+function wasDragJustDone(){return _dragJustHappened;}
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
@@ -271,6 +275,8 @@ function useDrag({onDragEnd,onClick}){
         const dx=Math.abs(me.clientX-mouseDownPos.current.x),dy=Math.abs(me.clientY-mouseDownPos.current.y);
         const wasClick=dt<DRAG_THRESHOLD_MS&&dx<=DRAG_THRESHOLD_PX&&dy<=DRAG_THRESHOLD_PX;
         if(wasClick){if(dragRef.current)dragRef.current.style.transform="";onClick&&onClick();return;}
+        // era un drag: segna globalmente per bloccare onClick della griglia
+        markDragDone();
         const dh=(me.clientY-mouseDownPos.current.y)/slotH,dd=Math.round((me.clientX-mouseDownPos.current.x)/colW);
         const ns=Math.max(8,Math.min(19.75,snapH(os+dh))),ne=Math.min(20,ns+(oe-os)),nd=Math.max(1,od+dd);
         if(dragRef.current)dragRef.current.style.transform="";
@@ -280,11 +286,16 @@ function useDrag({onDragEnd,onClick}){
     };
   }
   function makeResizeHandlers(ev,slotH){
-    return function onResizeDown(e){
+    return     function onResizeDown(e){
       e.stopPropagation();e.preventDefault();dragging.current=true;
       const sy=e.clientY,oe=ev.end,os=ev.start;
       function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}
-      function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({end:ne,ore:ne-os});}
+      function onUp(me){
+        document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
+        markDragDone();
+        const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));
+        if(ne!==oe)onDragEnd({end:ne,ore:ne-os});
+      }
       document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
     };
   }
@@ -415,86 +426,100 @@ function runVerifica(avvisi,tutors,tutEvents){
   const errors=[];
   const avByName={};avvisi.forEach(av=>avByName[av.name]=av);
 
-  // 1. Tutor orfano (avviso non esiste)
+  // 1. Tutor orfano
   for(const[tid,months]of Object.entries(tutEvents)){
     for(const[mk,evs]of Object.entries(months)){
       for(const ev of evs){
         if(!avByName[ev.name]){
           const t=tutors.find(x=>x.id===tid);
-          errors.push({type:"orfano",msg:`Tutor "${t?.cognome} ${t?.nome}" ha un evento assegnato all'avviso "${ev.name}" che non esiste più (${mk}, giorno ${ev.day}).`});
+          errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}" ha un evento assegnato all'avviso "${ev.name}" che non esiste più (${mk}, giorno ${ev.day}).`});
         }
       }
     }
   }
 
-  // 2. Slot tutoraggio fuori dal giorno/orario dell'avviso
+  // 2. Fuori giorno / fuori orario
   for(const[tid,months]of Object.entries(tutEvents)){
     for(const[mk,evs]of Object.entries(months)){
       for(const ev of evs){
         const av=avByName[ev.name];if(!av)continue;
         const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);
+        const t=tutors.find(x=>x.id===tid);
         if(!avDay){
-          const t=tutors.find(x=>x.id===tid);
-          errors.push({type:"fuori_giorno",msg:`Tutor "${t?.cognome} ${t?.nome}": slot tutoraggio "${ev.name}" il giorno ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});
-        } else {
-          if(ev.start<avDay.start||ev.end>avDay.end){
-            const t=tutors.find(x=>x.id===tid);
-            errors.push({type:"fuori_orario",msg:`Tutor "${t?.cognome} ${t?.nome}": slot tutoraggio "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) è fuori dall'orario dell'avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});
-          }
+          errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot tutoraggio "${ev.name}" il giorno ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});
+        } else if(ev.start<avDay.start||ev.end>avDay.end){
+          errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori dall'orario avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});
         }
       }
     }
   }
 
-  // 3. Sovrapposizioni stesso tutor stessa giornata
+  // 3. Sovrapposizioni
   for(const[tid,months]of Object.entries(tutEvents)){
     for(const[mk,evs]of Object.entries(months)){
       const t=tutors.find(x=>x.id===tid);
       for(let i=0;i<evs.length;i++){for(let j=i+1;j<evs.length;j++){
         const a=evs[i],b=evs[j];
         if(a.day===b.day&&a.start<b.end&&b.start<a.end){
-          errors.push({type:"sovrapposizione",msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il giorno ${a.day} ${mk} tra "${a.name}" (${fmt(a.start)}–${fmt(a.end)}) e "${b.name}" (${fmt(b.start)}–${fmt(b.end)}).`});
+          errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" (${fmt(a.start)}–${fmt(a.end)}) e "${b.name}" (${fmt(b.start)}–${fmt(b.end)}).`});
         }
       }}
     }
   }
 
-  // 4. Ore tutoraggio eccedono ore avviso
+  // 4. Eccedenza ore tutoraggio
   for(const av of avvisi){
     const totAvOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
     let totTutOre=0;
-    for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(ev.name===av.name)totTutOre+=(ev.ore||0);}}}
-    if(totTutOre>totAvOre){errors.push({type:"eccedenza",msg:`Avviso "${av.name}": ore tutoraggio totali (${totTutOre}h) superano le ore dell'avviso (${totAvOre}h).`});}
+    for(const[,months]of Object.entries(tutEvents)){for(const[,evs]of Object.entries(months)){for(const ev of evs){if(ev.name===av.name)totTutOre+=(ev.ore||0);}}}
+    if(totTutOre>totAvOre){errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${av.name}": ore tutoraggio totali (${totTutOre}h) superano le ore dell'avviso nel calendario (${totAvOre}h).`});}
   }
 
   // 5. Durata dichiarata vs ore calendario
   for(const av of avvisi){
     if(!av.durataOre)continue;
     const totOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
-    if(totOre!==av.durataOre){errors.push({type:"durata",msg:`Avviso "${av.name}": ore nel calendario (${totOre}h) non corrispondono alla durata dichiarata (${av.durataOre}h).`});}
+    if(totOre!==av.durataOre){errors.push({type:"durata",monthKey:null,msg:`Avviso "${av.name}": ore nel calendario (${totOre}h) ≠ durata da bando (${av.durataOre}h).`});}
   }
 
   return errors;
 }
 
-function VerificaModal({errors,onClose}){
+function VerificaModal({errors,onClose,onNavigate}){
   const typeIcon={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋"};
   const typeLabel={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno avviso",fuori_orario:"Fuori orario avviso",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
-  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center"}}>
-    <div style={{background:"#fff",borderRadius:14,width:560,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 32px rgba(0,0,0,0.22)"}}>
-      <div style={{background:errors.length===0?"#27ae60":"#e74c3c",color:"#fff",padding:"14px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style={{fontWeight:700,fontSize:15}}>{errors.length===0?"✅ Verifica completata senza errori":"⚠️ Trovati "+errors.length+" proble"+(errors.length===1?"ma":"mi")}</span>
+  // Draggable
+  const[pos,setPos]=useState({x:window.innerWidth/2-280,y:window.innerHeight/2-240});
+  const dragging=useRef(false),dragOffset=useRef({x:0,y:0});
+  function onHeaderDown(e){dragging.current=true;dragOffset.current={x:e.clientX-pos.x,y:e.clientY-pos.y};
+    function onMove(me){if(!dragging.current)return;setPos({x:me.clientX-dragOffset.current.x,y:me.clientY-dragOffset.current.y});}
+    function onUp(){dragging.current=false;document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);}
+    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
+  }
+  return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
+    <div style={{position:"absolute",left:pos.x,top:pos.y,width:580,maxHeight:"75vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
+      <div onMouseDown={onHeaderDown} style={{background:errors.length===0?"#27ae60":"#e74c3c",color:"#fff",padding:"12px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"grab",userSelect:"none"}}>
+        <span style={{fontWeight:700,fontSize:15}}>{errors.length===0?"✅ Verifica completata senza errori":"⚠️ "+errors.length+" proble"+(errors.length===1?"ma":"mi")+" trovat"+(errors.length===1?"o":"i")}</span>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
       </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {errors.length===0?<p style={{color:"#27ae60",fontWeight:600,textAlign:"center",marginTop:20}}>Tutti i dati sono coerenti. 🎉</p>:errors.map((e,i)=>(
-          <div key={i} style={{padding:"10px 14px",marginBottom:8,borderRadius:8,border:"1px solid #f5c6cb",background:"#fff8f8",display:"flex",gap:10,alignItems:"flex-start"}}>
+        {errors.length===0
+          ?<p style={{color:"#27ae60",fontWeight:600,textAlign:"center",marginTop:20}}>Tutti i dati sono coerenti. 🎉</p>
+          :errors.map((e,i)=>(
+          <div key={i} onClick={()=>e.monthKey&&onNavigate&&onNavigate(e.monthKey)} style={{padding:"10px 14px",marginBottom:8,borderRadius:8,border:"1px solid #f5c6cb",background:"#fff8f8",display:"flex",gap:10,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .15s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="#fff0f0";}} onMouseLeave={ev=>ev.currentTarget.style.background="#fff8f8"}>
             <span style={{fontSize:18,flexShrink:0}}>{typeIcon[e.type]||"⚠️"}</span>
-            <div><div style={{fontSize:11,fontWeight:700,color:"#c0392b",marginBottom:2}}>{typeLabel[e.type]||e.type}</div><div style={{fontSize:12,color:"#555",lineHeight:1.5}}>{e.msg}</div></div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#c0392b",marginBottom:2,display:"flex",justifyContent:"space-between"}}>
+                <span>{typeLabel[e.type]||e.type}</span>
+                {e.monthKey&&<span style={{fontSize:10,color:"#4f86c6",fontWeight:600}}>📅 Vai al mese →</span>}
+              </div>
+              <div style={{fontSize:12,color:"#555",lineHeight:1.5}}>{e.msg}</div>
+            </div>
           </div>
         ))}
       </div>
-      <div style={{padding:"12px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"flex-end"}}>
+      <div style={{padding:"12px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontSize:11,color:"#aaa"}}>Trascina l'intestazione per spostare</span>
         <button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button>
       </div>
     </div>
@@ -632,28 +657,67 @@ function TutoraggiPanel({tutors,tutEvents,avvisi,onClose}){
 function RiepilogoPanel({avvisi,tutors,tutEvents,currentMonthKey,onClose}){
   const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
   function getIntersectionOre(tutorId,avvisoName){let total=0;const av=avvisi.find(a=>a.name===avvisoName);if(!av)return 0;const td=tutEvents[tutorId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avvisoName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)total+=en-s;}}}return total;}
+  // Sempre sull'intero anno, indipendente dal filtro
+  function getIntersectionOreAnno(tutorId,avvisoName){let total=0;const av=avvisi.find(a=>a.name===avvisoName);if(!av)return 0;const td=tutEvents[tutorId]||{};for(const[,tevs]of Object.entries(td)){for(const tev of tevs){if(tev.name!==avvisoName)continue;for(const ae of av.events.filter(e=>e.day===tev.day&&e.month===Object.keys(td).find(k=>td[k]===tevs)||true)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)total+=en-s;}}}return total;}
+  function getTutorOreAnnoPerAvviso(tutorId,avvisoName){let total=0;const td=tutEvents[tutorId]||{};for(const[,evs]of Object.entries(td)){for(const ev of evs){if(ev.name===avvisoName)total+=(ev.ore||0);}}return total;}
   function getAvvisoTotalOre(av){if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
   function getTutorTotalOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
   function getAvvisiForTutor(tId){const names=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)names.add(ev.name);}return[...names];}
   function getTutorsForAvviso(avName){return tutors.filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;});}
   const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
+  const fmtPct=p=>`${Math.round(p)}%`;
   const bSt=a=>({padding:"5px 14px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:a?"#4f86c6":"#f0f4f8",color:a?"#fff":"#555"});
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <ResizablePanel defaultWidth={420}>
+    <ResizablePanel defaultWidth={440}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📊 Riepilogo Ore</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
-      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:8,flexWrap:"wrap"}}>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{display:"flex",gap:4}}><button style={bSt(viewMode==="tutor")} onClick={()=>setViewMode("tutor")}>👤 Per tutor</button><button style={bSt(viewMode==="avviso")} onClick={()=>setViewMode("avviso")}>📋 Per avviso</button></div>
         <div style={{display:"flex",gap:4,marginLeft:"auto"}}><button style={bSt(timeMode==="mese")} onClick={()=>setTimeMode("mese")}>Mese</button><button style={bSt(timeMode==="anno")} onClick={()=>setTimeMode("anno")}>Anno</button></div>
       </div>
+      <div style={{padding:"6px 16px",background:"#f8f9ff",borderBottom:"1px solid #eee",fontSize:11,color:"#888"}}>
+        💡 Le percentuali indicano la quota sul totale annuo dell'avviso (indipendente dal filtro mese/anno)
+      </div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {viewMode==="tutor"&&tutors.map(t=>{const tot=getTutorTotalOre(t.id),avNames=getAvvisiForTutor(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-          <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6"}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fmtOre(tot)}</span></div>
-          <div style={{padding:"8px 14px"}}>{avNames.map(nm=><div key={nm} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><span style={{color:"#555"}}>{nm}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{fmtOre(getIntersectionOre(t.id,nm))}</span></div>)}</div>
-        </div>);})}
-        {viewMode==="avviso"&&avvisi.map(av=>{const avTot=getAvvisoTotalOre(av);const tutList=getTutorsForAvviso(av.name);return(<div key={av.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-          <div style={{background:hexToRgba(av.color,0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:av.color}}/><span style={{fontWeight:700,fontSize:13}}>{av.name}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fmtOre(avTot)}</span></div>
-          <div style={{padding:"8px 14px"}}>{tutList.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tutList.map(t=><div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:600,color:"#1a3a5c"}}>{fmtOre(getIntersectionOre(t.id,av.name))}</span></div>)}</div>
-        </div>);})}
+        {viewMode==="tutor"&&tutors.map(t=>{
+          const tot=getTutorTotalOre(t.id),avNames=getAvvisiForTutor(t.id);if(tot===0&&avNames.length===0)return null;
+          return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+            <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6"}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fmtOre(tot)}</span></div>
+            <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{
+              const av=avvisi.find(a=>a.name===nm);
+              const oreFiltered=getIntersectionOre(t.id,nm);
+              const oreAnno=getTutorOreAnnoPerAvviso(t.id,nm);
+              const pct=av?.durataOre?oreAnno/av.durataOre*100:null;
+              return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}>
+                <span style={{color:"#555"}}>{nm}</span>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <span style={{fontWeight:600,color:"#1a3a5c"}}>{fmtOre(oreFiltered)}</span>
+                  {pct!==null&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:8,background:pct>100?"#ffeaea":pct>=80?"#e8f8ee":"#f0f4f8",color:pct>100?"#c0392b":pct>=80?"#27ae60":"#888",fontWeight:600}} title="% sul totale annuo avviso (durata da bando)">{fmtPct(pct)} annuo</span>}
+                </div>
+              </div>);
+            })}</div>
+          </div>);
+        })}
+        {viewMode==="avviso"&&avvisi.map(av=>{
+          const avTot=getAvvisoTotalOre(av);const tutList=getTutorsForAvviso(av.name);
+          return(<div key={av.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+            <div style={{background:hexToRgba(av.color,0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:av.color}}/><span style={{fontWeight:700,fontSize:13}}>{av.name}</span>{av.durataOre&&<span style={{fontSize:11,color:"#888",fontWeight:400}}>· {av.durataOre}h da bando</span>}</div>
+              <span style={{fontWeight:700,color:"#1a3a5c"}}>{fmtOre(avTot)}</span>
+            </div>
+            <div style={{padding:"8px 14px"}}>{tutList.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tutList.map(t=>{
+              const oreFiltered=getIntersectionOre(t.id,av.name);
+              const oreAnno=getTutorOreAnnoPerAvviso(t.id,av.name);
+              const pct=av.durataOre?oreAnno/av.durataOre*100:null;
+              return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <span style={{fontWeight:600,color:"#1a3a5c"}}>{fmtOre(oreFiltered)}</span>
+                  {pct!==null&&<span style={{fontSize:10,padding:"1px 6px",borderRadius:8,background:pct>100?"#ffeaea":pct>=80?"#e8f8ee":"#f0f4f8",color:pct>100?"#c0392b":pct>=80?"#27ae60":"#888",fontWeight:600}} title="% sul totale annuo avviso (durata da bando)">{fmtPct(pct)} annuo</span>}
+                </div>
+              </div>);
+            })}</div>
+          </div>);
+        })}
       </div>
     </ResizablePanel>
   </div>);
@@ -872,6 +936,8 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,tutors:initTutors,editTar
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App({user}){
+  // ref sempre aggiornato per evitare closure stale nei drag handler
+  const tutEventsRef=useRef({});
   const[view,setView]=useState("tutoraggio");
   const[tutors,setTutors]=useState([]);
   const[activeTutorIds,setActiveTutorIds]=useState(null);
@@ -903,7 +969,7 @@ function App({user}){
   const month=MONTHS[monthIdx];
 
   useEffect(()=>{
-    fsLoadData().then(({avvisi:a,tutors:t,tutEvents:te,settings:s})=>{setAvvisi(a);setTutors(t);setTutEvents(te);setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
+    fsLoadData().then(({avvisi:a,tutors:t,tutEvents:te,settings:s})=>{setAvvisi(a);setTutors(t);setTutEvents(te);tutEventsRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdminUser(true);}).catch(()=>{});
   },[]);
 
@@ -972,31 +1038,79 @@ function App({user}){
   function buildMonthTutByDay(){const byDay={};for(const ev of visibleTutEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push({...ev,_color:getTutorColor(ev.tutorId)});}return byDay;}
   function buildMonthAvByDay(){const byDay={};for(const ev of visibleAvEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push(ev);}return byDay;}
 
-  function handleGridClick(d,e){const rect=e.currentTarget.getBoundingClientRect();const snap=Math.round((8+(e.clientY-rect.top)/slotH)*4)/4;const start=Math.min(Math.max(snap,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start,end:Math.min(start+1,20)}});}
+  function handleGridClick(d,e){
+    if(wasDragJustDone())return; // drag appena completato, ignora
+    const rect=e.currentTarget.getBoundingClientRect();
+    const snap=Math.round((8+(e.clientY-rect.top)/slotH)*4)/4;
+    const start=Math.min(Math.max(snap,8),19.75);
+    setModal({type:"add",mode:view,prefill:{day:d,start,end:Math.min(start+1,20)}});
+  }
   function toggleAvviso(id){setActiveAvvisi(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTutorFilter(id){setActiveTutorIds(prev=>{const all=new Set(tutors.map(t=>t.id));const base=prev===null?new Set(all):new Set(prev);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
-  async function addTutoraggio(ev,monthKey){const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const updated={...tutEvents,[tId]:{...(tutEvents[tId]||{}),[mk]:[...((tutEvents[tId]||{})[mk]||[]),{...ev,id}]}};setTutEvents(updated);await fsSaveTutEvents(tId,mk,updated[tId][mk]);}
-  async function editTutoraggio(evId,updated){const newState={...tutEvents};for(const[tid,months]of Object.entries(newState)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){newState[tid]={...months,[mk]:evs.map(e=>e.id===evId?{...e,...updated}:e)};setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;}}};}
-  async function deleteTutoraggio(evId){const newState={...tutEvents};for(const[tid,months]of Object.entries(newState)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){newState[tid]={...months,[mk]:evs.filter(e=>e.id!==evId)};setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;}}};}
-  async function addAvviso({existingId,name,color,durataOre,month:mk,day,start,end,ore,events,newId}){
-    if(events&&events.length>0){const id=newId||`av-${Date.now()}`;const updated=[...avvisi,{id,name,color,durataOre,events}];setAvvisi(updated);setActiveAvvisi(prev=>new Set([...prev,id]));await fsSaveAvvisi(updated);return;}
-    const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};let updated;
-    if(existingId){updated=avvisi.map(av=>av.id===existingId?{...av,durataOre:durataOre??av.durataOre,events:[...av.events,evData]}:av);}
-    else{const id=`av-${Date.now()}`;updated=[...avvisi,{id,name,color,durataOre,events:[evData]}];setActiveAvvisi(prev=>new Set([...prev,id]));}
-    setAvvisi(updated);await fsSaveAvvisi(updated);
+  async function addTutoraggio(ev,monthKey){
+    const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;
+    const cur=tutEventsRef.current;
+    const updated={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};
+    tutEventsRef.current=updated;setTutEvents(updated);
+    await fsSaveTutEvents(tId,mk,updated[tId][mk]);
   }
-  async function editAvviso(avId,evId,evData,color,durataOre){const updated=avvisi.map(av=>av.id!==avId?av:{...av,color,durataOre:durataOre??av.durataOre,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});setAvvisi(updated);await fsSaveAvvisi(updated);}
-  async function deleteAvviso(avId,evId){const updated=avvisi.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});setAvvisi(updated);await fsSaveAvvisi(updated);}
+  async function editTutoraggio(evId,updated){
+    const cur=JSON.parse(JSON.stringify(tutEventsRef.current));
+    for(const[tid,months]of Object.entries(cur)){
+      for(const[mk,evs]of Object.entries(months)){
+        const idx=evs.findIndex(e=>e.id===evId);
+        if(idx>=0){
+          cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};
+          tutEventsRef.current=cur;setTutEvents(cur);
+          await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;
+        }
+      }
+    }
+  }
+  async function deleteTutoraggio(evId){
+    const cur=JSON.parse(JSON.stringify(tutEventsRef.current));
+    for(const[tid,months]of Object.entries(cur)){
+      for(const[mk,evs]of Object.entries(months)){
+        if(evs.find(e=>e.id===evId)){
+          cur[tid][mk]=evs.filter(e=>e.id!==evId);
+          tutEventsRef.current=cur;setTutEvents(cur);
+          await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;
+        }
+      }
+    }
+  }
+  // avvisiRef per stesso motivo
+  const avvisiRef=useRef([]);
+  useEffect(()=>{avvisiRef.current=avvisi;},[avvisi]);
+  async function addAvviso({existingId,name,color,durataOre,month:mk,day,start,end,ore,events,newId}){
+    if(events&&events.length>0){const id=newId||`av-${Date.now()}`;const updated=[...avvisiRef.current,{id,name,color,durataOre,events}];avvisiRef.current=updated;setAvvisi(updated);setActiveAvvisi(prev=>new Set([...prev,id]));await fsSaveAvvisi(updated);return;}
+    const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};let updated;
+    if(existingId){updated=avvisiRef.current.map(av=>av.id===existingId?{...av,durataOre:durataOre??av.durataOre,events:[...av.events,evData]}:av);}
+    else{const id=`av-${Date.now()}`;updated=[...avvisiRef.current,{id,name,color,durataOre,events:[evData]}];setActiveAvvisi(prev=>new Set([...prev,id]));}
+    avvisiRef.current=updated;setAvvisi(updated);await fsSaveAvvisi(updated);
+  }
+  async function editAvviso(avId,evId,evData,color,durataOre){
+    const updated=avvisiRef.current.map(av=>av.id!==avId?av:{...av,color,durataOre:durataOre??av.durataOre,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});
+    avvisiRef.current=updated;setAvvisi(updated);await fsSaveAvvisi(updated);
+  }
+  async function deleteAvviso(avId,evId){
+    const updated=avvisiRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});
+    avvisiRef.current=updated;setAvvisi(updated);await fsSaveAvvisi(updated);
+  }
   async function handleSaveTutors(list){setTutors(list);setActiveTutorIds(null);setShowTutorPanel(false);await fsSaveTutors(list);}
   async function handleSaveTutorInline(list){setTutors(list);await fsSaveTutors(list);}
   async function handleSaveSettings(s){const merged={...settings,...s};setSettings(merged);await fsSaveSettings(merged);}
-  async function handleTutDragEnd(evId,updated){await editTutoraggio(evId,updated);}
-  async function handleAvDragEnd(avId,evId,updated){await editAvviso(avId,evId,{month:updated.month||month.key,day:updated.day,start:updated.start,end:updated.end,ore:updated.ore||updated.end-updated.start},avvisi.find(a=>a.id===avId)?.color);}
+  async function handleTutDragEnd(evId,u){await editTutoraggio(evId,u);}
+  async function handleAvDragEnd(avId,evId,u){
+    const av=avvisiRef.current.find(a=>a.id===avId);
+    await editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)},av?.color,av?.durataOre);
+  }
   async function handleLoadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;const{tutors:t,avvisi:a,tutEvents:te}=generateDemoData();setTutors(t);setAvvisi(a);setTutEvents(te);setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAvvisi(a);for(const[tId,months]of Object.entries(te))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tId,mk,evs);setShowSettings(false);alert("Dati demo caricati!");}
   async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);setTutEvents({});setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setShowSettings(false);alert("Database svuotato.");}
   async function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const a=raw.avvisi||[],t=raw.tutors||[],te=raw.tutEvents||{};setAvvisi(a);setTutors(t);setTutEvents(te);setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);setImportError("");await fsSaveAvvisi(a);await fsSaveTutors(t);for(const[tId,months]of Object.entries(te))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tId,mk,evs);}catch(err){setImportError("File non valido: "+err.message);}};reader.readAsText(file);e.target.value="";}
-  function handleVerifica(){const errs=runVerifica(avvisi,tutors,tutEvents);setVerificaErrors(errs);setShowVerifica(true);}
+  function handleVerifica(){const errs=runVerifica(avvisi,tutors,tutEventsRef.current);setVerificaErrors(errs);setShowVerifica(true);}
+  function handleVerificaNavigate(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}
 
   const vBtn=(v,lbl)=>({padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,background:view===v?"#fff":"rgba(255,255,255,0.15)",color:view===v?"#1a3a5c":"#fff",boxShadow:view===v?"0 2px 8px rgba(0,0,0,0.15)":"none",transition:"all .15s"});
   const hBtn=(extra={})=>({background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600,...extra});
