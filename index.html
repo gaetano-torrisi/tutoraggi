@@ -35,6 +35,9 @@
     .zoom-btn{background:none;border:1px solid #dde;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:#555;}
     .view-btn{background:#f0f4f8;color:#555;border:1px solid #dde;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:11px;font-weight:700;}
     .view-btn.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c;}
+    .resize-panel{display:flex;height:100%;position:relative;}
+    .resize-handle{width:5px;cursor:ew-resize;background:transparent;flex-shrink:0;position:relative;transition:background 0.2s;}
+    .resize-handle:hover,.resize-handle.dragging{background:#4f86c6;}
   </style>
 </head>
 <body>
@@ -64,7 +67,6 @@
 </div>
 <div id="root" style="display:none;height:100vh;flex-direction:column;"></div>
 <div id="saving-indicator">💾 Salvataggio...</div>
-
 <script>
   const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
   firebase.initializeApp(firebaseConfig);
@@ -77,7 +79,6 @@
   function showSaving(){const el=document.getElementById("saving-indicator");el.classList.add("show");clearTimeout(window._st);window._st=setTimeout(()=>el.classList.remove("show"),1500);}
   auth.onAuthStateChanged(user=>{if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}});
 </script>
-
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback}=React;
 const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52;
@@ -100,18 +101,10 @@ const MONTHS=[
 const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ecc71","#27ae60","#1abc9c","#16a085","#3498db","#2980b9","#9b59b6","#8e44ad","#34495e","#2c3e50","#e91e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688","#4caf50","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#795548","#9e9e9e","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#fff176","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a","#80deea","#c5e1a5","#ffe082"];
 const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
-const FUNNY_PHRASES=[
-  "Cosa importiamo oggi nel calendario del dolore?",
-  "Quale riunione avresti potuto essere una email?",
-  "Quale documento ti ha rovinato la giornata?",
-  "Quale deadline ti ha svegliato stanotte?",
-  "Cosa ottimizziamo oggi per non farlo mai più manualmente?",
-  "Quale foglio Excel vorresti bruciare?",
-  "Cosa posso fare per renderti la giornata meno lunga?",
-  "Cosa ti manca per staccare prima delle 18?",
-  "Cosa vuoi fare oggi invece di goderti il sole?",
-];
+const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quale riunione avresti potuto essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?"];
+const DRAG_THRESHOLD_PX=5,DRAG_THRESHOLD_MS=150;
 
+// ── UTILS ─────────────────────────────────────────────────────────────────────
 function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function fmt(h){return`${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
 function timeStrToH(s){const[hh,mm]=s.split(":").map(Number);return hh+(mm||0)/60;}
@@ -142,90 +135,59 @@ async function fsClearAll(){showSaving();const colls=["avvisi","tutors","tutEven
 function generateDemoData(){
   const tutorNames=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
   const tutors=tutorNames.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:TUTOR_COLORS[i]}));
-
-  // Collect all weekdays for a month
-  function getMonthWeekdays(mIdx){
-    const m=MONTHS[mIdx];const days=[];
-    for(let d=1;d<=m.days;d++)if(isWeekday(m.year,m.month,d))days.push({mIdx,day:d,mk:m.key});
-    return days;
-  }
-
-  // 5 avvisi ~400h each, distributed across their months
-  // Session duration 4h, so ~100 sessions per avviso across ~15-20 days/month
+  function getMonthWeekdays(mIdx){const m=MONTHS[mIdx];const days=[];for(let d=1;d<=m.days;d++)if(isWeekday(m.year,m.month,d))days.push({mIdx,day:d,mk:m.key});return days;}
   const avvisiDefs=[
-    {name:"Avviso 1",color:PALETTE[10],monthIdxs:[0,1,2,3],startH:9,endH:13},     // gen-apr
-    {name:"Avviso 2",color:PALETTE[2], monthIdxs:[2,3,4,5],startH:14,endH:18},    // mar-giu
-    {name:"Avviso 3",color:PALETTE[12],monthIdxs:[4,5,6,7],startH:9,endH:13},     // mag-ago
-    {name:"Avviso 4",color:PALETTE[0], monthIdxs:[7,8,9,10],startH:14,endH:18},   // ago-nov
-    {name:"Avviso 5",color:PALETTE[5], monthIdxs:[9,10,11,0],startH:9,endH:13},   // ott-gen(wrap)
+    {name:"Avviso 1",color:PALETTE[10],monthIdxs:[0,1,2,3],startH:9,endH:13,durataOre:400},
+    {name:"Avviso 2",color:PALETTE[2],monthIdxs:[2,3,4,5],startH:14,endH:18,durataOre:400},
+    {name:"Avviso 3",color:PALETTE[12],monthIdxs:[4,5,6,7],startH:9,endH:13,durataOre:400},
+    {name:"Avviso 4",color:PALETTE[0],monthIdxs:[7,8,9,10],startH:14,endH:18,durataOre:400},
+    {name:"Avviso 5",color:PALETTE[5],monthIdxs:[9,10,11],startH:9,endH:13,durataOre:400},
   ];
-
   const avvisi=avvisiDefs.map((def,ai)=>{
-    const sessH=def.endH-def.startH; // 4h per session
-    const targetSess=Math.round(400/sessH); // ~100 sessions
-    // Collect all weekdays across the months
-    const allSlots=def.monthIdxs.flatMap(mi=>getMonthWeekdays(mi<12?mi:mi%12));
-    // Pick ~17-20 days per month (almost all weekdays), evenly distributed
-    // Shuffle within each month to keep some gaps
-    const byMonth={};
-    for(const s of allSlots){if(!byMonth[s.mk])byMonth[s.mk]=[];byMonth[s.mk].push(s);}
+    const sessH=def.endH-def.startH;const targetSess=Math.round(def.durataOre/sessH);
+    const allSlots=def.monthIdxs.flatMap(mi=>getMonthWeekdays(mi));
+    const byMonth={};for(const s of allSlots){if(!byMonth[s.mk])byMonth[s.mk]=[];byMonth[s.mk].push(s);}
     const sessPerMonth=Math.ceil(targetSess/def.monthIdxs.length);
     const events=[];let evIdx=0;
-    for(const mk of Object.keys(byMonth)){
-      const slots=byMonth[mk];
-      // keep ~85% of weekdays (skip ~15% randomly for realism)
-      const kept=slots.filter(()=>Math.random()>0.15).slice(0,sessPerMonth);
-      for(const s of kept){
-        events.push({id:`ave-demo-${ai}-${evIdx++}`,month:s.mk,day:s.day,start:def.startH,end:def.endH,ore:sessH});
-      }
-    }
-    return{id:`av-demo-${ai}`,name:def.name,color:def.color,events};
+    for(const mk of Object.keys(byMonth)){const slots=byMonth[mk];const kept=slots.filter(()=>Math.random()>0.15).slice(0,sessPerMonth);for(const s of kept){events.push({id:`ave-demo-${ai}-${evIdx++}`,month:s.mk,day:s.day,start:def.startH,end:def.endH,ore:sessH});}}
+    return{id:`av-demo-${ai}`,name:def.name,color:def.color,durataOre:def.durataOre,events};
   });
-
-  // Tutoraggi: 2 tutors per avviso, cover ≤30% of avviso days, whole/half hours only
-  // Session duration = avviso session duration * 0.25 to 0.30 (30% cap), rounded to 0.5
   const tutEvents={};
   avvisiDefs.forEach((def,ai)=>{
-    const av=avvisi[ai];
-    const sessH=def.endH-def.startH;
-    // tutor ore per sessione: 30% of sessH, rounded to nearest 0.5, min 0.5
-    const rawTutH=sessH*0.28;
-    const tutH=Math.max(0.5,Math.round(rawTutH*2)/2);
-    const tutEndH=def.startH+tutH;
-
-    // Use tutors 0,1 for odd avvisi, 2,3 for even
+    const av=avvisi[ai];const sessH=def.endH-def.startH;
+    const rawTutH=sessH*0.28;const tutH=Math.max(0.5,Math.round(rawTutH*2)/2);const tutEndH=def.startH+tutH;
     const tIdxPair=ai%2===0?[0,1]:[2,3];
-
     for(let ti=0;ti<2;ti++){
-      const tId=tutors[tIdxPair[ti]].id;
-      if(!tutEvents[tId])tutEvents[tId]={};
-      // each tutor covers ~15% of av days (so together ≤30%), leave some days uncovered
-      // shuffle and pick ~15% of events per month
-      const byMonth={};
-      for(const e of av.events){if(!byMonth[e.month])byMonth[e.month]=[];byMonth[e.month].push(e);}
-      for(const[mk,evs]of Object.entries(byMonth)){
-        if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];
-        // pick ~15% of days, minimum 1 if any exist
-        const n=Math.max(1,Math.round(evs.length*0.15));
-        // stagger: tutor 0 takes first portion, tutor 1 takes second portion
-        const startIdx=ti*Math.floor(evs.length/2);
-        const picked=evs.slice(startIdx,startIdx+n);
-        picked.forEach((e,j)=>{
-          tutEvents[tId][mk].push({
-            id:`tut-demo-${ai}-${ti}-${mk}-${j}`,
-            day:e.day,name:def.name,
-            start:def.startH,end:tutEndH,
-            ore:tutH,tutorId:tId,
-          });
-        });
-      }
+      const tId=tutors[tIdxPair[ti]].id;if(!tutEvents[tId])tutEvents[tId]={};
+      const byMonth={};for(const e of av.events){if(!byMonth[e.month])byMonth[e.month]=[];byMonth[e.month].push(e);}
+      for(const[mk,evs]of Object.entries(byMonth)){if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];const n=Math.max(1,Math.round(evs.length*0.15));const startIdx=ti*Math.floor(evs.length/2);const picked=evs.slice(startIdx,startIdx+n);picked.forEach((e,j)=>{tutEvents[tId][mk].push({id:`tut-demo-${ai}-${ti}-${mk}-${j}`,day:e.day,name:def.name,start:def.startH,end:tutEndH,ore:tutH,tutorId:tId});});}
     }
   });
-
   return{tutors,avvisi,tutEvents};
 }
 
-// ── UI HELPERS ────────────────────────────────────────────────────────────────
+// ── RESIZABLE PANEL ───────────────────────────────────────────────────────────
+function ResizablePanel({children,defaultWidth=400,minWidth=320,side="right"}){
+  const[width,setWidth]=useState(defaultWidth);
+  const dragging=useRef(false);
+  const maxWidth=Math.round(window.innerWidth*0.70);
+  function onMouseDown(e){
+    e.preventDefault();dragging.current=true;
+    const startX=e.clientX,startW=width;
+    function onMove(me){if(!dragging.current)return;const delta=side==="right"?startX-me.clientX:me.clientX-startX;setWidth(Math.max(minWidth,Math.min(maxWidth,startW+delta)));}
+    function onUp(){dragging.current=false;document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);}
+    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
+  }
+  return(
+    <div style={{width,background:"#fff",boxShadow:side==="right"?"-4px 0 24px rgba(0,0,0,0.18)":"4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"row",flexShrink:0,position:"relative"}}>
+      {side==="right"&&<div onMouseDown={onMouseDown} style={{width:5,cursor:"ew-resize",background:"transparent",flexShrink:0,transition:"background 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="#4f86c6"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}/>}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>{children}</div>
+      {side==="left"&&<div onMouseDown={onMouseDown} style={{width:5,cursor:"ew-resize",background:"transparent",flexShrink:0,transition:"background 0.2s"}} onMouseEnter={e=>e.currentTarget.style.background="#4f86c6"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}/>}
+    </div>
+  );
+}
+
+// ── UI COMPONENTS ─────────────────────────────────────────────────────────────
 function MiniCalendar({initialMonthIdx,selected,onSelect}){
   const[mIdx,setMIdx]=useState(initialMonthIdx);
   const md=MONTHS[mIdx];const{year,month,days}=md;
@@ -282,23 +244,61 @@ function ColorPicker({value,onChange}){
 }
 
 // ── DRAGGABLE SLOTS ───────────────────────────────────────────────────────────
-const DRAG_THRESHOLD=5;
+function useDrag({onDragEnd,onClick}){
+  const dragRef=useRef(null),resizeRef=useRef(null);
+  const dragging=useRef(false),mouseDownTime=useRef(0),mouseDownPos=useRef({x:0,y:0});
+
+  function makeBodyHandlers(ev,slotH,colW){
+    return function onBodyDown(e){
+      if(resizeRef.current&&e.target===resizeRef.current)return;
+      e.stopPropagation();
+      mouseDownTime.current=Date.now();
+      mouseDownPos.current={x:e.clientX,y:e.clientY};
+      dragging.current=false;
+      const os=ev.start,oe=ev.end,od=ev.day;
+      function onMove(me){
+        const dx=Math.abs(me.clientX-mouseDownPos.current.x),dy=Math.abs(me.clientY-mouseDownPos.current.y);
+        const dt=Date.now()-mouseDownTime.current;
+        if(!dragging.current&&(dx>DRAG_THRESHOLD_PX||dy>DRAG_THRESHOLD_PX||dt>DRAG_THRESHOLD_MS))dragging.current=true;
+        if(!dragging.current)return;
+        const dh=(me.clientY-mouseDownPos.current.y)/slotH,dd=Math.round((me.clientX-mouseDownPos.current.x)/colW);
+        const ns=Math.max(8,Math.min(19.75,snapH(os+dh)));
+        if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}
+      }
+      function onUp(me){
+        document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
+        const dt=Date.now()-mouseDownTime.current;
+        const dx=Math.abs(me.clientX-mouseDownPos.current.x),dy=Math.abs(me.clientY-mouseDownPos.current.y);
+        const wasClick=dt<DRAG_THRESHOLD_MS&&dx<=DRAG_THRESHOLD_PX&&dy<=DRAG_THRESHOLD_PX;
+        if(wasClick){if(dragRef.current)dragRef.current.style.transform="";onClick&&onClick();return;}
+        const dh=(me.clientY-mouseDownPos.current.y)/slotH,dd=Math.round((me.clientX-mouseDownPos.current.x)/colW);
+        const ns=Math.max(8,Math.min(19.75,snapH(os+dh))),ne=Math.min(20,ns+(oe-os)),nd=Math.max(1,od+dd);
+        if(dragRef.current)dragRef.current.style.transform="";
+        if(ns!==os||ne!==oe||nd!==od)onDragEnd({start:ns,end:ne,day:nd});
+      }
+      document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
+    };
+  }
+  function makeResizeHandlers(ev,slotH){
+    return function onResizeDown(e){
+      e.stopPropagation();e.preventDefault();dragging.current=true;
+      const sy=e.clientY,oe=ev.end,os=ev.start;
+      function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}
+      function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({end:ne,ore:ne-os});}
+      document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
+    };
+  }
+  return{dragRef,resizeRef,makeBodyHandlers,makeResizeHandlers};
+}
+
 function DraggableSlot({ev,col,numCols,color,tutorLabel,overlayActive,slotH,colW,onEdit,onClick,onDragEnd}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const pad=overlayActive?5:1,w=`calc(${100/numCols}% - ${pad*2+2}px)`,left=`calc(${(col/numCols)*100}% + ${pad+1}px)`;
-  const dragRef=useRef(null),resizeRef=useRef(null),dragging=useRef(false);
-  function onBodyDown(e){if(e.target===resizeRef.current)return;e.stopPropagation();const sy=e.clientY,sx=e.clientX,os=ev.start,oe=ev.end,od=ev.day;dragging.current=false;
-    function onMove(me){if(!dragging.current&&(Math.abs(me.clientY-sy)>DRAG_THRESHOLD||Math.abs(me.clientX-sx)>DRAG_THRESHOLD))dragging.current=true;if(!dragging.current)return;const dh=(me.clientY-sy)/slotH,dd=Math.round((me.clientX-sx)/colW),ns=Math.max(8,Math.min(19.75,snapH(os+dh)));if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}}
-    function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);if(!dragging.current){onClick&&onClick();return;}const dh=(me.clientY-sy)/slotH,dd=Math.round((me.clientX-sx)/colW),ns=Math.max(8,Math.min(19.75,snapH(os+dh))),ne=Math.min(20,ns+(oe-os)),nd=Math.max(1,od+dd);if(dragRef.current)dragRef.current.style.transform="";if(ns!==os||ne!==oe||nd!==od)onDragEnd({...ev,start:ns,end:ne,day:nd});}
-    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);}
-  function onResizeDown(e){e.stopPropagation();e.preventDefault();dragging.current=true;const sy=e.clientY,oe=ev.end,os=ev.start;
-    function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}
-    function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({...ev,end:ne,ore:ne-os});}
-    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);}
+  const{dragRef,resizeRef,makeBodyHandlers,makeResizeHandlers}=useDrag({onDragEnd:u=>onDragEnd({...ev,...u}),onClick});
   return(<div ref={dragRef} style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"visible",boxSizing:"border-box",zIndex:3,background:color||"#4f86c6",userSelect:"none"}} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,0.08)",borderBottom:"1px solid rgba(255,255,255,0.2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"5px 5px 0 0"}}>✏️ {ev.name}</div>
-    <div onMouseDown={onBodyDown} style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,0.9)",cursor:"grab",height:"calc(100% - 22px - 8px)"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
-    <div ref={resizeRef} onMouseDown={onResizeDown} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.15)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,0.6)",borderRadius:1}}/></div>
+    <div onMouseDown={makeBodyHandlers(ev,slotH,colW)} style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,0.9)",cursor:"grab",height:"calc(100% - 22px - 8px)"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
+    <div ref={resizeRef} onMouseDown={makeResizeHandlers(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.15)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,0.6)",borderRadius:1}}/></div>
   </div>);
 }
 function AvOverlaySlot({ev,col,numCols,color,slotH}){
@@ -311,19 +311,11 @@ function AvOverlaySlot({ev,col,numCols,color,slotH}){
 function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onClick,onDragEnd}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const w=`calc(${100/numCols}% - 3px)`,left=`calc(${(col/numCols)*100}% + 1px)`;
-  const dragRef=useRef(null),resizeRef=useRef(null),dragging=useRef(false);
-  function onBodyDown(e){if(e.target===resizeRef.current)return;e.stopPropagation();const sy=e.clientY,sx=e.clientX,os=ev.start,oe=ev.end,od=ev.day;dragging.current=false;
-    function onMove(me){if(!dragging.current&&(Math.abs(me.clientY-sy)>DRAG_THRESHOLD||Math.abs(me.clientX-sx)>DRAG_THRESHOLD))dragging.current=true;if(!dragging.current)return;const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-sy)/slotH))),dd=Math.round((me.clientX-sx)/colW);if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}}
-    function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);if(!dragging.current){onClick&&onClick();return;}const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-sy)/slotH))),ne=Math.min(20,ns+(oe-os)),nd=Math.max(1,od+Math.round((me.clientX-sx)/colW));if(dragRef.current)dragRef.current.style.transform="";if(ns!==os||ne!==oe||nd!==od)onDragEnd({...ev,start:ns,end:ne,day:nd});}
-    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);}
-  function onResizeDown(e){e.stopPropagation();e.preventDefault();dragging.current=true;const sy=e.clientY,oe=ev.end,os=ev.start;
-    function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}
-    function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({...ev,end:ne,ore:ne-os});}
-    document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);}
+  const{dragRef,resizeRef,makeBodyHandlers,makeResizeHandlers}=useDrag({onDragEnd:u=>onDragEnd({...ev,...u}),onClick});
   return(<div ref={dragRef} style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.4),border:`1.5px dashed ${color}`,userSelect:"none"}}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,color:"#444",background:"rgba(0,0,0,0.07)",borderBottom:"1px dashed rgba(0,0,0,0.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>✏️ {ev.avvisoName}</div>
-    <div onMouseDown={onBodyDown} style={{padding:"1px 5px",fontSize:10,color:"#555",cursor:"grab",height:"calc(100% - 22px - 8px)"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
-    <div ref={resizeRef} onMouseDown={onResizeDown} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.1)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,0.3)",borderRadius:1}}/></div>
+    <div onMouseDown={makeBodyHandlers(ev,slotH,colW)} style={{padding:"1px 5px",fontSize:10,color:"#555",cursor:"grab",height:"calc(100% - 22px - 8px)"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
+    <div ref={resizeRef} onMouseDown={makeResizeHandlers(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.1)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,0.3)",borderRadius:1}}/></div>
   </div>);
 }
 
@@ -364,7 +356,6 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
   </div>);
 }
 
-// ── MONTH VIEW ────────────────────────────────────────────────────────────────
 function MonthView({month,tutByDay,avByDay,overlayActive,onDayClick}){
   const daysArr=Array.from({length:month.days},(_,i)=>i+1);
   const isWeekend=d=>[0,6].includes(new Date(month.year,month.month,d).getDay());
@@ -373,24 +364,16 @@ function MonthView({month,tutByDay,avByDay,overlayActive,onDayClick}){
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
       {["Lun","Mar","Mer","Gio","Ven","Sab","Dom"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"#888",padding:"4px 0"}}>{d}</div>)}
       {Array.from({length:firstDow},(_,i)=><div key={`e${i}`}/>)}
-      {daysArr.map(d=>{
-        const wk=isWeekend(d);
-        const tEvs=tutByDay?.[d]||[];
-        // avByDay here contains either overlay (tut view) or actual av events (av view)
-        const aEvs=avByDay?.[d]||[];
-        const all=[...tEvs,...aEvs];
-        return(<div key={d} style={{minHeight:70,border:`1px solid ${wk?"#e0d8f0":"#dde"}`,borderRadius:8,padding:4,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"pointer"}} onClick={()=>onDayClick&&onDayClick(d)} onMouseEnter={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.08)":"#f5f8fc"} onMouseLeave={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.04)":"#fff"}>
-          <div style={{fontSize:12,fontWeight:700,color:wk?"#9b59b6":"#1a3a5c",marginBottom:2}}>{d}</div>
-          {all.slice(0,3).map((ev,i)=><div key={i} style={{height:5,borderRadius:3,background:ev.avColor||ev._color||"#4f86c6",opacity:0.85,marginBottom:2}}/>)}
-          {all.length>3&&<div style={{fontSize:9,color:"#888"}}>+{all.length-3}</div>}
-        </div>);
-      })}
+      {daysArr.map(d=>{const wk=isWeekend(d),tEvs=tutByDay?.[d]||[],aEvs=avByDay?.[d]||[];const all=[...tEvs,...aEvs];return(<div key={d} style={{minHeight:70,border:`1px solid ${wk?"#e0d8f0":"#dde"}`,borderRadius:8,padding:4,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"pointer"}} onClick={()=>onDayClick&&onDayClick(d)} onMouseEnter={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.08)":"#f5f8fc"} onMouseLeave={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.04)":"#fff"}>
+        <div style={{fontSize:12,fontWeight:700,color:wk?"#9b59b6":"#1a3a5c",marginBottom:2}}>{d}</div>
+        {all.slice(0,3).map((ev,i)=><div key={i} style={{height:5,borderRadius:3,background:ev.avColor||ev._color||"#4f86c6",opacity:0.85,marginBottom:2}}/>)}
+        {all.length>3&&<div style={{fontSize:9,color:"#888"}}>+{all.length-3}</div>}
+      </div>);})}
     </div>
   </div>);
 }
 
-// ── ZOOM BAR ──────────────────────────────────────────────────────────────────
-function ZoomBar({calView,zoomIdx,weekOffset,onZoomChange,onCalViewChange,onWeekNav}){
+function ZoomBar({calView,zoomIdx,onZoomChange,onCalViewChange,onWeekNav}){
   return(<div className="zoom-bar">
     <button className={`view-btn${calView==="month"?" active":""}`} onClick={()=>onCalViewChange("month")}>Mese</button>
     <button className={`view-btn${calView==="week"?" active":""}`} onClick={()=>onCalViewChange("week")}>Sett.</button>
@@ -403,48 +386,131 @@ function ZoomBar({calView,zoomIdx,weekOffset,onZoomChange,onCalViewChange,onWeek
   </div>);
 }
 
-// ── HAMBURGER MENU ────────────────────────────────────────────────────────────
+// ── HAMBURGER ─────────────────────────────────────────────────────────────────
 function HamburgerMenu({isAdmin,onTutor,onUsers,onSettings,onExport,onImport,importRef}){
-  const[open,setOpen]=useState(false);
-  const menuRef=useRef();
-  useEffect(()=>{
-    function handleClick(e){if(menuRef.current&&!menuRef.current.contains(e.target))setOpen(false);}
-    document.addEventListener("mousedown",handleClick);
-    return()=>document.removeEventListener("mousedown",handleClick);
-  },[]);
+  const[open,setOpen]=useState(false);const menuRef=useRef();
+  useEffect(()=>{function h(e){if(menuRef.current&&!menuRef.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const item=(icon,label,onClick,extra={})=>(
-    <button onClick={()=>{onClick();setOpen(false);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:"#1a3a5c",fontWeight:600,textAlign:"left",borderRadius:0,...extra}} onMouseEnter={e=>e.currentTarget.style.background="#f0f4f8"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
+    <button onClick={()=>{onClick();setOpen(false);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:"#1a3a5c",fontWeight:600,textAlign:"left",...extra}} onMouseEnter={e=>e.currentTarget.style.background="#f0f4f8"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
       <span style={{fontSize:16}}>{icon}</span>{label}
     </button>
   );
-  return(
-    <div ref={menuRef} style={{position:"relative",flexShrink:0}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:18,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",width:38,height:34}}>☰</button>
-      {open&&(
-        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:600,minWidth:200,overflow:"hidden",border:"1px solid #eee"}}>
-          {item("👤","Tutor",onTutor)}
-          <div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>
-          {isAdmin&&item("🔐","Utenti",onUsers)}
-          {isAdmin&&<div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>}
-          {isAdmin&&item("⚙️","Impostazioni",onSettings)}
-          {isAdmin&&<div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>}
-          {item("💾","Esporta JSON",onExport,{color:"#27ae60"})}
-          {item("📂","Importa JSON",()=>importRef.current.click(),{color:"#2980b9"})}
-        </div>
-      )}
+  return(<div ref={menuRef} style={{position:"relative",flexShrink:0}}>
+    <button onClick={()=>setOpen(o=>!o)} style={{background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:18,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",width:38,height:34}}>☰</button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:600,minWidth:200,overflow:"hidden",border:"1px solid #eee"}}>
+      {item("👤","Tutor",onTutor)}
+      <div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>
+      {isAdmin&&item("🔐","Utenti",onUsers)}
+      {isAdmin&&<div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>}
+      {isAdmin&&item("⚙️","Impostazioni",onSettings)}
+      {isAdmin&&<div style={{height:1,background:"#f0f0f0",margin:"0 12px"}}/>}
+      {item("💾","Esporta JSON",onExport,{color:"#27ae60"})}
+      {item("📂","Importa JSON",()=>importRef.current.click(),{color:"#2980b9"})}
+    </div>}
+  </div>);
+}
+
+// ── VERIFICA ──────────────────────────────────────────────────────────────────
+function runVerifica(avvisi,tutors,tutEvents){
+  const errors=[];
+  const avByName={};avvisi.forEach(av=>avByName[av.name]=av);
+
+  // 1. Tutor orfano (avviso non esiste)
+  for(const[tid,months]of Object.entries(tutEvents)){
+    for(const[mk,evs]of Object.entries(months)){
+      for(const ev of evs){
+        if(!avByName[ev.name]){
+          const t=tutors.find(x=>x.id===tid);
+          errors.push({type:"orfano",msg:`Tutor "${t?.cognome} ${t?.nome}" ha un evento assegnato all'avviso "${ev.name}" che non esiste più (${mk}, giorno ${ev.day}).`});
+        }
+      }
+    }
+  }
+
+  // 2. Slot tutoraggio fuori dal giorno/orario dell'avviso
+  for(const[tid,months]of Object.entries(tutEvents)){
+    for(const[mk,evs]of Object.entries(months)){
+      for(const ev of evs){
+        const av=avByName[ev.name];if(!av)continue;
+        const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);
+        if(!avDay){
+          const t=tutors.find(x=>x.id===tid);
+          errors.push({type:"fuori_giorno",msg:`Tutor "${t?.cognome} ${t?.nome}": slot tutoraggio "${ev.name}" il giorno ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});
+        } else {
+          if(ev.start<avDay.start||ev.end>avDay.end){
+            const t=tutors.find(x=>x.id===tid);
+            errors.push({type:"fuori_orario",msg:`Tutor "${t?.cognome} ${t?.nome}": slot tutoraggio "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) è fuori dall'orario dell'avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Sovrapposizioni stesso tutor stessa giornata
+  for(const[tid,months]of Object.entries(tutEvents)){
+    for(const[mk,evs]of Object.entries(months)){
+      const t=tutors.find(x=>x.id===tid);
+      for(let i=0;i<evs.length;i++){for(let j=i+1;j<evs.length;j++){
+        const a=evs[i],b=evs[j];
+        if(a.day===b.day&&a.start<b.end&&b.start<a.end){
+          errors.push({type:"sovrapposizione",msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il giorno ${a.day} ${mk} tra "${a.name}" (${fmt(a.start)}–${fmt(a.end)}) e "${b.name}" (${fmt(b.start)}–${fmt(b.end)}).`});
+        }
+      }}
+    }
+  }
+
+  // 4. Ore tutoraggio eccedono ore avviso
+  for(const av of avvisi){
+    const totAvOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
+    let totTutOre=0;
+    for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(ev.name===av.name)totTutOre+=(ev.ore||0);}}}
+    if(totTutOre>totAvOre){errors.push({type:"eccedenza",msg:`Avviso "${av.name}": ore tutoraggio totali (${totTutOre}h) superano le ore dell'avviso (${totAvOre}h).`});}
+  }
+
+  // 5. Durata dichiarata vs ore calendario
+  for(const av of avvisi){
+    if(!av.durataOre)continue;
+    const totOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
+    if(totOre!==av.durataOre){errors.push({type:"durata",msg:`Avviso "${av.name}": ore nel calendario (${totOre}h) non corrispondono alla durata dichiarata (${av.durataOre}h).`});}
+  }
+
+  return errors;
+}
+
+function VerificaModal({errors,onClose}){
+  const typeIcon={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋"};
+  const typeLabel={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno avviso",fuori_orario:"Fuori orario avviso",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
+  return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:600,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div style={{background:"#fff",borderRadius:14,width:560,maxHeight:"80vh",display:"flex",flexDirection:"column",boxShadow:"0 8px 32px rgba(0,0,0,0.22)"}}>
+      <div style={{background:errors.length===0?"#27ae60":"#e74c3c",color:"#fff",padding:"14px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style={{fontWeight:700,fontSize:15}}>{errors.length===0?"✅ Verifica completata senza errori":"⚠️ Trovati "+errors.length+" proble"+(errors.length===1?"ma":"mi")}</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:16}}>
+        {errors.length===0?<p style={{color:"#27ae60",fontWeight:600,textAlign:"center",marginTop:20}}>Tutti i dati sono coerenti. 🎉</p>:errors.map((e,i)=>(
+          <div key={i} style={{padding:"10px 14px",marginBottom:8,borderRadius:8,border:"1px solid #f5c6cb",background:"#fff8f8",display:"flex",gap:10,alignItems:"flex-start"}}>
+            <span style={{fontSize:18,flexShrink:0}}>{typeIcon[e.type]||"⚠️"}</span>
+            <div><div style={{fontSize:11,fontWeight:700,color:"#c0392b",marginBottom:2}}>{typeLabel[e.type]||e.type}</div><div style={{fontSize:12,color:"#555",lineHeight:1.5}}>{e.msg}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{padding:"12px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"flex-end"}}>
+        <button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button>
+      </div>
     </div>
-  );
+  </div>);
 }
 
 // ── PANELS ────────────────────────────────────────────────────────────────────
 function UsersPanel({onClose}){
-  const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);
+  const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[editingRole,setEditingRole]=useState({});
   const inp={display:"block",width:"100%",marginBottom:8,padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);});},[]);
   async function handleAdd(){if(!newEmail.trim())return;setSaving(true);await db.collection("authorizedEmails").doc(newEmail.trim().toLowerCase()).set({role:newRole});const snap=await db.collection("authorizedEmails").get();setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setNewEmail("");setSaving(false);}
   async function handleRemove(email){if(!confirm(`Rimuovere ${email}?`))return;await db.collection("authorizedEmails").doc(email).delete();setEmails(prev=>prev.filter(e=>e.email!==email));}
+  async function handleRoleChange(email,newR){await db.collection("authorizedEmails").doc(email).update({role:newR});setEmails(prev=>prev.map(e=>e.email===email?{...e,role:newR}:e));setEditingRole(prev=>({...prev,[email]:false}));}
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:400,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
+    <ResizablePanel defaultWidth={400}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>🔐 Utenti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
         <div style={{background:"#f0f6ff",borderRadius:10,padding:14,marginBottom:16,border:"1px solid #4f86c6"}}>
@@ -452,12 +518,25 @@ function UsersPanel({onClose}){
           <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{...inp,marginBottom:10}}><option value="user">Utente</option><option value="admin">Amministratore</option></select>
           <button onClick={handleAdd} disabled={saving} style={{width:"100%",padding:"8px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{saving?"...":"Aggiungi"}</button>
         </div>
-        {loading?<p style={{color:"#aaa",fontSize:13}}>Caricamento...</p>:emails.map(e=>(<div key={e.email} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:8,border:"1px solid #eee",marginBottom:8,background:"#fafbfc"}}>
-          <div><div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div><div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div></div>
-          <button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button>
+        {loading?<p style={{color:"#aaa",fontSize:13}}>Caricamento...</p>:emails.map(e=>(<div key={e.email} style={{padding:"10px 12px",borderRadius:8,border:"1px solid #eee",marginBottom:8,background:"#fafbfc"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div>
+              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}>
+                <select defaultValue={e.role} id={`role-${e.email}`} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12}}>
+                  <option value="user">Utente</option><option value="admin">Amministratore</option>
+                </select>
+                <button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>Salva</button>
+                <button onClick={()=>setEditingRole(prev=>({...prev,[e.email]:false}))} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button>
+              </div>:<div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div>}
+            </div>
+            <div style={{display:"flex",gap:6}}>
+              <button onClick={()=>setEditingRole(prev=>({...prev,[e.email]:true}))} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12}}>✏️</button>
+              <button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button>
+            </div>
+          </div>
         </div>))}
       </div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
@@ -468,7 +547,7 @@ function TutorPanel({tutors,onSave,onClose}){
   function saveForm(){if(!form.nome.trim()&&!form.cognome.trim())return;if(editing===-1)setList(prev=>[...prev,form]);else setList(prev=>prev.map((t,i)=>i===editing?form:t));setEditing(null);}
   const fullName=t=>`${t.cognome} ${t.nome}`.trim()||"—";
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:420,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
+    <ResizablePanel defaultWidth={420}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>👤 Tutor</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"14px 16px"}}>
         {list.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
@@ -488,7 +567,7 @@ function TutorPanel({tutors,onSave,onClose}){
         {editing===null&&<button onClick={()=>startEdit(-1)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:8,border:"2px dashed #4f86c6",background:"transparent",color:"#4f86c6",cursor:"pointer",fontWeight:600,fontSize:13}}>+ Aggiungi tutor</button>}
       </div>
       <div style={{padding:"12px 16px",borderTop:"1px solid #eee",display:"flex",justifyContent:"flex-end"}}><button onClick={()=>onSave(list)} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>✓ Salva e chiudi</button></div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
@@ -496,22 +575,25 @@ function AnagraficaPanel({avvisi,onClose}){
   const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
   const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:400,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",overflowY:"auto"}}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
-      <div style={{padding:"12px 16px",flex:1}}>
+    <ResizablePanel defaultWidth={400}>
+      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Riepilogo Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {avvisi.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso.</p>}
         {avvisi.map(av=>{
           const totOre=av.events.reduce((s,e)=>s+(e.ore||0),0);
           return(<div key={av.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
             <div style={{background:hexToRgba(av.color,0.15),borderBottom:"1px solid #eee",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:av.color,flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{av.name}</span></div>
-              <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fmtOre(totOre)} totali</span>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                {av.durataOre&&<span style={{fontSize:11,color:"#888"}}>Durata: {av.durataOre}h</span>}
+                <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fmtOre(totOre)} totali</span>
+              </div>
             </div>
             <div style={{padding:"8px 12px"}}>{av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(av.color,0.12),border:`1px solid ${hexToRgba(av.color,0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
           </div>);
         })}
       </div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
@@ -520,8 +602,8 @@ function TutoraggiPanel({tutors,tutEvents,avvisi,onClose}){
   const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
   const avColorByName={};for(const av of avvisi)avColorByName[av.name]=av.color;
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:420,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📌 Tutoraggi</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+    <ResizablePanel defaultWidth={420}>
+      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📌 Riepilogo Tutoraggi</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {tutors.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
         {tutors.map(t=>{
@@ -538,27 +620,28 @@ function TutoraggiPanel({tutors,tutEvents,avvisi,onClose}){
               {monthEntries.map(([mk,evs])=>{const mOre=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fmtOre(mOre)}</span></div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avColorByName[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div>
-              </div>);})}</div>
+              </div>);})}
+            </div>
           </div>);
         })}
       </div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
 function RiepilogoPanel({avvisi,tutors,tutEvents,currentMonthKey,onClose}){
   const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
-  function getIntersectionOre(tutorId,avvisoName){let total=0;const av=avvisi.find(a=>a.name===avvisoName);if(!av)return 0;const td=tutEvents[tutorId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;const avEvs=av.events.filter(e=>e.month===mk);for(const tev of tevs){if(tev.name!==avvisoName)continue;for(const ae of avEvs){if(ae.day!==tev.day)continue;const intStart=Math.max(tev.start,ae.start),intEnd=Math.min(tev.end,ae.end);if(intEnd>intStart)total+=intEnd-intStart;}}}return total;}
+  function getIntersectionOre(tutorId,avvisoName){let total=0;const av=avvisi.find(a=>a.name===avvisoName);if(!av)return 0;const td=tutEvents[tutorId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avvisoName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)total+=en-s;}}}return total;}
   function getAvvisoTotalOre(av){if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
-  function getTutorTotalOre(tutorId){let t=0;const td=tutEvents[tutorId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
-  function getAvvisiForTutor(tutorId){const names=new Set();const td=tutEvents[tutorId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)names.add(ev.name);}return[...names];}
+  function getTutorTotalOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
+  function getAvvisiForTutor(tId){const names=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)names.add(ev.name);}return[...names];}
   function getTutorsForAvviso(avName){return tutors.filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;});}
   const fmtOre=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
   const bSt=a=>({padding:"5px 14px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:a?"#4f86c6":"#f0f4f8",color:a?"#fff":"#555"});
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:420,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
+    <ResizablePanel defaultWidth={420}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📊 Riepilogo Ore</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
-      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:8,flexWrap:"wrap"}}>
         <div style={{display:"flex",gap:4}}><button style={bSt(viewMode==="tutor")} onClick={()=>setViewMode("tutor")}>👤 Per tutor</button><button style={bSt(viewMode==="avviso")} onClick={()=>setViewMode("avviso")}>📋 Per avviso</button></div>
         <div style={{display:"flex",gap:4,marginLeft:"auto"}}><button style={bSt(timeMode==="mese")} onClick={()=>setTimeMode("mese")}>Mese</button><button style={bSt(timeMode==="anno")} onClick={()=>setTimeMode("anno")}>Anno</button></div>
       </div>
@@ -572,7 +655,7 @@ function RiepilogoPanel({avvisi,tutors,tutEvents,currentMonthKey,onClose}){
           <div style={{padding:"8px 14px"}}>{tutList.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tutList.map(t=><div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:600,color:"#1a3a5c"}}>{fmtOre(getIntersectionOre(t.id,av.name))}</span></div>)}</div>
         </div>);})}
       </div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
@@ -583,44 +666,59 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
   const[saved,setSaved]=useState(false);
   const[testGemini,setTestGemini]=useState(null);const[testOpenai,setTestOpenai]=useState(null);
   const[testingG,setTestingG]=useState(false);const[testingO,setTestingO]=useState(false);
+  const[cooldownG,setCooldownG]=useState(0);const[cooldownO,setCooldownO]=useState(0);
+  const COOLDOWN_SEC=60;
+  useEffect(()=>{if(cooldownG<=0)return;const t=setInterval(()=>setCooldownG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cooldownG]);
+  useEffect(()=>{if(cooldownO<=0)return;const t=setInterval(()=>setCooldownO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cooldownO]);
   async function handleSave(){await onSave({aiProvider,geminiApiKey:geminiKey,openaiApiKey:openaiKey});setSaved(true);setTimeout(()=>setSaved(false),2000);}
-  async function testGeminiKey(){if(!geminiKey){setTestGemini("❌ Chiave non inserita");return;}setTestingG(true);setTestGemini(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"Rispondi solo: OK"}]}]})});setTestGemini(r.ok?"✅ Connessione riuscita":"❌ Chiave non valida ("+r.status+")");}catch(e){setTestGemini("❌ Errore di rete");}setTestingG(false);}
-  async function testOpenaiKey(){if(!openaiKey){setTestOpenai("❌ Chiave non inserita");return;}setTestingO(true);setTestOpenai(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestOpenai(r.ok?"✅ Connessione riuscita":"❌ Chiave non valida ("+r.status+")");}catch(e){setTestOpenai("❌ Errore di rete");}setTestingO(false);}
+  async function testGeminiKey(){if(!geminiKey){setTestGemini("❌ Chiave non inserita");return;}setTestingG(true);setTestGemini(null);
+    try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});
+    if(r.ok)setTestGemini("✅ Connessione riuscita");else{const j=await r.json();const msg=r.status===429?"❌ Quota esaurita (429) – riprova domani":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}: ${j.error?.message||""}`;setTestGemini(msg);}}catch(e){setTestGemini("❌ Errore di rete");}
+    setTestingG(false);setCooldownG(COOLDOWN_SEC);}
+  async function testOpenaiKey(){if(!openaiKey){setTestOpenai("❌ Chiave non inserita");return;}setTestingO(true);setTestOpenai(null);
+    try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});
+    if(r.ok)setTestOpenai("✅ Connessione riuscita");else{const msg=r.status===429?"❌ Quota esaurita (429)":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}`;setTestOpenai(msg);}}catch(e){setTestOpenai("❌ Errore di rete");}
+    setTestingO(false);setCooldownO(COOLDOWN_SEC);}
   const inp={display:"block",width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13,fontFamily:"monospace",marginTop:4};
   const pBtn=(val,color)=>({flex:1,padding:"9px 0",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,borderRadius:8,background:aiProvider===val?color:"#f0f4f8",color:aiProvider===val?"#fff":"#555"});
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <div style={{width:440,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column"}}>
+    <ResizablePanel defaultWidth={440}>
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>⚙️ Impostazioni</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:20}}>
         <div style={{marginBottom:20,padding:16,background:"#f8f9ff",borderRadius:12,border:"1px solid #dde"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c",marginBottom:12}}>🤖 Assistente AI</div>
-          <label style={{fontSize:12,color:"#555",display:"block",marginBottom:8}}>Modello predefinito</label>
           <div style={{display:"flex",gap:6,marginBottom:14}}><button style={pBtn("gemini","#1a73e8")} onClick={()=>setAiProvider("gemini")}>✨ Gemini 2.0 Flash</button><button style={pBtn("openai","#10a37f")} onClick={()=>setAiProvider("openai")}>💬 GPT-4o mini</button></div>
           <div style={{marginBottom:12,padding:12,borderRadius:8,border:`1px solid ${aiProvider==="gemini"?"#1a73e8":"#e8edf3"}`,background:aiProvider==="gemini"?"#fff":"#fafbfc"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:13,fontWeight:700,color:aiProvider==="gemini"?"#1a73e8":"#aaa"}}>✨ Gemini</span>{aiProvider==="gemini"&&<span style={{fontSize:10,background:"#1a73e8",color:"#fff",padding:"1px 6px",borderRadius:8,fontWeight:600}}>ATTIVO</span>}</div>
             <input type="password" value={geminiKey} onChange={e=>setGeminiKey(e.target.value)} placeholder="AIza..." style={inp}/>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}><button onClick={testGeminiKey} disabled={testingG} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #1a73e8",background:"#fff",color:"#1a73e8",cursor:"pointer",fontSize:12,fontWeight:600}}>{testingG?"...":"🔍 Testa"}</button>{testGemini&&<span style={{fontSize:12,color:testGemini.startsWith("✅")?"#27ae60":"#e74c3c"}}>{testGemini}</span>}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+              <button onClick={testGeminiKey} disabled={testingG||cooldownG>0} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #1a73e8",background:"#fff",color:cooldownG>0?"#aaa":"#1a73e8",cursor:cooldownG>0?"not-allowed":"pointer",fontSize:12,fontWeight:600}}>{testingG?"...":`🔍 Testa${cooldownG>0?` (${cooldownG}s)`:""}`}</button>
+              {testGemini&&<span style={{fontSize:12,color:testGemini.startsWith("✅")?"#27ae60":"#e74c3c"}}>{testGemini}</span>}
+            </div>
           </div>
           <div style={{padding:12,borderRadius:8,border:`1px solid ${aiProvider==="openai"?"#10a37f":"#e8edf3"}`,background:aiProvider==="openai"?"#fff":"#fafbfc"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:13,fontWeight:700,color:aiProvider==="openai"?"#10a37f":"#aaa"}}>💬 OpenAI</span>{aiProvider==="openai"&&<span style={{fontSize:10,background:"#10a37f",color:"#fff",padding:"1px 6px",borderRadius:8,fontWeight:600}}>ATTIVO</span>}</div>
             <input type="password" value={openaiKey} onChange={e=>setOpenaiKey(e.target.value)} placeholder="sk-..." style={inp}/>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}><button onClick={testOpenaiKey} disabled={testingO} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #10a37f",background:"#fff",color:"#10a37f",cursor:"pointer",fontSize:12,fontWeight:600}}>{testingO?"...":"🔍 Testa"}</button>{testOpenai&&<span style={{fontSize:12,color:testOpenai.startsWith("✅")?"#27ae60":"#e74c3c"}}>{testOpenai}</span>}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+              <button onClick={testOpenaiKey} disabled={testingO||cooldownO>0} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #10a37f",background:"#fff",color:cooldownO>0?"#aaa":"#10a37f",cursor:cooldownO>0?"not-allowed":"pointer",fontSize:12,fontWeight:600}}>{testingO?"...":`🔍 Testa${cooldownO>0?` (${cooldownO}s)`:""}`}</button>
+              {testOpenai&&<span style={{fontSize:12,color:testOpenai.startsWith("✅")?"#27ae60":"#e74c3c"}}>{testOpenai}</span>}
+            </div>
           </div>
-          <p style={{fontSize:11,color:"#aaa",marginTop:10}}>🔒 Chiavi salvate su Firestore, non visibili agli altri utenti.</p>
+          <p style={{fontSize:11,color:"#aaa",marginTop:10}}>🔒 Chiavi salvate su Firestore. Il pulsante Testa ha un cooldown di 60s.</p>
         </div>
         {isAdmin&&<div style={{padding:16,background:"#fff8f0",borderRadius:12,border:"1px solid #f0c080"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#c0392b",marginBottom:12}}>🛠️ Strumenti Admin</div>
           <button onClick={onLoadDemo} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600,marginBottom:10,fontSize:13}}>🎲 Carica dati demo</button>
           <p style={{fontSize:11,color:"#888",marginBottom:12}}>Carica 5 avvisi e 4 tutor di esempio. Sovrascrive i dati esistenti.</p>
           <button onClick={onClearDb} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#e74c3c",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>🗑️ Cancella database</button>
-          <p style={{fontSize:11,color:"#888",marginTop:6}}>Rimuove tutti i dati dal database. Operazione irreversibile.</p>
+          <p style={{fontSize:11,color:"#888",marginTop:6}}>Rimuove tutti i dati. Operazione irreversibile.</p>
         </div>}
       </div>
       <div style={{padding:"12px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"flex-end",gap:10}}>
         <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-        <button onClick={handleSave} style={{padding:"8px 20px",borderRadius:8,border:"none",background:saved?"#2ecc71":"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600,transition:"background .3s"}}>{saved?"✓ Salvato":"Salva"}</button>
+        <button onClick={handleSave} style={{padding:"8px 20px",borderRadius:8,border:"none",background:saved?"#2ecc71":"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>{saved?"✓ Salvato":"Salva"}</button>
       </div>
-    </div>
+    </ResizablePanel>
   </div>);
 }
 
@@ -630,149 +728,142 @@ function AiPanel({tutors,avvisi,settings,user,isAdmin,onAddTut,onAddAv,onClose})
   const fileRef=useRef(),bottomRef=useRef();
   const userName=user?.email?.split("@")[0]||"utente";
   const phrase=useRef(FUNNY_PHRASES[Math.floor(Math.random()*FUNNY_PHRASES.length)]).current;
-
-  useEffect(()=>{setMessages([{role:"ai",text:"Cosa vuoi fare oggi?",buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);},[]);
+  useEffect(()=>{setMessages([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);},[]);
   useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   function addMsg(msg){setMessages(prev=>[...prev,msg]);}
-
-  function handleButtonClick(value){
-    addMsg({role:"user",text:value==="tutoraggio"?"📌 Tutoraggi":"📋 Avviso/Progetto"});setImportType(value);
-    if(value==="tutoraggio"){if(tutors.length===0){addMsg({role:"ai",text:"Non ci sono tutor registrati. Aggiungine uno dalla sezione 👤 Tutor."});return;}setStep("tutor");addMsg({role:"ai",text:"A quale tutor appartengono i dati?",select:tutors.map(t=>({value:t.id,label:`${t.cognome} ${t.nome}`.trim()}))});}
-    else{setStep("avName");addMsg({role:"ai",text:"Come si chiama questo avviso/progetto?",showInput:"avName"});}
-  }
+  function handleButtonClick(value){addMsg({role:"user",text:value==="tutoraggio"?"📌 Tutoraggi":"📋 Avviso/Progetto"});setImportType(value);if(value==="tutoraggio"){if(tutors.length===0){addMsg({role:"ai",text:"Non ci sono tutor registrati. Aggiungine uno dalla sezione 👤 Tutor."});return;}setStep("tutor");addMsg({role:"ai",text:"A quale tutor appartengono i dati?",select:tutors.map(t=>({value:t.id,label:`${t.cognome} ${t.nome}`.trim()}))});}else{setStep("avName");addMsg({role:"ai",text:"Come si chiama questo avviso/progetto?",showInput:"avName"});}}
   function handleSelectTutor(tid){const t=tutors.find(x=>x.id===tid);setSelectedTutor(tid);addMsg({role:"user",text:`👤 ${t?.cognome} ${t?.nome}`.trim()});setStep("upload");addMsg({role:"ai",text:"Perfetto! Carica il documento (PDF, immagine, Word, CSV).",showUpload:true});}
   function handleAvNameSubmit(){if(!avNameInput.trim())return;setAvName(avNameInput);addMsg({role:"user",text:avNameInput});setStep("avColor");addMsg({role:"ai",text:"Che colore vuoi assegnare?",showColor:true});}
   function handleAvColorSubmit(color){setAvColor(color);addMsg({role:"user",text:"🎨 Colore selezionato"});setStep("upload");addMsg({role:"ai",text:"Perfetto! Carica il documento.",showUpload:true});}
-
-  async function handleFileUpload(e){
-    const file=e.target.files[0];if(!file)return;e.target.value="";
-    addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Sto analizzando il documento...",isLoading:true});
-    try{const result=await analyzeDoc(file);setMessages(prev=>prev.filter(m=>!m.isLoading));
-      if(result.ambiguities?.length>0){setAmbiguities(result.ambiguities);setPendingEvents(result.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`Ho trovato ${result.events?.length||0} appuntamenti, ma ho bisogno di chiarimenti:`,showAmbiguities:result.ambiguities,events:result.events||[]});}
-      else if(result.events?.length>0){setPendingEvents(result.events);setStep("preview");addMsg({role:"ai",text:`Ho trovato ${result.events.length} appuntamenti. Confermi l'importazione?`,showPreview:result.events});}
-      else{addMsg({role:"ai",text:"Non ho trovato appuntamenti. Prova con un altro file.",showUpload:true});setStep("upload");}
-    }catch(err){setMessages(prev=>prev.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}
-    setLoading(false);
-  }
-  async function analyzeDoc(file){
-    const provider=settings.aiProvider||"gemini";
-    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});
-    const mime=file.type||"application/octet-stream";
-    const prompt=`Sei un assistente che estrae dati da documenti di calendari formativi. Analizza e restituisci SOLO JSON (nessun testo extra):\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome attività"}],"ambiguities":[{"field":"orario","description":"problema","eventIndex":0}]}\nRegole: month="mmm-yy" (mag-26 ecc), start/end ore decimali (9.5=09:30), ore=durata. Se ambiguo→ambiguities.`;
-    if(provider==="gemini"){
-      if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");
-      const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");
-      const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\nContenuto:\n${atob(b64)}`}];
-      const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});
-      if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||"Errore Gemini");}
-      const data=await resp.json();return parseResp(data.candidates?.[0]?.content?.parts?.[0]?.text||"{}");
-    }else{
-      if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");
-      const isImg=mime.startsWith("image/");
-      const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\nContenuto:\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];
-      const resp=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});
-      if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||"Errore OpenAI");}
-      const data=await resp.json();return parseResp(data.choices?.[0]?.message?.content||"{}");
-    }
-  }
+  async function handleFileUpload(e){const file=e.target.files[0];if(!file)return;e.target.value="";addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Sto analizzando il documento...",isLoading:true});
+    try{const result=await analyzeDoc(file);setMessages(prev=>prev.filter(m=>!m.isLoading));if(result.ambiguities?.length>0){setAmbiguities(result.ambiguities);setPendingEvents(result.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`Ho trovato ${result.events?.length||0} appuntamenti, ma ho bisogno di chiarimenti:`,showAmbiguities:result.ambiguities,events:result.events||[]});}else if(result.events?.length>0){setPendingEvents(result.events);setStep("preview");addMsg({role:"ai",text:`Ho trovato ${result.events.length} appuntamenti. Confermi l'importazione?`,showPreview:result.events});}else{addMsg({role:"ai",text:"Non ho trovato appuntamenti. Prova con un altro file.",showUpload:true});setStep("upload");}}catch(err){setMessages(prev=>prev.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function analyzeDoc(file){const provider=settings.aiProvider||"gemini";const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});const mime=file.type||"application/octet-stream";const prompt=`Sei un assistente che estrae dati da documenti di calendari formativi. Analizza e restituisci SOLO JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[{"field":"orario","description":"problema","eventIndex":0}]}\nRegole: month="mmm-yy", start/end decimali (9.5=09:30), ore=durata.`;
+    if(provider==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\nContenuto:\n${atob(b64)}`}];const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!resp.ok){const e=await resp.json();const msg=resp.status===429?"Quota API Gemini esaurita. Riprova domani.":resp.status===401?"Chiave Gemini non valida.":`Errore Gemini ${resp.status}: ${e.error?.message||""}`;throw new Error(msg);}const data=await resp.json();return parseResp(data.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}
+    else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");const isImg=mime.startsWith("image/");const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];const resp=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});if(!resp.ok){const e=await resp.json();const msg=resp.status===429?"Quota API OpenAI esaurita.":resp.status===401?"Chiave OpenAI non valida.":`Errore OpenAI ${resp.status}: ${e.error?.message||""}`;throw new Error(msg);}const data=await resp.json();return parseResp(data.choices?.[0]?.message?.content||"{}");}}
   function parseResp(text){try{return JSON.parse(text.replace(/```json|```/g,"").trim());}catch(e){const m=text.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
-  async function handleConfirm(){
-    setLoading(true);
-    try{
-      if(importType==="tutoraggio"){for(const ev of pendingEvents)await onAddTut({day:ev.day,name:ev.name,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selectedTutor},ev.month);}
-      else{const id=`av-${Date.now()}`;const events=pendingEvents.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({name:avName,color:avColor,events,newId:id});}
-      setStep("done");addMsg({role:"ai",text:`✅ Importati ${pendingEvents.length} appuntamenti con successo!`});
-    }catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}
-    setLoading(false);
-  }
-
-  function renderMsg(msg,idx){
-    const isAi=msg.role==="ai";
-    return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
-      <div style={{maxWidth:"75%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"#f0f4f8":"#4f86c6",color:isAi?"#1a3a5c":"#fff",fontSize:13,lineHeight:1.5,boxShadow:"0 1px 3px rgba(0,0,0,0.07)"}}>
-        {msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}
+  async function handleConfirm(){setLoading(true);try{if(importType==="tutoraggio"){for(const ev of pendingEvents)await onAddTut({day:ev.day,name:ev.name,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selectedTutor},ev.month);}else{const id=`av-${Date.now()}`;const events=pendingEvents.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({name:avName,color:avColor,events,newId:id});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pendingEvents.length} appuntamenti con successo!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  function renderMsg(msg,idx){const isAi=msg.role==="ai";return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
+    <div style={{maxWidth:"75%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"#f0f4f8":"#4f86c6",color:isAi?"#1a3a5c":"#fff",fontSize:13,lineHeight:1.5}}>{msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
+    {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>handleButtonClick(b.value)} style={{padding:"7px 14px",borderRadius:20,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>{b.label}</button>)}</div>}
+    {msg.select&&step==="tutor"&&<div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>{msg.select.map(o=><button key={o.value} onClick={()=>handleSelectTutor(o.value)} style={{padding:"6px 12px",borderRadius:12,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:600,fontSize:12}}>{o.label}</button>)}</div>}
+    {msg.showInput==="avName"&&step==="avName"&&<div style={{marginTop:6,display:"flex",gap:6,width:"100%",maxWidth:280}}><input value={avNameInput} onChange={e=>setAvNameInput(e.target.value)} placeholder="Nome avviso..." onKeyDown={e=>e.key==="Enter"&&handleAvNameSubmit()} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #ccc",fontSize:12,outline:"none"}}/><button onClick={handleAvNameSubmit} style={{padding:"7px 12px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>OK</button></div>}
+    {msg.showColor&&step==="avColor"&&<div style={{marginTop:6,display:"flex",flexWrap:"wrap",gap:5}}>{PALETTE.slice(0,20).map(c=><div key={c} onClick={()=>handleAvColorSubmit(c)} style={{width:24,height:24,borderRadius:5,background:c,cursor:"pointer",border:"2px solid transparent",boxSizing:"border-box"}} onMouseEnter={e=>e.currentTarget.style.border="2px solid #333"} onMouseLeave={e=>e.currentTarget.style.border="2px solid transparent"}/>)}</div>}
+    {msg.showUpload&&step==="upload"&&<div style={{marginTop:6}}><button onClick={()=>fileRef.current.click()} style={{padding:"8px 16px",borderRadius:10,border:"2px dashed #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📎 Carica file</button><p style={{fontSize:10,color:"#aaa",marginTop:3}}>PDF · Immagine · Word · CSV</p></div>}
+    {msg.showPreview&&<div style={{marginTop:6,width:"100%",maxWidth:340}}>
+      <div style={{maxHeight:150,overflowY:"auto",border:"1px solid #dde",borderRadius:8,background:"#fff",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 10px",borderBottom:"1px solid #f0f0f0",fontSize:11}}><span style={{color:"#555"}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{ev.ore}h</span></div>)}</div>
+      {step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={handleConfirm} disabled={loading} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"#2ecc71",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep("upload");addMsg({role:"ai",text:"Ok, puoi caricare un altro documento.",showUpload:true});}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>}
+    </div>}
+    {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%",maxWidth:340}}>{msg.showAmbiguities.map((amb,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {amb.field}</div><div style={{color:"#555",marginBottom:5}}>{amb.description}</div><button onClick={()=>{const rem=ambiguities.filter((_,j)=>j!==i);setAmbiguities(rem);if(rem.length===0){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pendingEvents});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
+  </div>);}
+  return(<div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:"#fff",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)",display:"flex",flexDirection:"column",height:"42vh",borderTop:"2px solid #1a3a5c"}}>
+    <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <span style={{fontWeight:800,fontSize:18}}>🤖 Ciao, {userName}!</span>
+        <span style={{fontWeight:800,fontSize:18,opacity:0.9}}>{phrase}</span>
+        <div style={{fontSize:11,opacity:0.6,background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"2px 8px"}}>{settings.aiProvider==="gemini"?"✨ Gemini 2.0 Flash":"💬 GPT-4o mini"}</div>
+        {isAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"4px 10px",cursor:"not-allowed",fontSize:13,fontWeight:700,opacity:0.85}} title="Funzione in arrivo 🚀">💪 God Mode</button>}
       </div>
-      {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>handleButtonClick(b.value)} style={{padding:"7px 14px",borderRadius:20,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>{b.label}</button>)}</div>}
-      {msg.select&&step==="tutor"&&<div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>{msg.select.map(o=><button key={o.value} onClick={()=>handleSelectTutor(o.value)} style={{padding:"6px 12px",borderRadius:12,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:600,fontSize:12}}>{o.label}</button>)}</div>}
-      {msg.showInput==="avName"&&step==="avName"&&<div style={{marginTop:6,display:"flex",gap:6,width:"100%",maxWidth:280}}><input value={avNameInput} onChange={e=>setAvNameInput(e.target.value)} placeholder="Nome avviso..." onKeyDown={e=>e.key==="Enter"&&handleAvNameSubmit()} style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #ccc",fontSize:12,outline:"none"}}/><button onClick={handleAvNameSubmit} style={{padding:"7px 12px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>OK</button></div>}
-      {msg.showColor&&step==="avColor"&&<div style={{marginTop:6,display:"flex",flexWrap:"wrap",gap:5}}>{PALETTE.slice(0,20).map(c=><div key={c} onClick={()=>handleAvColorSubmit(c)} style={{width:24,height:24,borderRadius:5,background:c,cursor:"pointer",border:"2px solid transparent",boxSizing:"border-box"}} onMouseEnter={e=>e.currentTarget.style.border="2px solid #333"} onMouseLeave={e=>e.currentTarget.style.border="2px solid transparent"}/>)}</div>}
-      {msg.showUpload&&step==="upload"&&<div style={{marginTop:6}}><button onClick={()=>fileRef.current.click()} style={{padding:"8px 16px",borderRadius:10,border:"2px dashed #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📎 Carica file</button><p style={{fontSize:10,color:"#aaa",marginTop:3}}>PDF · Immagine · Word · CSV</p></div>}
-      {msg.showPreview&&<div style={{marginTop:6,width:"100%",maxWidth:340}}>
-        <div style={{maxHeight:150,overflowY:"auto",border:"1px solid #dde",borderRadius:8,background:"#fff",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 10px",borderBottom:"1px solid #f0f0f0",fontSize:11}}><span style={{color:"#555"}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{ev.ore}h</span></div>)}</div>
-        {step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={handleConfirm} disabled={loading} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"#2ecc71",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep("upload");addMsg({role:"ai",text:"Ok, puoi caricare un altro documento.",showUpload:true});}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>}
-      </div>}
-      {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%",maxWidth:340}}>{msg.showAmbiguities.map((amb,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {amb.field}</div><div style={{color:"#555",marginBottom:5}}>{amb.description}</div><button onClick={()=>{const rem=ambiguities.filter((_,j)=>j!==i);setAmbiguities(rem);if(rem.length===0){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pendingEvents});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
-    </div>);
-  }
-
-  return(
-    <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:500,background:"#fff",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)",display:"flex",flexDirection:"column",height:"42vh",borderTop:"2px solid #1a3a5c"}}>
-      {/* Header AI */}
-      <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-          <span style={{fontWeight:800,fontSize:18}}>🤖 Ciao, {userName}!</span>
-          <span style={{fontWeight:800,fontSize:18,opacity:0.9}}>{phrase}</span>
-          <div style={{fontSize:11,opacity:0.6,background:"rgba(255,255,255,0.15)",borderRadius:8,padding:"2px 8px"}}>{settings.aiProvider==="gemini"?"✨ Gemini 2.0 Flash":"💬 GPT-4o mini"}</div>
-          {isAdmin&&<button style={{background:"rgba(255,200,0,0.2)",border:"1.5px solid rgba(255,200,0,0.5)",color:"#ffd700",borderRadius:8,padding:"4px 10px",cursor:"not-allowed",fontSize:11,fontWeight:700,opacity:0.7}} title="Funzione in arrivo 🚀">⚡ God Mode</button>}
-        </div>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
-      </div>
-      <div style={{flex:1,overflowY:"auto",padding:"12px 20px",display:"flex",flexDirection:"column"}}>
-        {messages.map((m,i)=>renderMsg(m,i))}
-        <div ref={bottomRef}/>
-      </div>
-      <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.csv,.doc,.docx,.txt" style={{display:"none"}} onChange={handleFileUpload}/>
+      <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
     </div>
-  );
+    <div style={{flex:1,overflowY:"auto",padding:"12px 20px",display:"flex",flexDirection:"column"}}>
+      {messages.map((m,i)=>renderMsg(m,i))}
+      <div ref={bottomRef}/>
+    </div>
+    <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.csv,.doc,.docx,.txt" style={{display:"none"}} onChange={handleFileUpload}/>
+  </div>);
 }
 
 // ── ADD/EDIT MODAL ────────────────────────────────────────────────────────────
-function AddModal({mode,prefill,currentMonthIdx,avvisi,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose}){
-  const isEdit=!!editTarget;const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");const fAv=avvisi[0];
+function AddModal({mode,prefill,currentMonthIdx,avvisi,tutors:initTutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose,onSaveTutor}){
+  const isEdit=!!editTarget;
+  const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
+  const[tutors,setTutors]=useState(initTutors);
+  const fAv=avvisi[0];
+
+  // Tutoraggio fields
+  const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||initTutors[0]?.id||""):(initTutors[0]?.id||""));
   const[tutName,setTutName]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.name:(fAv?.name||""));
-  const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
   const[tutDay,setTutDay]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.day:(prefill?.day||1));
   const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
   const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
   const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
+  // New tutor inline
+  const[showNewTutor,setShowNewTutor]=useState(false);
+  const[newTutorForm,setNewTutorForm]=useState({nome:"",cognome:"",cf:"",azienda:"",color:TUTOR_COLORS[0]});
+
+  // Avviso fields
   const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(fAv?.id||"__new__"));
   const[avColor,setAvColor]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.color:PALETTE[5]);
+  const[avDurata,setAvDurata]=useState(isEdit&&editTarget.type==="avviso"?(editTarget.avviso.durataOre||""):(avvisi.find(a=>a.id===avId)?.durataOre||""));
   const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
   const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
   const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
   const[avEnd,setAvEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.end:(prefill?.end||13)));
   const[newAvName,setNewAvName]=useState("");
+
   const inp={display:"block",width:"100%",marginBottom:10,padding:"6px 8px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   const tabBtn=(t,lbl)=><button onClick={()=>setTab(t)} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontWeight:600,fontSize:13,borderRadius:6,background:tab===t?"#4f86c6":"#f0f4f8",color:tab===t?"#fff":"#555"}}>{lbl}</button>;
   const selT=tutors.find(t=>t.id===tutTutor);
+
+  async function saveNewTutor(){
+    if(!newTutorForm.nome.trim()&&!newTutorForm.cognome.trim())return;
+    const id=`tutor-${Date.now()}`;
+    const nt={...newTutorForm,id};
+    const updated=[...tutors,nt];
+    setTutors(updated);setTutTutor(id);setShowNewTutor(false);
+    await onSaveTutor(updated);
+  }
+
   return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
-    <div style={{background:"#fff",borderRadius:14,padding:24,width:370,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",maxHeight:"90vh",overflowY:"auto"}}>
+    <div style={{background:"#fff",borderRadius:14,padding:24,width:390,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",maxHeight:"92vh",overflowY:"auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><span style={{fontWeight:700,fontSize:15}}>{isEdit?"✏️ Modifica":"➕ Aggiungi"}</span><button onClick={onClose} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:"#888"}}>✕</button></div>
       {!isEdit&&<div style={{display:"flex",gap:6,marginBottom:16}}>{tabBtn("tutoraggio","📌 Tutoraggio")}{tabBtn("avviso","📋 Avviso/Progetto")}</div>}
+
       {tab==="tutoraggio"&&(<>
+        {/* Tutor prima */}
+        <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Tutor</label>
+        <select value={tutTutor} onChange={e=>{if(e.target.value==="__new__"){setShowNewTutor(true);}else{setTutTutor(e.target.value);setShowNewTutor(false);}}} style={inp}>
+          {tutors.length===0?<option value="">-- prima inserire un tutor --</option>:tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
+          <option value="__new__">+ Nuovo tutor...</option>
+        </select>
+        {selT&&!showNewTutor&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:hexToRgba(selT.color||"#4f86c6",0.12)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"#4f86c6"}}/><span style={{fontSize:12,color:"#555"}}>Colore tutor</span></div>}
+        {showNewTutor&&<div style={{background:"#f0f6ff",borderRadius:10,border:"1px solid #4f86c6",padding:12,marginBottom:10}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#1a3a5c",marginBottom:8}}>➕ Nuovo tutor</div>
+          <div style={{display:"flex",gap:6}}><div style={{flex:1}}><label style={{fontSize:11,color:"#555"}}>Nome</label><input value={newTutorForm.nome} onChange={e=>setNewTutorForm(f=>({...f,nome:e.target.value}))} style={{...inp,marginBottom:6}}/></div><div style={{flex:1}}><label style={{fontSize:11,color:"#555"}}>Cognome</label><input value={newTutorForm.cognome} onChange={e=>setNewTutorForm(f=>({...f,cognome:e.target.value}))} style={{...inp,marginBottom:6}}/></div></div>
+          <label style={{fontSize:11,color:"#555"}}>CF</label><input value={newTutorForm.cf} onChange={e=>setNewTutorForm(f=>({...f,cf:e.target.value.toUpperCase()}))} style={{...inp,marginBottom:6}} maxLength={16}/>
+          <label style={{fontSize:11,color:"#555"}}>Azienda</label><input value={newTutorForm.azienda} onChange={e=>setNewTutorForm(f=>({...f,azienda:e.target.value}))} style={{...inp,marginBottom:6}}/>
+          <label style={{fontSize:11,color:"#555"}}>Colore</label>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4,marginBottom:8}}>{TUTOR_COLORS.map(c=><div key={c} onClick={()=>setNewTutorForm(f=>({...f,color:c}))} style={{width:20,height:20,borderRadius:3,background:c,cursor:"pointer",border:newTutorForm.color===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
+          <div style={{display:"flex",gap:6}}><button onClick={()=>setShowNewTutor(false)} style={{flex:1,padding:"6px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>Annulla</button><button onClick={saveNewTutor} style={{flex:1,padding:"6px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:12}}>Salva tutor</button></div>
+        </div>}
+        {/* Poi avviso */}
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
         <select value={tutName} onChange={e=>setTutName(e.target.value)} style={inp}>{avvisi.length===0?<option value="">-- prima inserire un avviso --</option>:avvisi.map(a=><option key={a.id} value={a.name}>{a.name}</option>)}</select>
-        <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Tutor</label>
-        <select value={tutTutor} onChange={e=>setTutTutor(e.target.value)} style={inp}>{tutors.length===0?<option value="">-- prima inserire un tutor --</option>:tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
-        {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:hexToRgba(selT.color||"#4f86c6",0.12)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"#4f86c6"}}/><span style={{fontSize:12,color:"#555"}}>Colore tutor</span></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:14}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&<button onClick={()=>{if(confirm("Eliminare?"))onDeleteTut(editTarget.ev.id);onClose();}} style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
-          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button><button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(tutName&&e>s&&tutTutor){const mk=MONTHS[tutMonthIdx].key;isEdit?onEditTut(editTarget.ev.id,{day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},mk):onAddTut({day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(tutName&&e>s&&tutTutor&&tutTutor!=="__new__"){const mk=MONTHS[tutMonthIdx].key;isEdit?onEditTut(editTarget.ev.id,{day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},mk):onAddTut({day:tutDay,name:tutName,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
+
       {tab==="avviso"&&(<>
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
-        <select value={avId} onChange={e=>{setAvId(e.target.value);if(e.target.value!=="__new__"){const f=avvisi.find(a=>a.id===e.target.value);if(f)setAvColor(f.color);}}} style={inp}><option value="__new__">+ Nuovo avviso...</option>{avvisi.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select>
+        <select value={avId} onChange={e=>{setAvId(e.target.value);if(e.target.value!=="__new__"){const f=avvisi.find(a=>a.id===e.target.value);if(f){setAvColor(f.color);setAvDurata(f.durataOre||"");}}}} style={inp}><option value="__new__">+ Nuovo avviso...</option>{avvisi.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select>
         {avId==="__new__"&&<input value={newAvName} onChange={e=>setNewAvName(e.target.value)} placeholder="Nome nuovo avviso..." style={inp}/>}
         <ColorPicker value={avColor} onChange={setAvColor}/>
+        <div style={{marginBottom:10}}>
+          <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Durata Avviso/Progetto (ore da bando)</label>
+          <input type="number" min="0" value={avDurata} onChange={e=>setAvDurata(e.target.value===""?"":Number(e.target.value))} placeholder="es. 400" style={{...inp,marginBottom:0}}/>
+        </div>
         <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
         {!isEdit&&<p style={{fontSize:11,color:"#888",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&<button onClick={()=>{if(confirm("Eliminare?"))onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}} style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
-          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button><button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s)return;const mk=MONTHS[avMonthIdx].key;const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit){onEditAv(editTarget.avviso.id,editTarget.ev.id,evData,avColor);}else if(avId==="__new__"&&newAvName){onAddAv({name:newAvName,color:avColor,...evData});}else if(avId!=="__new__"){onAddAv({existingId:avId,...evData});}onClose();}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s)return;const mk=MONTHS[avMonthIdx].key;const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};const dur=avDurata===""?undefined:Number(avDurata);if(isEdit){onEditAv(editTarget.avviso.id,editTarget.ev.id,evData,avColor,dur);}else if(avId==="__new__"&&newAvName){onAddAv({name:newAvName,color:avColor,durataOre:dur,...evData});}else if(avId!=="__new__"){onAddAv({existingId:avId,durataOre:dur,...evData});}onClose();}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
     </div>
@@ -792,7 +883,6 @@ function App({user}){
   const[showAvvisiOverlay,setShowAvvisiOverlay]=useState(false);
   const[zoomIdx,setZoomIdx]=useState(2);
   const[calView,setCalView]=useState("day");
-  // weekStart: the absolute Monday (as Date) anchoring the week view
   const[weekStart,setWeekStart]=useState(null);
   const[modal,setModal]=useState(null);
   const[showAnagrafica,setShowAnagrafica]=useState(false);
@@ -802,11 +892,12 @@ function App({user}){
   const[showRiepilogo,setShowRiepilogo]=useState(false);
   const[showSettings,setShowSettings]=useState(false);
   const[showAiPanel,setShowAiPanel]=useState(false);
+  const[showVerifica,setShowVerifica]=useState(false);
+  const[verificaErrors,setVerificaErrors]=useState([]);
   const[isAdminUser,setIsAdminUser]=useState(false);
   const[loading,setLoading]=useState(true);
   const[importError,setImportError]=useState("");
   const importRef=useRef();
-
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];
   const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];
   const month=MONTHS[monthIdx];
@@ -816,36 +907,52 @@ function App({user}){
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdminUser(true);}).catch(()=>{});
   },[]);
 
-  // When month changes, reset weekStart to the first Monday of that month
+  // Week navigation: compute visible days for week view
   useEffect(()=>{
     const m=MONTHS[monthIdx];
     const firstDay=new Date(m.year,m.month,1);
-    const dow=firstDay.getDay()||7; // Mon=1..Sun=7
-    const firstMon=new Date(firstDay);
-    firstMon.setDate(firstDay.getDate()-(dow-1));
-    setWeekStart(new Date(firstMon));
+    const dow=firstDay.getDay()||7;
+    const mon=new Date(firstDay);mon.setDate(firstDay.getDate()-(dow-1));
+    setWeekStart(new Date(mon));
   },[monthIdx]);
 
-  // ── Visible days ──
   function getVisibleDays(){
     if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);
     if(calView==="week"&&weekStart){
+      const m=MONTHS[monthIdx];
+      const lastDay=new Date(m.year,m.month,m.days);
       const days=[];
       for(let i=0;i<7;i++){
         const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);
-        days.push(d.getDate()); // we show all 7 days regardless of month boundary
+        if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());
+        else if(d<new Date(m.year,m.month,1)||d>lastDay)continue;
+        else days.push(d.getDate());
       }
-      return days;
+      return days.length>0?days:Array.from({length:month.days},(_,i)=>i+1);
     }
     return Array.from({length:month.days},(_,i)=>i+1);
   }
   function navigateWeek(dir){
-    setWeekStart(prev=>{const d=new Date(prev);d.setDate(d.getDate()+dir*7);return d;});
+    setWeekStart(prev=>{
+      const m=MONTHS[monthIdx];
+      const d=new Date(prev);d.setDate(d.getDate()+dir*7);
+      // Clamp to month boundaries (week must overlap the month)
+      const firstOfMonth=new Date(m.year,m.month,1);
+      const lastOfMonth=new Date(m.year,m.month,m.days);
+      // Find Monday of week containing firstOfMonth
+      const firstDow=firstOfMonth.getDay()||7;
+      const firstMon=new Date(firstOfMonth);firstMon.setDate(firstOfMonth.getDate()-(firstDow-1));
+      // Find Monday of week containing lastOfMonth
+      const lastDow=lastOfMonth.getDay()||7;
+      const lastMon=new Date(lastOfMonth);lastMon.setDate(lastOfMonth.getDate()-(lastDow-1));
+      if(d<firstMon)return firstMon;
+      if(d>lastMon)return lastMon;
+      return d;
+    });
   }
-
   const visibleDays=getVisibleDays();
 
-  // ── Data derivations ──
+  // Data
   const allTutEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
   const visibleTutEvs=activeTutorIds===null?allTutEvs:allTutEvs.filter(e=>activeTutorIds.has(e.tutorId));
   const avvisiNamesInMonth=new Set(allTutEvs.map(e=>e.name));
@@ -857,57 +964,39 @@ function App({user}){
   const visibleAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
   const totalAvOre=avEvs.reduce((a,e)=>a+e.ore,0);
 
-  function getTutorColor(id){const t=tutors.find(x=>x.id===id);return t?.color||"#4f86c6";}
+  function getTutorColor(id){return tutors.find(x=>x.id===id)?.color||"#4f86c6";}
   function getTutorLabel(id){const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";}
-
-  function buildTutByDay(){const byDay={};for(const ev of visibleTutEvs){if(!byDay[ev.day])byDay[ev.day]=[];const color=getTutorColor(ev.tutorId),tLabel=getTutorLabel(ev.tutorId);byDay[ev.day].push({...ev,_color:color,_tutorLabel:tLabel,_onEdit:()=>setModal({type:"edit-tut",ev,monthKey:month.key}),_onClick:()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return byDay;}
+  function buildTutByDay(){const byDay={};for(const ev of visibleTutEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push({...ev,_color:getTutorColor(ev.tutorId),_tutorLabel:getTutorLabel(ev.tutorId),_onEdit:()=>setModal({type:"edit-tut",ev,monthKey:month.key}),_onClick:()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return byDay;}
   function buildAvOverlayByDay(){const byDay={};for(const ev of avEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push(ev);}return byDay;}
   function buildAvByDay(){const byDay={};for(const ev of visibleAvEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push({...ev,_onEdit:()=>{const av=avvisi.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av,ev,monthKey:month.key});},_onClick:()=>setModal({type:"add",mode:"avviso",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return byDay;}
   function buildMonthTutByDay(){const byDay={};for(const ev of visibleTutEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push({...ev,_color:getTutorColor(ev.tutorId)});}return byDay;}
-  // For month view avvisi: plain avEvs grouped by day (no overlay logic needed, always visible)
   function buildMonthAvByDay(){const byDay={};for(const ev of visibleAvEvs){if(!byDay[ev.day])byDay[ev.day]=[];byDay[ev.day].push(ev);}return byDay;}
 
-  function handleGridClick(d,e){
-    const rect=e.currentTarget.getBoundingClientRect();
-    const snap=Math.round((8+(e.clientY-rect.top)/slotH)*4)/4;
-    const start=Math.min(Math.max(snap,8),19.75);
-    setModal({type:"add",mode:view,prefill:{day:d,start,end:Math.min(start+1,20)}});
-  }
+  function handleGridClick(d,e){const rect=e.currentTarget.getBoundingClientRect();const snap=Math.round((8+(e.clientY-rect.top)/slotH)*4)/4;const start=Math.min(Math.max(snap,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start,end:Math.min(start+1,20)}});}
   function toggleAvviso(id){setActiveAvvisi(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTutorFilter(id){setActiveTutorIds(prev=>{const all=new Set(tutors.map(t=>t.id));const base=prev===null?new Set(all):new Set(prev);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
   async function addTutoraggio(ev,monthKey){const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const updated={...tutEvents,[tId]:{...(tutEvents[tId]||{}),[mk]:[...((tutEvents[tId]||{})[mk]||[]),{...ev,id}]}};setTutEvents(updated);await fsSaveTutEvents(tId,mk,updated[tId][mk]);}
   async function editTutoraggio(evId,updated){const newState={...tutEvents};for(const[tid,months]of Object.entries(newState)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){newState[tid]={...months,[mk]:evs.map(e=>e.id===evId?{...e,...updated}:e)};setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;}}};}
   async function deleteTutoraggio(evId){const newState={...tutEvents};for(const[tid,months]of Object.entries(newState)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){newState[tid]={...months,[mk]:evs.filter(e=>e.id!==evId)};setTutEvents(newState);await fsSaveTutEvents(tid,mk,newState[tid][mk]);return;}}};}
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,newId}){
-    if(events&&events.length>0){const id=newId||`av-${Date.now()}`;const updated=[...avvisi,{id,name,color,events}];setAvvisi(updated);setActiveAvvisi(prev=>new Set([...prev,id]));await fsSaveAvvisi(updated);return;}
+  async function addAvviso({existingId,name,color,durataOre,month:mk,day,start,end,ore,events,newId}){
+    if(events&&events.length>0){const id=newId||`av-${Date.now()}`;const updated=[...avvisi,{id,name,color,durataOre,events}];setAvvisi(updated);setActiveAvvisi(prev=>new Set([...prev,id]));await fsSaveAvvisi(updated);return;}
     const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};let updated;
-    if(existingId){updated=avvisi.map(av=>av.id===existingId?{...av,events:[...av.events,evData]}:av);}
-    else{const id=`av-${Date.now()}`;updated=[...avvisi,{id,name,color,events:[evData]}];setActiveAvvisi(prev=>new Set([...prev,id]));}
+    if(existingId){updated=avvisi.map(av=>av.id===existingId?{...av,durataOre:durataOre??av.durataOre,events:[...av.events,evData]}:av);}
+    else{const id=`av-${Date.now()}`;updated=[...avvisi,{id,name,color,durataOre,events:[evData]}];setActiveAvvisi(prev=>new Set([...prev,id]));}
     setAvvisi(updated);await fsSaveAvvisi(updated);
   }
-  async function editAvviso(avId,evId,evData,color){const updated=avvisi.map(av=>av.id!==avId?av:{...av,color,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});setAvvisi(updated);await fsSaveAvvisi(updated);}
+  async function editAvviso(avId,evId,evData,color,durataOre){const updated=avvisi.map(av=>av.id!==avId?av:{...av,color,durataOre:durataOre??av.durataOre,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});setAvvisi(updated);await fsSaveAvvisi(updated);}
   async function deleteAvviso(avId,evId){const updated=avvisi.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});setAvvisi(updated);await fsSaveAvvisi(updated);}
   async function handleSaveTutors(list){setTutors(list);setActiveTutorIds(null);setShowTutorPanel(false);await fsSaveTutors(list);}
+  async function handleSaveTutorInline(list){setTutors(list);await fsSaveTutors(list);}
   async function handleSaveSettings(s){const merged={...settings,...s};setSettings(merged);await fsSaveSettings(merged);}
   async function handleTutDragEnd(evId,updated){await editTutoraggio(evId,updated);}
   async function handleAvDragEnd(avId,evId,updated){await editAvviso(avId,evId,{month:updated.month||month.key,day:updated.day,start:updated.start,end:updated.end,ore:updated.ore||updated.end-updated.start},avvisi.find(a=>a.id===avId)?.color);}
-
-  async function handleLoadDemo(){
-    if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;
-    const{tutors:t,avvisi:a,tutEvents:te}=generateDemoData();
-    setTutors(t);setAvvisi(a);setTutEvents(te);setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
-    await fsSaveTutors(t);await fsSaveAvvisi(a);
-    for(const[tId,months]of Object.entries(te))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tId,mk,evs);
-    setShowSettings(false);alert("Dati demo caricati con successo!");
-  }
-  async function handleClearDb(){
-    if(!confirm("⚠️ Attenzione: questa operazione eliminerà TUTTI i dati dal database. Continuare?"))return;
-    if(!confirm("Sei sicuro? L'operazione è irreversibile."))return;
-    await fsClearAll();setTutors([]);setAvvisi([]);setTutEvents({});setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);
-    setShowSettings(false);alert("Database svuotato.");
-  }
+  async function handleLoadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;const{tutors:t,avvisi:a,tutEvents:te}=generateDemoData();setTutors(t);setAvvisi(a);setTutEvents(te);setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAvvisi(a);for(const[tId,months]of Object.entries(te))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tId,mk,evs);setShowSettings(false);alert("Dati demo caricati!");}
+  async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);setTutEvents({});setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setShowSettings(false);alert("Database svuotato.");}
   async function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const a=raw.avvisi||[],t=raw.tutors||[],te=raw.tutEvents||{};setAvvisi(a);setTutors(t);setTutEvents(te);setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);setImportError("");await fsSaveAvvisi(a);await fsSaveTutors(t);for(const[tId,months]of Object.entries(te))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tId,mk,evs);}catch(err){setImportError("File non valido: "+err.message);}};reader.readAsText(file);e.target.value="";}
+  function handleVerifica(){const errs=runVerifica(avvisi,tutors,tutEvents);setVerificaErrors(errs);setShowVerifica(true);}
 
   const vBtn=(v,lbl)=>({padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,background:view===v?"#fff":"rgba(255,255,255,0.15)",color:view===v?"#1a3a5c":"#fff",boxShadow:view===v?"0 2px 8px rgba(0,0,0,0.15)":"none",transition:"all .15s"});
   const hBtn=(extra={})=>({background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600,...extra});
@@ -915,39 +1004,23 @@ function App({user}){
   if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"#888"}}>⏳ Caricamento...</div>;
 
   return(<React.Fragment>
-    {/* HEADER */}
     <div style={{background:"#1a3a5c",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",gap:10,flexShrink:0,flexWrap:"wrap"}}>
-      {/* Hamburger + icona */}
-      <HamburgerMenu
-        isAdmin={isAdminUser}
-        onTutor={()=>setShowTutorPanel(true)}
-        onUsers={()=>setShowUsersPanel(true)}
-        onSettings={()=>setShowSettings(true)}
-        onExport={()=>exportJSON(avvisi,tutors,tutEvents)}
-        onImport={()=>importRef.current.click()}
-        importRef={importRef}
-      />
+      <HamburgerMenu isAdmin={isAdminUser} onTutor={()=>setShowTutorPanel(true)} onUsers={()=>setShowUsersPanel(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents)} onImport={()=>importRef.current.click()} importRef={importRef}/>
       <input ref={importRef} type="file" accept=".json" style={{display:"none"}} onChange={handleImport}/>
       <span style={{fontWeight:700,fontSize:16}}>📅</span>
-
-      {/* Vista calendario */}
       <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}>
         <button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button>
         <button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button>
       </div>
-
-      {/* Pulsanti pannelli */}
-      <button onClick={()=>setShowTutoraggiPanel(true)} style={hBtn()}>📌 Tutoraggi</button>
-      <button onClick={()=>setShowAnagrafica(true)} style={hBtn()}>📋 Avvisi/Progetti</button>
-      <button onClick={()=>setShowRiepilogo(true)} style={hBtn()}>📊 Riepilogo</button>
+      <button onClick={()=>setShowTutoraggiPanel(true)} style={hBtn()}>📌 Riepilogo Tutoraggi</button>
+      <button onClick={()=>setShowAnagrafica(true)} style={hBtn()}>📋 Riepilogo Avvisi/Progetti</button>
+      <button onClick={()=>setShowRiepilogo(true)} style={hBtn()}>📊 Riepilogo Ore</button>
       <button onClick={()=>setShowAiPanel(true)} style={hBtn({background:"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>
-
+      <button onClick={handleVerifica} style={hBtn({background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)"})}>✅ Verifica</button>
       <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:12,opacity:0.6}}>{user?.email}</span>
         <button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button>
       </div>
-
-      {/* Navigazione mese */}
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===0?0.4:1}}>‹</button>
         <span style={{fontWeight:600,minWidth:150,textAlign:"center"}}>{month.label}</span>
@@ -958,7 +1031,6 @@ function App({user}){
 
     {importError&&<div style={{background:"#ffeaea",borderBottom:"1px solid #f5c6cb",padding:"6px 20px",fontSize:12,color:"#c0392b",display:"flex",justifyContent:"space-between"}}>⚠️ {importError}<button onClick={()=>setImportError("")} style={{background:"none",border:"none",cursor:"pointer",color:"#c0392b"}}>✕</button></div>}
 
-    {/* SUB-BARS */}
     {view==="tutoraggio"&&(<div style={{background:"#fff",borderBottom:"1px solid #dde",flexShrink:0}}>
       <div style={{padding:"5px 20px",borderBottom:"1px solid #f0f0f0",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {totalTutOre%1===0?totalTutOre:totalTutOre.toFixed(1)}h tutoraggio</span>
@@ -984,37 +1056,11 @@ function App({user}){
       </div>
     </div>)}
 
-    {/* CALENDAR */}
     {calView==="month"
-      ?<MonthView
-          month={month}
-          tutByDay={view==="tutoraggio"?buildMonthTutByDay():null}
-          avByDay={view==="tutoraggio"?(showAvvisiOverlay?buildAvOverlayByDay():null):buildMonthAvByDay()}
-          overlayActive={showAvvisiOverlay}
-          onDayClick={d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}})}
-        />
-      :<CalendarGrid
-          days={visibleDays}
-          monthData={month}
-          tutByDay={view==="tutoraggio"?buildTutByDay():null}
-          avOverlayByDay={view==="tutoraggio"?buildAvOverlayByDay():null}
-          avByDay={view==="avviso"?buildAvByDay():null}
-          footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTutOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}}
-          overlayActive={showAvvisiOverlay}
-          slotH={slotH}
-          colW={colW}
-          onGridClick={handleGridClick}
-          onTutDragEnd={handleTutDragEnd}
-          onAvDragEnd={handleAvDragEnd}
-        />
-    }
+      ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMonthTutByDay():null} avByDay={view==="tutoraggio"?(showAvvisiOverlay?buildAvOverlayByDay():null):buildMonthAvByDay()} overlayActive={showAvvisiOverlay} onDayClick={d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}})}/>
+      :<CalendarGrid days={visibleDays} monthData={month} tutByDay={view==="tutoraggio"?buildTutByDay():null} avOverlayByDay={view==="tutoraggio"?buildAvOverlayByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTutOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showAvvisiOverlay} slotH={slotH} colW={colW} onGridClick={handleGridClick} onTutDragEnd={handleTutDragEnd} onAvDragEnd={handleAvDragEnd}/>}
 
-    <ZoomBar
-      calView={calView} zoomIdx={zoomIdx}
-      onZoomChange={setZoomIdx}
-      onCalViewChange={v=>setCalView(v)}
-      onWeekNav={navigateWeek}
-    />
+    <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navigateWeek}/>
 
     {showTutorPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutorPanel(false)}/>}
     {showTutoraggiPanel&&<TutoraggiPanel tutors={tutors} tutEvents={tutEvents} avvisi={avvisi} onClose={()=>setShowTutoraggiPanel(false)}/>}
@@ -1023,7 +1069,8 @@ function App({user}){
     {showRiepilogo&&<RiepilogoPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowRiepilogo(false)}/>}
     {showSettings&&<SettingsPanel settings={settings} onSave={handleSaveSettings} onClose={()=>setShowSettings(false)} isAdmin={isAdminUser} onLoadDemo={handleLoadDemo} onClearDb={handleClearDb}/>}
     {showAiPanel&&<AiPanel tutors={tutors} avvisi={avvisi} settings={settings} user={user} isAdmin={isAdminUser} onAddTut={addTutoraggio} onAddAv={addAvviso} onClose={()=>setShowAiPanel(false)}/>}
-    {modal&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)}/>}
+    {showVerifica&&<VerificaModal errors={verificaErrors} onClose={()=>setShowVerifica(false)}/>}
+    {modal&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onSaveTutor={handleSaveTutorInline} onClose={()=>setModal(null)}/>}
   </React.Fragment>);
 }
 
