@@ -68,38 +68,13 @@
   const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
   firebase.initializeApp(firebaseConfig);
   const auth=firebase.auth(),db=firebase.firestore();
-  function showLoginTab(t){
-    document.getElementById("tab-login").style.display=t==="login"?"block":"none";
-    document.getElementById("tab-register").style.display=t==="register"?"block":"none";
-    document.querySelectorAll(".login-tab").forEach((b,i)=>b.classList.toggle("active",(t==="login"&&i===0)||(t==="register"&&i===1)));
-    document.getElementById("login-error").textContent="";
-  }
+  function showLoginTab(t){document.getElementById("tab-login").style.display=t==="login"?"block":"none";document.getElementById("tab-register").style.display=t==="register"?"block":"none";document.querySelectorAll(".login-tab").forEach((b,i)=>b.classList.toggle("active",(t==="login"&&i===0)||(t==="register"&&i===1)));document.getElementById("login-error").textContent="";}
   function showErr(m){document.getElementById("login-error").textContent=m;}
   document.getElementById("login-google-btn").onclick=()=>{showErr("");auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>showErr(e.message));};
-  document.getElementById("login-email-btn").onclick=async()=>{
-    showErr("");
-    const email=document.getElementById("login-email").value.trim(),pass=document.getElementById("login-password").value;
-    if(!email||!pass){showErr("Inserisci email e password.");return;}
-    try{await auth.signInWithEmailAndPassword(email,pass);}
-    catch(e){showErr(e.code==="auth/user-not-found"?"Account non trovato.":e.code==="auth/wrong-password"?"Password errata.":e.message);}
-  };
-  document.getElementById("register-btn").onclick=async()=>{
-    showErr("");
-    const email=document.getElementById("reg-email").value.trim().toLowerCase(),pass=document.getElementById("reg-password").value,pass2=document.getElementById("reg-password2").value;
-    if(!email||!pass){showErr("Compila tutti i campi.");return;}
-    if(pass.length<6){showErr("Password min. 6 caratteri.");return;}
-    if(pass!==pass2){showErr("Le password non coincidono.");return;}
-    try{
-      const snap=await db.collection("authorizedEmails").doc(email).get();
-      if(!snap.exists){showErr("Email non autorizzata.");return;}
-      await auth.createUserWithEmailAndPassword(email,pass);
-    }catch(e){showErr(e.code==="auth/email-already-in-use"?"Account già esistente.":e.message);}
-  };
+  document.getElementById("login-email-btn").onclick=async()=>{showErr("");const email=document.getElementById("login-email").value.trim(),pass=document.getElementById("login-password").value;if(!email||!pass){showErr("Inserisci email e password.");return;}try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/user-not-found"?"Account non trovato.":e.code==="auth/wrong-password"?"Password errata.":e.message);}};
+  document.getElementById("register-btn").onclick=async()=>{showErr("");const email=document.getElementById("reg-email").value.trim().toLowerCase(),pass=document.getElementById("reg-password").value,pass2=document.getElementById("reg-password2").value;if(!email||!pass){showErr("Compila tutti i campi.");return;}if(pass.length<6){showErr("Password min. 6 caratteri.");return;}if(pass!==pass2){showErr("Le password non coincidono.");return;}try{const snap=await db.collection("authorizedEmails").doc(email).get();if(!snap.exists){showErr("Email non autorizzata.");return;}await auth.createUserWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/email-already-in-use"?"Account già esistente.":e.message);}};
   function showSaving(){const el=document.getElementById("saving-indicator");el.classList.add("show");clearTimeout(window._st);window._st=setTimeout(()=>el.classList.remove("show"),1500);}
-  auth.onAuthStateChanged(user=>{
-    if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}
-    else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}
-  });
+  auth.onAuthStateChanged(user=>{if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}});
 </script>
 <script type="text/babel">
 const {useState,useEffect,useRef}=React;
@@ -124,34 +99,12 @@ const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ec
 const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const AV_STATI=["In corso","Concluso","Sospeso"];
-const FUNNY_PHRASES=[
-  "Cosa importiamo oggi nel calendario del dolore?",
-  "Quale riunione avresti potuto essere una email?",
-  "Quale documento ti ha rovinato la giornata?",
-  "Quale deadline ti ha svegliato stanotte?",
-  "Cosa ottimizziamo oggi per non farlo mai più manualmente?",
-  "Quale foglio Excel vorresti bruciare?",
-  "Cosa posso fare per renderti la giornata meno lunga?",
-  "Cosa ti manca per staccare prima delle 18?",
-  "Cosa vuoi fare oggi invece di goderti il sole?",
-  "Quale collega ti ha già scritto tre email oggi?",
-  "Quale procedura amministrativa vorresti semplificare per sempre?",
-  "Quante ore di riunioni avresti potuto evitare questa settimana?",
-  "Quale scadenza regionale ti tiene sveglio la notte?",
-  "Cosa vuoi delegare a me prima di andare a pranzo?",
-  "Quale modulo hai compilato tre volte perché il sistema era giù?",
-  "Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?",
-  "Quale progetto giace abbandonato in una cartella del desktop?",
-  "Quanti allegati stai per inviare a qualcuno che non li leggerà mai?",
-  "Cosa sistemiamo oggi per non doverci pensare più?",
-  "Quale report hai rimandato abbastanza da renderlo urgente?",
-];
+const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quale riunione avresti potuto essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?"];
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
 function markDrag(){_dragDone=true;setTimeout(()=>{_dragDone=false;},50);}
 function wasDrag(){return _dragDone;}
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
 function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function fmt(h){return`${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
 function timeStrToH(s){const[hh,mm]=s.split(":").map(Number);return hh+(mm||0)/60;}
@@ -178,11 +131,7 @@ function exportJSON(avvisi,tutors,tutEvents,anagraficaAv){
 // ── FIRESTORE ─────────────────────────────────────────────────────────────────
 async function fsLoad(){
   try{
-    const[av,tu,te,se,an]=await Promise.all([
-      db.collection("avvisi").get(),db.collection("tutors").get(),
-      db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),
-      db.collection("anagraficaAv").get(),
-    ]);
+    const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);
     const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});
     return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaAv:an.docs.map(d=>d.data())};
   }catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{},anagraficaAv:[]};}
@@ -192,12 +141,7 @@ async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await 
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
-async function fsClearAll(){
-  showSaving();
-  for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){
-    const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();
-  }
-}
+async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 
 // ── DEMO DATA ─────────────────────────────────────────────────────────────────
 function generateDemoData(){
@@ -205,10 +149,10 @@ function generateDemoData(){
   const tutors=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:TUTOR_COLORS[i]}));
   const anaDefs=[
     {nome:"Avviso 1",codice:"DDG 001/2026",colore:PALETTE[10],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},
-    {nome:"Avviso 2",codice:"DDG 002/2026",colore:PALETTE[2], durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""},
+    {nome:"Avviso 2",codice:"DDG 002/2026",colore:PALETTE[2],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""},
     {nome:"Avviso 3",codice:"DDG 003/2026",colore:PALETTE[12],durataOre:400,stato:"In corso",dataInizio:"01/05/2026",dataFine:"31/08/2026",note:""},
-    {nome:"Avviso 4",codice:"DDG 004/2026",colore:PALETTE[0], durataOre:400,stato:"In corso",dataInizio:"01/08/2026",dataFine:"30/11/2026",note:""},
-    {nome:"Avviso 5",codice:"DDG 005/2026",colore:PALETTE[5], durataOre:400,stato:"In corso",dataInizio:"01/10/2026",dataFine:"31/12/2026",note:""},
+    {nome:"Avviso 4",codice:"DDG 004/2026",colore:PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/08/2026",dataFine:"30/11/2026",note:""},
+    {nome:"Avviso 5",codice:"DDG 005/2026",colore:PALETTE[5],durataOre:400,stato:"In corso",dataInizio:"01/10/2026",dataFine:"31/12/2026",note:""},
   ];
   const anagraficaAv=anaDefs.map((d,i)=>({...d,id:`av-demo-${i}`}));
   const avMonthIdxs=[[0,1,2,3],[2,3,4,5],[4,5,6,7],[7,8,9,10],[9,10,11]];
@@ -221,10 +165,7 @@ function generateDemoData(){
     const bm={};for(const s of all){if(!bm[s.mk])bm[s.mk]=[];bm[s.mk].push(s);}
     const spm=Math.ceil(tgt/mIdxs.length);
     const events=[];let ei=0;
-    for(const mk of Object.keys(bm)){
-      const kept=bm[mk].filter(()=>Math.random()>0.15).slice(0,spm);
-      for(const s of kept)events.push({id:`ave-demo-${ai}-${ei++}`,month:s.mk,day:s.day,start:sH,end:eH,ore:sessH});
-    }
+    for(const mk of Object.keys(bm)){const kept=bm[mk].filter(()=>Math.random()>0.15).slice(0,spm);for(const s of kept)events.push({id:`ave-demo-${ai}-${ei++}`,month:s.mk,day:s.day,start:sH,end:eH,ore:sessH});}
     return{id:ana.id,events};
   });
   const tutEvents={};
@@ -240,9 +181,7 @@ function generateDemoData(){
         if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];
         const n=Math.max(1,Math.round(evs.length*0.15));
         const st=ti*Math.floor(evs.length/2);
-        evs.slice(st,st+n).forEach((e,j)=>{
-          tutEvents[tId][mk].push({id:`tut-demo-${ai}-${ti}-${mk}-${j}`,day:e.day,name:ana.nome,start:sH,end:sH+tutH,ore:tutH,tutorId:tId});
-        });
+        evs.slice(st,st+n).forEach((e,j)=>{tutEvents[tId][mk].push({id:`tut-demo-${ai}-${ti}-${mk}-${j}`,day:e.day,name:ana.nome,start:sH,end:sH+tutH,ore:tutH,tutorId:tId});});
       }
     }
   });
@@ -257,8 +196,7 @@ function ResizablePanel({children,defaultWidth=400,minWidth=320}){
   function onMD(e){e.preventDefault();dr.current=true;const sx=e.clientX,sw=width;
     function mv(me){if(!dr.current)return;setWidth(Math.max(minWidth,Math.min(max,sw+(sx-me.clientX))));}
     function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}
-    document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);
-  }
+    document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   return(<div style={{width,background:"#fff",boxShadow:"-4px 0 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"row",flexShrink:0}}>
     <div onMouseDown={onMD} style={{width:5,cursor:"ew-resize",flexShrink:0,background:"transparent",transition:"background .2s"}} onMouseEnter={e=>e.currentTarget.style.background="#4f86c6"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}/>
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>{children}</div>
@@ -319,37 +257,15 @@ function useDrag({onDragEnd,onClick}){
       if(resizeRef.current&&e.target===resizeRef.current)return;
       e.stopPropagation();t0.current=Date.now();p0.current={x:e.clientX,y:e.clientY};dragging.current=false;
       const os=ev.start,oe=ev.end,od=ev.day;
-      function onMove(me){
-        const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;
-        if(!dragging.current&&(dx>DRAG_PX||dy>DRAG_PX||dt>DRAG_MS))dragging.current=true;
-        if(!dragging.current)return;
-        const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));
-        const dd=Math.round((me.clientX-p0.current.x)/colW);
-        if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}
-      }
-      function onUp(me){
-        document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
-        const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;
-        if(dt<DRAG_MS&&dx<=DRAG_PX&&dy<=DRAG_PX){if(dragRef.current)dragRef.current.style.transform="";onClick&&onClick();return;}
-        markDrag();
-        const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));
-        const ne=Math.min(20,ns+(oe-os)),nd=Math.max(1,od+Math.round((me.clientX-p0.current.x)/colW));
-        if(dragRef.current)dragRef.current.style.transform="";
-        if(ns!==os||ne!==oe||nd!==od)onDragEnd({start:ns,end:ne,day:nd});
-      }
+      function onMove(me){const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;if(!dragging.current&&(dx>DRAG_PX||dy>DRAG_PX||dt>DRAG_MS))dragging.current=true;if(!dragging.current)return;const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));const dd=Math.round((me.clientX-p0.current.x)/colW);if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}}
+      function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;if(dt<DRAG_MS&&dx<=DRAG_PX&&dy<=DRAG_PX){if(dragRef.current)dragRef.current.style.transform="";onClick&&onClick();return;}markDrag();const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));const ne=Math.min(20,ns+(oe-os));const nd=Math.max(1,od+Math.round((me.clientX-p0.current.x)/colW));if(dragRef.current)dragRef.current.style.transform="";if(ns!==os||ne!==oe||nd!==od)onDragEnd({start:ns,end:ne,day:nd});}
       document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
     };
   }
   function makeResize(ev,slotH){
-    return function onDown(e){
-      e.stopPropagation();e.preventDefault();
-      const sy=e.clientY,oe=ev.end,os=ev.start;
+    return function onDown(e){e.stopPropagation();e.preventDefault();const sy=e.clientY,oe=ev.end,os=ev.start;
       function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}
-      function onUp(me){
-        document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);
-        markDrag();const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));
-        if(ne!==oe)onDragEnd({end:ne,ore:ne-os});
-      }
+      function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);markDrag();const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({end:ne,ore:ne-os});}
       document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);
     };
   }
@@ -357,30 +273,32 @@ function useDrag({onDragEnd,onClick}){
 }
 
 // ── SLOTS ─────────────────────────────────────────────────────────────────────
-function DraggableSlot({ev,col,numCols,color,tutorLabel,overlayActive,slotH,colW,onEdit,onClick,onDragEnd,overrideStyle}){
-  const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
-  const pad=overlayActive&&!overrideStyle?5:1;
-  const defaultStyle={
-    top,
-    left:`calc(${(col/numCols)*100}% + ${pad+1}px)`,
-    width:`calc(${100/numCols}% - ${pad*2+2}px)`,
-    height:h,
-  };
-  const posStyle=overrideStyle||defaultStyle;
+function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd({...ev,...u}),onClick});
-  return(<div ref={dragRef} style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none"}}>
+  // posOverride: {top,left,width,height} in px/strings — used when inside avviso overlay
+  const defaultTop=(ev.start-8)*slotH;
+  const defaultH=Math.max((ev.end-ev.start)*slotH,20);
+  const defLeft=`calc(${(col/numCols)*100}% + 2px)`;
+  const defW=`calc(${100/numCols}% - 4px)`;
+  const style=posOverride
+    ? {position:"absolute",...posOverride,borderRadius:5,overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none"}
+    : {position:"absolute",top:defaultTop,left:defLeft,width:defW,height:defaultH,borderRadius:5,overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none"};
+  return(<div ref={dragRef} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:"pointer",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,0.08)",borderBottom:"1px solid rgba(255,255,255,0.2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"5px 5px 0 0"}}>✏️ {ev.name}</div>
     <div onMouseDown={makeBody(ev,slotH,colW)} style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,0.9)",cursor:"grab",height:"calc(100% - 22px - 8px)"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
     <div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.15)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,0.6)",borderRadius:1}}/></div>
   </div>);
 }
+
 function AvOverlaySlot({ev,col,numCols,color,slotH}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const w=`calc(${100/numCols}% - 3px)`,left=`calc(${(col/numCols)*100}% + 1px)`;
-  return(<div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.06),border:`2px solid ${color}`,pointerEvents:"none"}}>
-    <div style={{position:"absolute",top:-16,left:-1,fontSize:9,fontWeight:700,color,background:"rgba(255,255,255,0.95)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,whiteSpace:"nowrap",overflow:"hidden",maxWidth:"95%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:20}}>{(ev.avvisoName||"").substring(0,26)}</div>
+  return(<div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
+    {/* Etichetta sopra il bordo */}
+    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"rgba(255,255,255,0.95)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:10,pointerEvents:"none"}}>{(ev.avvisoName||"").substring(0,26)}</div>
   </div>);
 }
+
 function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onClick,onDragEnd}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const w=`calc(${100/numCols}% - 3px)`,left=`calc(${(col/numCols)*100}% + 1px)`;
@@ -406,9 +324,17 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
       </div>
       {days.map(d=>{
         const wk=isWE(d),footer=footerByDay?.[d];
-        const tEvs=tutByDay?.[d]||[],ovEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
+        const tEvs=tutByDay?.[d]||[];
+        const avOvEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
         const avEvs=avByDay?.[d]||[];
-        const lT=layoutEvents(tEvs),lO=layoutEvents(ovEvs),lA=layoutEvents(avEvs);
+        const lA=layoutEvents(avEvs);
+
+        // Build shared layout for overlay: avvisi get columns, tutor slots follow same column
+        const lOv=layoutEvents(avOvEvs);
+        // Map: avvisoName -> {col, numCols} from the overlay layout
+        const avPosMap={};
+        lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.avvisoName]={col,numCols};});
+
         return(<div key={d} style={{width:colW,flexShrink:0,borderRight:"1px solid #dde"}}>
           <div style={{height:40,background:wk?"#e8e0f0":"#e8edf3",borderBottom:"1px solid #ccc",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
             <span style={{fontSize:11,color:wk?"#9b59b6":"#555"}}>{getDN(d)}</span>
@@ -416,52 +342,41 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
           </div>
           <div onClick={e=>{if(!wasDrag())onGridClick&&onGridClick(d,e);}} style={{position:"relative",height:12*slotH,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"crosshair",overflow:"visible"}}>
             {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*slotH,left:0,right:0,height:slotH,borderTop:"1px solid #f0f0f0"}}/>)}
-            {/* Overlay avvisi — layout condiviso con i tutoraggi */}
-            {overlayActive && (()=>{
-              // Costruiamo un layout unico basato sugli avvisi overlay
-              const ovEvs=avOvEvs;
-              const lOv=layoutEvents(ovEvs);
-              // Mappa avvisoName -> {col, numCols} per posizionare i tutoraggi
-              const avPosMap={};
-              lOv.forEach(({ev:oev,col:oc,numCols:onc})=>{avPosMap[oev.avvisoName]={col:oc,numCols:onc};});
-              return(<React.Fragment>
-                {/* Rettangoli avvisi */}
-                {lOv.map(({ev:oev,col:oc,numCols:onc},i)=>
-                  <AvOverlaySlot key={"ov"+i} ev={oev} col={oc} numCols={onc} color={oev.avColor} slotH={slotH}/>
-                )}
-                {/* Slot tutoraggi dentro il rettangolo del loro avviso */}
-                {tEvs.map((tev,i)=>{
+
+            {/* Avviso overlay containers */}
+            {overlayActive&&lOv.map(({ev,col,numCols},i)=>
+              <AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>
+            )}
+
+            {/* Tutor slots — inside avviso column when overlay active, free otherwise */}
+            {overlayActive
+              ? tEvs.map((tev,i)=>{
                   const pos=avPosMap[tev.name];
                   if(!pos)return null;
-                  const top=(tev.start-8)*slotH;
-                  const h=Math.max((tev.end-tev.start)*slotH,20);
-                  // Stessa colonna dell'avviso, con padding interno di 3px
-                  const pad=3;
+                  const PAD=3;
                   const colFrac=1/pos.numCols;
-                  const leftPct=pos.col*colFrac*100;
-                  const widthPct=colFrac*100;
+                  const leftPx=pos.col*colFrac*colW+PAD+1;
+                  const widthPx=colFrac*colW-PAD*2-2;
+                  const topPx=(tev.start-8)*slotH;
+                  const heightPx=Math.max((tev.end-tev.start)*slotH,20);
                   return(<DraggableSlot key={"to"+i} ev={tev} col={0} numCols={1}
                     color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel}
-                    overlayActive={true} slotH={slotH} colW={colW}
+                    slotH={slotH} colW={colW}
                     onEdit={tev._onEdit} onClick={tev._onClick}
                     onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tev.id,u)}
-                    overrideStyle={{
-                      left:`calc(${leftPct}% + ${pad+1}px)`,
-                      width:`calc(${widthPct}% - ${pad*2+2}px)`,
-                      top,height:h,
-                    }}
+                    posOverride={{top:topPx,left:leftPx,width:widthPx,height:heightPx}}
                   />);
-                })}
-              </React.Fragment>);
-            })()}
-            {/* Slot tutoraggi normali (senza overlay) */}
-            {!overlayActive && lT.map(({ev,col,numCols},i)=>
-              <DraggableSlot key={"t"+i} ev={ev} col={col} numCols={numCols}
-                color={ev._color||"#4f86c6"} tutorLabel={ev._tutorLabel}
-                overlayActive={false} slotH={slotH} colW={colW}
-                onEdit={ev._onEdit} onClick={ev._onClick}
-                onDragEnd={u=>onTutDragEnd&&onTutDragEnd(ev.id,u)}/>
-            )}
+                })
+              : tEvs.map(({...tev}=tev,i)=>
+                  <DraggableSlot key={"t"+i} ev={tEvs[i]} col={layoutEvents(tEvs).find(x=>x.ev===tEvs[i])?.col||0} numCols={layoutEvents(tEvs).find(x=>x.ev===tEvs[i])?.numCols||1}
+                    color={tEvs[i]._color||"#4f86c6"} tutorLabel={tEvs[i]._tutorLabel}
+                    slotH={slotH} colW={colW}
+                    onEdit={tEvs[i]._onEdit} onClick={tEvs[i]._onClick}
+                    onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tEvs[i].id,u)}
+                  />
+                )
+            }
+
             {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onClick={ev._onClick} onDragEnd={u=>onAvDragEnd&&onAvDragEnd(ev.avvisoId,ev.id,u)}/>)}
           </div>
           <div style={{height:20,background:wk?"#f0ebf8":"#f5f8fc",borderTop:"1px solid #dde",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -530,42 +445,11 @@ function HamburgerMenu({isAdmin,onTutor,onAnagraficaAv,onUsers,onSettings,onExpo
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   const errors=[];
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
-  const anaById={};anagraficaAv.forEach(a=>anaById[a.id]=a);
   const avByName={};anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
-
-  for(const[tid,months]of Object.entries(tutEvents)){
-    for(const[mk,evs]of Object.entries(months)){
-      for(const ev of evs){
-        if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot sull'avviso "${ev.name}" non presente in anagrafica (${mk}, giorno ${ev.day}).`});}
-      }
-    }
-  }
-  for(const[tid,months]of Object.entries(tutEvents)){
-    for(const[mk,evs]of Object.entries(months)){
-      for(const ev of evs){
-        const av=avByName[ev.name];if(!av)continue;
-        const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);
-        const t=tutors.find(x=>x.id===tid);
-        if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});
-        else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});
-      }
-    }
-  }
-  for(const[tid,months]of Object.entries(tutEvents)){
-    for(const[mk,evs]of Object.entries(months)){
-      const t=tutors.find(x=>x.id===tid);
-      for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){
-        const a=evs[i],b=evs[j];
-        if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});
-      }
-    }
-  }
-  for(const ana of anagraficaAv){
-    const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;
-    let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);
-    if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso nel calendario (${totAv}h).`});
-    if(ana.durataOre){const tot=totAv;if(tot!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${tot}h) ≠ durata da bando (${ana.durataOre}h).`});}
-  }
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot sull'avviso "${ev.name}" non presente in anagrafica (${mk}, giorno ${ev.day}).`});}}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});}}}
+  for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso nel calendario (${totAv}h).`});if(ana.durataOre){const tot=totAv;if(tot!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${tot}h) ≠ durata da bando (${ana.durataOre}h).`});}}
   return errors;
 }
 
@@ -574,10 +458,7 @@ function VerificaModal({errors,onClose,onNavigate}){
   const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
   const[pos,setPos]=useState({x:Math.max(0,window.innerWidth/2-290),y:Math.max(0,window.innerHeight/2-240)});
   const dr=useRef(false),off=useRef({x:0,y:0});
-  function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};
-    function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}
-    function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}
-    document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
+  function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
     <div style={{position:"absolute",left:pos.x,top:pos.y,width:580,maxHeight:"75vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
       <div onMouseDown={onHD} style={{background:errors.length===0?"#27ae60":"#e74c3c",color:"#fff",padding:"12px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"grab",userSelect:"none"}}>
@@ -618,18 +499,11 @@ function UsersPanel({onClose}){
         </div>
         {loading?<p style={{color:"#aaa",fontSize:13}}>Caricamento...</p>:emails.map(e=>(<div key={e.email} style={{padding:"10px 12px",borderRadius:8,border:"1px solid #eee",marginBottom:8,background:"#fafbfc"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div>
-              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}>
-                <select defaultValue={e.role} id={`role-${e.email}`} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12}}><option value="user">Utente</option><option value="admin">Amministratore</option></select>
-                <button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>Salva</button>
-                <button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button>
-              </div>:<div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div>}
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div>
+              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12}}><option value="user">Utente</option><option value="admin">Amministratore</option></select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>
+              :<div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div>}
             </div>
-            <div style={{display:"flex",gap:6}}>
-              <button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12}}>✏️</button>
-              <button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button>
-            </div>
+            <div style={{display:"flex",gap:6}}><button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button></div>
           </div>
         </div>))}
       </div>
@@ -683,45 +557,23 @@ function AnagraficaAvPanel({anagraficaAv,onSave,onClose}){
       <div style={{flex:1,overflowY:"auto",padding:"14px 16px"}}>
         {list.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso.</p>}
         {list.map((a,i)=>(<div key={a.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",background:"#fafbfc"}}>
-          <div style={{display:"flex",alignItems:"flex-start",gap:10,flex:1}}>
-            <div style={{width:14,height:14,borderRadius:4,background:a.colore||"#4f86c6",flexShrink:0,marginTop:2}}/>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{a.nome}</div>
-              {a.codice&&<div style={{fontSize:11,color:"#888"}}>Codice: {a.codice}</div>}
-              <div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>
-                {a.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.durataOre}h</span>}
-                <span style={{fontSize:11,background:hexToRgba(statoColor[a.stato]||"#888",0.12),color:statoColor[a.stato]||"#888",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.stato}</span>
-                {a.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>{a.dataInizio}{a.dataFine?` → ${a.dataFine}`:""}</span>}
-              </div>
+          <div style={{display:"flex",alignItems:"flex-start",gap:10,flex:1}}><div style={{width:14,height:14,borderRadius:4,background:a.colore||"#4f86c6",flexShrink:0,marginTop:2}}/>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{a.nome}</div>{a.codice&&<div style={{fontSize:11,color:"#888"}}>Codice: {a.codice}</div>}
+              <div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>{a.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.durataOre}h</span>}<span style={{fontSize:11,background:hexToRgba(statoColor[a.stato]||"#888",0.12),color:statoColor[a.stato]||"#888",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.stato}</span>{a.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>{a.dataInizio}{a.dataFine?` → ${a.dataFine}`:""}</span>}</div>
             </div>
           </div>
-          <div style={{display:"flex",gap:6,flexShrink:0}}>
-            <button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button>
-            <button onClick={()=>setList(p=>p.filter((_,j)=>j!==i))} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button>
-          </div>
+          <div style={{display:"flex",gap:6,flexShrink:0}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>setList(p=>p.filter((_,j)=>j!==i))} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
         </div>))}
         {editing!==null&&(<div style={{marginTop:12,borderRadius:10,border:"1px solid #4f86c6",padding:"14px",background:"#f0f6ff"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#1a3a5c"}}>{editing===-1?"➕ Nuovo Avviso":"✏️ Modifica Avviso"}</div>
-          <label style={{fontSize:12,color:"#555"}}>Nome *</label>
-          <input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={inp} placeholder="Nome avviso/progetto"/>
-          <label style={{fontSize:12,color:"#555"}}>Codice avviso</label>
-          <input value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={inp} placeholder="Es. DDG 1381/2026"/>
+          <label style={{fontSize:12,color:"#555"}}>Nome *</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={inp} placeholder="Nome avviso/progetto"/>
+          <label style={{fontSize:12,color:"#555"}}>Codice avviso</label><input value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={inp} placeholder="Es. DDG 1381/2026"/>
           <label style={{fontSize:12,color:"#555"}}>Colore</label>
           <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>{PALETTE.map(c=><div key={c} onClick={()=>setForm(f=>({...f,colore:c}))} style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:form.colore===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Durata da bando (ore)</label><input type="number" min="0" value={form.durataOre||""} onChange={e=>setForm(f=>({...f,durataOre:e.target.value===""?"":Number(e.target.value)}))} style={inp} placeholder="Es. 400"/></div>
-            <div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Stato</label><select value={form.stato||"In corso"} onChange={e=>setForm(f=>({...f,stato:e.target.value}))} style={inp}>{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data inizio</label><input value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))} style={inp} placeholder="Es. 01/01/2026"/></div>
-            <div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data fine</label><input value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))} style={inp} placeholder="Es. 31/12/2026"/></div>
-          </div>
-          <label style={{fontSize:12,color:"#555"}}>Note</label>
-          <textarea value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} style={{...inp,height:60,resize:"vertical"}} placeholder="Note aggiuntive..."/>
-          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-            <button onClick={()=>setEditing(null)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-            <button onClick={saveForm} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>Salva</button>
-          </div>
+          <div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Durata da bando (ore)</label><input type="number" min="0" value={form.durataOre||""} onChange={e=>setForm(f=>({...f,durataOre:e.target.value===""?"":Number(e.target.value)}))} style={inp} placeholder="Es. 400"/></div><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Stato</label><select value={form.stato||"In corso"} onChange={e=>setForm(f=>({...f,stato:e.target.value}))} style={inp}>{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div></div>
+          <div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data inizio</label><input value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))} style={inp} placeholder="Es. 01/01/2026"/></div><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data fine</label><input value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))} style={inp} placeholder="Es. 31/12/2026"/></div></div>
+          <label style={{fontSize:12,color:"#555"}}>Note</label><textarea value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} style={{...inp,height:60,resize:"vertical"}} placeholder="Note aggiuntive..."/>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button onClick={()=>setEditing(null)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button><button onClick={saveForm} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>Salva</button></div>
         </div>)}
         {editing===null&&<button onClick={()=>startEdit(-1)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:8,border:"2px dashed #4f86c6",background:"transparent",color:"#4f86c6",cursor:"pointer",fontWeight:600,fontSize:13}}>+ Aggiungi avviso/progetto</button>}
       </div>
@@ -740,26 +592,13 @@ function RiepilogoAvPanel({avvisi,anagraficaAv,onClose}){
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Riepilogo Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {anagraficaAv.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso in anagrafica.</p>}
-        {anagraficaAv.map(ana=>{
-          const av=avById[ana.id];const tot=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;
-          return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-            <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"8px 12px"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span></div>
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  {ana.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{ana.durataOre}h da bando</span>}
-                  <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} tot.</span>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                <span style={{fontSize:11,color:statoColor[ana.stato]||"#888",fontWeight:600}}>{ana.stato}</span>
-                {ana.codice&&<span style={{fontSize:11,color:"#888"}}>· {ana.codice}</span>}
-                {ana.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>· {ana.dataInizio}{ana.dataFine?` → ${ana.dataFine}`:""}</span>}
-              </div>
-            </div>
-            <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento nel calendario.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
-          </div>);
-        })}
+        {anagraficaAv.map(ana=>{const av=avById[ana.id];const tot=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+          <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"8px 12px"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{ana.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{ana.durataOre}h da bando</span>}<span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} tot.</span></div></div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><span style={{fontSize:11,color:statoColor[ana.stato]||"#888",fontWeight:600}}>{ana.stato}</span>{ana.codice&&<span style={{fontSize:11,color:"#888"}}>· {ana.codice}</span>}{ana.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>· {ana.dataInizio}{ana.dataFine?` → ${ana.dataFine}`:""}</span>}</div>
+          </div>
+          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento nel calendario.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
+        </div>);})}
       </div>
     </ResizablePanel>
   </div>);
@@ -774,22 +613,13 @@ function TutoraggiPanel({tutors,tutEvents,anagraficaAv,onClose}){
       <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📌 Riepilogo Tutoraggi</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {tutors.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
-        {tutors.map(t=>{
-          const td=tutEvents[t.id]||{};let tot=0;
-          const mes=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));
-          for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);
-          if(mes.length===0)return null;
+        {tutors.map(t=>{const td=tutEvents[t.id]||{};let tot=0;const mes=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);if(mes.length===0)return null;
           return(<div key={t.id} style={{marginBottom:16,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
             <div style={{background:hexToRgba(t.color||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div>
               <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} totali</span>
             </div>
-            <div style={{padding:"8px 12px"}}>
-              {mes.map(([mk,evs])=>{const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fo(mo)}</span></div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div>
-              </div>);})}
-            </div>
+            <div style={{padding:"8px 12px"}}>{mes.map(([mk,evs])=>{const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fo(mo)}</span></div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div></div>);})}</div>
           </div>);
         })}
       </div>
@@ -800,24 +630,13 @@ function TutoraggiPanel({tutors,tutEvents,anagraficaAv,onClose}){
 function RiepilogoPanel({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,onClose}){
   const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
-  const anaById={};anagraficaAv.forEach(a=>anaById[a.id]=a);
   function getTutOreAnnoPerAv(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
-  function getOreFiltered(tId,avName){
-    let t=0;const ana=anagraficaAv.find(a=>a.nome===avName);if(!ana)return 0;
-    const av=avById[ana.id];if(!av)return 0;
-    const td=tutEvents[tId]||{};
-    for(const[mk,tevs]of Object.entries(td)){
-      if(timeMode==="mese"&&mk!==currentMonthKey)continue;
-      for(const tev of tevs){if(tev.name!==avName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)t+=en-s;}}
-    }
-    return t;
-  }
+  function getOreFiltered(tId,avName){let t=0;const ana=anagraficaAv.find(a=>a.nome===avName);if(!ana)return 0;const av=avById[ana.id];if(!av)return 0;const td=tutEvents[tId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)t+=en-s;}}}return t;}
   function getAvOre(anaId){const av=avById[anaId];if(!av)return 0;if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
   function getTotOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
   function getAvNamesForTut(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)n.add(ev.name);}return[...n];}
   function getTutsForAv(avName){return tutors.filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;});}
-  const fo=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
-  const fp=p=>`${Math.round(p)}%`;
+  const fo=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;const fp=p=>`${Math.round(p)}%`;
   const bSt=a=>({padding:"5px 14px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:a?"#4f86c6":"#f0f4f8",color:a?"#fff":"#555"});
   const pctBadge=(oreAnno,durataOre)=>{if(!durataOre)return null;const p=oreAnno/durataOre*100;return(<span style={{fontSize:10,padding:"1px 6px",borderRadius:8,background:p>100?"#ffeaea":p>=80?"#e8f8ee":"#f0f4f8",color:p>100?"#c0392b":p>=80?"#27ae60":"#888",fontWeight:600}} title="% sul totale annuo">{fp(p)} annuo</span>);};
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
@@ -829,23 +648,14 @@ function RiepilogoPanel({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
       </div>
       <div style={{padding:"6px 16px",background:"#f8f9ff",borderBottom:"1px solid #eee",fontSize:11,color:"#888"}}>💡 % = quota annua del tutor sulla durata da bando</div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {viewMode==="tutor"&&tutors.map(t=>{
-          const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;
-          return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-            <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6"}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fo(tot)}</span></div>
-            <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{const ana=anagraficaAv.find(a=>a.nome===nm);const ore=getOreFiltered(t.id,nm);const oreA=getTutOreAnnoPerAv(t.id,nm);return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><span style={{color:"#555"}}>{nm}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana?.durataOre)}</div></div>);})}</div>
-          </div>);
-        })}
-        {viewMode==="avviso"&&anagraficaAv.map(ana=>{
-          const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);
-          return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
-            <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span>{ana.durataOre&&<span style={{fontSize:11,color:"#888",fontWeight:400}}>· {ana.durataOre}h da bando</span>}</div>
-              <span style={{fontWeight:700,color:"#1a3a5c",flexShrink:0}}>{fo(avTot)}</span>
-            </div>
-            <div style={{padding:"8px 14px"}}>{tuts.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tuts.map(t=>{const ore=getOreFiltered(t.id,ana.nome);const oreA=getTutOreAnnoPerAv(t.id,ana.nome);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana.durataOre)}</div></div>);})}</div>
-          </div>);
-        })}
+        {viewMode==="tutor"&&tutors.map(t=>{const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+          <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6"}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fo(tot)}</span></div>
+          <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{const ana=anagraficaAv.find(a=>a.nome===nm);const ore=getOreFiltered(t.id,nm);const oreA=getTutOreAnnoPerAv(t.id,nm);return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><span style={{color:"#555"}}>{nm}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana?.durataOre)}</div></div>);})}</div>
+        </div>);})}
+        {viewMode==="avviso"&&anagraficaAv.map(ana=>{const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+          <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span>{ana.durataOre&&<span style={{fontSize:11,color:"#888",fontWeight:400}}>· {ana.durataOre}h da bando</span>}</div><span style={{fontWeight:700,color:"#1a3a5c",flexShrink:0}}>{fo(avTot)}</span></div>
+          <div style={{padding:"8px 14px"}}>{tuts.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tuts.map(t=>{const ore=getOreFiltered(t.id,ana.nome);const oreA=getTutOreAnnoPerAv(t.id,ana.nome);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana.durataOre)}</div></div>);})}</div>
+        </div>);})}
       </div>
     </ResizablePanel>
   </div>);
@@ -858,23 +668,12 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
   const[saved,setSaved]=useState(false);
   const[testG,setTestG]=useState(null);const[testO,setTestO]=useState(null);
   const[tstgG,setTstgG]=useState(false);const[tstgO,setTstgO]=useState(false);
-  const[cdG,setCdG]=useState(0);const[cdO,setCdO]=useState(0);
-  const CD=60;
+  const[cdG,setCdG]=useState(0);const[cdO,setCdO]=useState(0);const CD=60;
   useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
   useEffect(()=>{if(cdO<=0)return;const t=setInterval(()=>setCdO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdO]);
   async function handleSave(){await onSave({aiProvider,geminiApiKey:geminiKey,openaiApiKey:openaiKey});setSaved(true);setTimeout(()=>setSaved(false),2000);}
-  async function testGemini(){
-    if(!geminiKey){setTestG("❌ Chiave non inserita");return;}
-    setTstgG(true);setTestG(null);
-    try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});if(r.ok)setTestG("✅ Connessione riuscita");else{const msg=r.status===429?"❌ Quota esaurita (429)":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}`;setTestG(msg);}}catch{setTestG("❌ Errore di rete");}
-    setTstgG(false);setCdG(CD);
-  }
-  async function testOpenai(){
-    if(!openaiKey){setTestO("❌ Chiave non inserita");return;}
-    setTstgO(true);setTestO(null);
-    try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});if(r.ok)setTestO("✅ Connessione riuscita");else{const msg=r.status===429?"❌ Quota esaurita (429)":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}`;setTestO(msg);}}catch{setTestO("❌ Errore di rete");}
-    setTstgO(false);setCdO(CD);
-  }
+  async function testGemini(){if(!geminiKey){setTestG("❌ Chiave non inserita");return;}setTstgG(true);setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});if(r.ok)setTestG("✅ Connessione riuscita");else{const msg=r.status===429?"❌ Quota esaurita (429)":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}`;setTestG(msg);}}catch{setTestG("❌ Errore di rete");}setTstgG(false);setCdG(CD);}
+  async function testOpenai(){if(!openaiKey){setTestO("❌ Chiave non inserita");return;}setTstgO(true);setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});if(r.ok)setTestO("✅ Connessione riuscita");else{const msg=r.status===429?"❌ Quota esaurita (429)":r.status===401?"❌ Chiave non valida (401)":`❌ Errore ${r.status}`;setTestO(msg);}}catch{setTestO("❌ Errore di rete");}setTstgO(false);setCdO(CD);}
   const inp={display:"block",width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13,fontFamily:"monospace",marginTop:4};
   const pBtn=(v,c)=>({flex:1,padding:"9px 0",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,borderRadius:8,background:aiProvider===v?c:"#f0f4f8",color:aiProvider===v?"#fff":"#555"});
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
@@ -899,7 +698,7 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
         {isAdmin&&<div style={{padding:16,background:"#fff8f0",borderRadius:12,border:"1px solid #f0c080"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#c0392b",marginBottom:12}}>🛠️ Strumenti Admin</div>
           <button onClick={onLoadDemo} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600,marginBottom:8,fontSize:13}}>🎲 Carica dati demo</button>
-          <p style={{fontSize:11,color:"#888",marginBottom:16}}>Crea anagrafica tutor, anagrafica avvisi e sessioni di esempio. Sovrascrive i dati esistenti.</p>
+          <p style={{fontSize:11,color:"#888",marginBottom:16}}>Crea anagrafica tutor, anagrafica avvisi e sessioni di esempio.</p>
           <button onClick={onClearDb} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#e74c3c",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>🗑️ Cancella database</button>
           <p style={{fontSize:11,color:"#888",marginTop:6}}>Operazione irreversibile.</p>
         </div>}
@@ -914,143 +713,39 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
 
 // ── AI PANEL ──────────────────────────────────────────────────────────────────
 function AiPanel({tutors,anagraficaAv,settings,user,isAdmin,onAddTut,onAddAv,onOpenTutorPanel,onOpenAvPanel,onClose}){
-  const[step,setStep]=useState("start");
-  const[importType,setImportType]=useState(null);
-  const[selTutor,setSelTutor]=useState("");
-  const[selAv,setSelAv]=useState("");
-  const[pending,setPending]=useState([]);
-  const[ambig,setAmbig]=useState([]);
-  const[loading,setLoading]=useState(false);
+  const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);
   const[messages,setMessages]=useState([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
   const phrase=useRef(FUNNY_PHRASES[Math.floor(Math.random()*FUNNY_PHRASES.length)]).current;
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-
-  function startImport(type){
-    setImportType(type);
-    if(type==="tutoraggio"){
-      if(!tutors.length){addMsg({role:"ai",text:"⚠️ Nessun tutor in anagrafica. Aggiungine uno prima.",showOpenTutor:true});return;}
-      addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});
-    } else {
-      if(!anagraficaAv.length){addMsg({role:"ai",text:"⚠️ Nessun avviso in anagrafica. Aggiungine uno prima.",showOpenAv:true});return;}
-      addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});
-    }
-  }
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"⚠️ Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"⚠️ Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento.",showAvSel:true});}
-
-  async function onFile(e){
-    const file=e.target.files[0];if(!file)return;e.target.value="";
-    if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}
-    if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}
-    addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});
-    try{
-      const res=await analyzeDoc(file);
-      setMessages(p=>p.filter(m=>!m.isLoading));
-      if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}
-      else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}
-      else{addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}
-    }catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}
-    setLoading(false);
-  }
-
-  async function analyzeDoc(file){
-    const prov=settings.aiProvider||"gemini";
-    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});
-    const mime=file.type||"application/octet-stream";
-    const prompt=`Estrai appuntamenti da questo documento. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy (gen-26..dic-26), start/end decimali, ore=durata.`;
-    if(prov==="gemini"){
-      if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");
-      const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");
-      const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});
-      if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}
-      const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");
-    } else {
-      if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");
-      const isImg=mime.startsWith("image/");
-      const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];
-      const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});
-      if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);
-      const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");
-    }
-  }
+  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file);setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function analyzeDoc(file){const prov=settings.aiProvider||"gemini";const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});const mime=file.type||"application/octet-stream";const prompt=`Estrai appuntamenti da questo documento. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");const isImg=mime.startsWith("image/");const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");}}
   function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
-
-  async function onConfirm(){
-    setLoading(true);
-    try{
-      if(importType==="tutoraggio"){
-        const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";
-        for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);
-      } else {
-        const ana=anagraficaAv.find(a=>a.id===selAv);
-        const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));
-        await onAddAv({id:selAv,events});
-      }
-      setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});
-    }catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}
-    setLoading(false);
-  }
-
-  function renderMsg(msg,idx){
-    const isAi=msg.role==="ai";
-    return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
-      <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"#f0f4f8":"#4f86c6",color:isAi?"#1a3a5c":"#fff",fontSize:13,lineHeight:1.5}}>{msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
-      {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label});startImport(b.value);}} style={{padding:"7px 14px",borderRadius:20,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>{b.label}</button>)}</div>}
-      {msg.showOpenTutor&&<button onClick={onOpenTutorPanel} style={{marginTop:6,padding:"7px 14px",borderRadius:10,border:"2px solid #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>👤 Apri Anagrafica Tutor</button>}
-      {msg.showOpenAv&&<button onClick={onOpenAvPanel} style={{marginTop:6,padding:"7px 14px",borderRadius:10,border:"2px solid #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📋 Apri Anagrafica Avvisi</button>}
-      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}>
-        <button onClick={proceedTutor} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button>
-        <button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button>
-      </div>}
-      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}>
-        <button onClick={proceedAv} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button>
-        <button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button>
-      </div>}
-      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}>
-          <option value="">— Seleziona tutor —</option>
-          {tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
-        </select>
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}>
-          <option value="">— Seleziona avviso/progetto —</option>
-          {anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-        </select>
-        <button onClick={()=>fileRef.current.click()} disabled={!selTutor||!selAv} style={{width:"100%",padding:"8px",borderRadius:10,border:"2px dashed #4f86c6",background:(!selTutor||!selAv)?"#f5f5f5":"#f0f6ff",color:(!selTutor||!selAv)?"#aaa":"#4f86c6",cursor:(!selTutor||!selAv)?"not-allowed":"pointer",fontWeight:700,fontSize:12}}>📎 Carica documento</button>
-      </div>}
-      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}>
-          <option value="">— Seleziona avviso/progetto —</option>
-          {anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-        </select>
-        <button onClick={()=>fileRef.current.click()} disabled={!selAv} style={{width:"100%",padding:"8px",borderRadius:10,border:"2px dashed #4f86c6",background:!selAv?"#f5f5f5":"#f0f6ff",color:!selAv?"#aaa":"#4f86c6",cursor:!selAv?"not-allowed":"pointer",fontWeight:700,fontSize:12}}>📎 Carica documento</button>
-      </div>}
-      {msg.showUpload&&<button onClick={()=>fileRef.current.click()} style={{marginTop:6,padding:"8px 16px",borderRadius:10,border:"2px dashed #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📎 Carica file</button>}
-      {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}>
-        <div style={{maxHeight:130,overflowY:"auto",border:"1px solid #dde",borderRadius:8,background:"#fff",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid #f0f0f0",fontSize:11}}><span style={{color:"#555"}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{ev.ore}h</span></div>)}</div>
-        {step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"#2ecc71",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>}
-      </div>}
-      {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"#555",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
-    </div>);
-  }
-
+  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  function renderMsg(msg,idx){const isAi=msg.role==="ai";return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
+    <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"#f0f4f8":"#4f86c6",color:isAi?"#1a3a5c":"#fff",fontSize:13,lineHeight:1.5}}>{msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
+    {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label});startImport(b.value);}} style={{padding:"7px 14px",borderRadius:20,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>{b.label}</button>)}</div>}
+    {msg.showOpenTutor&&<button onClick={onOpenTutorPanel} style={{marginTop:6,padding:"7px 14px",borderRadius:10,border:"2px solid #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>👤 Apri Anagrafica Tutor</button>}
+    {msg.showOpenAv&&<button onClick={onOpenAvPanel} style={{marginTop:6,padding:"7px 14px",borderRadius:10,border:"2px solid #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📋 Apri Anagrafica Avvisi</button>}
+    {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
+    {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
+    {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}><select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona tutor —</option>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select><select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select><button onClick={()=>fileRef.current.click()} disabled={!selTutor||!selAv} style={{width:"100%",padding:"8px",borderRadius:10,border:"2px dashed #4f86c6",background:(!selTutor||!selAv)?"#f5f5f5":"#f0f6ff",color:(!selTutor||!selAv)?"#aaa":"#4f86c6",cursor:(!selTutor||!selAv)?"not-allowed":"pointer",fontWeight:700,fontSize:12}}>📎 Carica documento</button></div>}
+    {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}><select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select><button onClick={()=>fileRef.current.click()} disabled={!selAv} style={{width:"100%",padding:"8px",borderRadius:10,border:"2px dashed #4f86c6",background:!selAv?"#f5f5f5":"#f0f6ff",color:!selAv?"#aaa":"#4f86c6",cursor:!selAv?"not-allowed":"pointer",fontWeight:700,fontSize:12}}>📎 Carica documento</button></div>}
+    {msg.showUpload&&<button onClick={()=>fileRef.current.click()} style={{marginTop:6,padding:"8px 16px",borderRadius:10,border:"2px dashed #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📎 Carica file</button>}
+    {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid #dde",borderRadius:8,background:"#fff",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid #f0f0f0",fontSize:11}}><span style={{color:"#555"}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"#2ecc71",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>}</div>}
+    {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"#555",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
+  </div>);}
   return(<div style={{position:"fixed",bottom:0,left:0,width:"33vw",minWidth:320,zIndex:500,background:"#fff",boxShadow:"4px -4px 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",height:"44vh",borderRadius:"0 14px 0 0",border:"2px solid #1a3a5c",borderBottom:"none",borderLeft:"none"}}>
     <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 14px",display:"flex",flexDirection:"column",gap:5,flexShrink:0,borderRadius:"0 12px 0 0"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <span style={{fontWeight:800,fontSize:16}}>🤖 Ciao, {uname}!</span>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",flexShrink:0,lineHeight:1}}>✕</button>
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <span style={{fontWeight:700,fontSize:13,opacity:0.92,flex:1,lineHeight:1.35}}>{phrase}</span>
-        {isAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"3px 10px",cursor:"not-allowed",fontSize:12,fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}} title="In arrivo 🚀">💪 God Mode</button>}
-      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontWeight:800,fontSize:16}}>🤖 Ciao, {uname}!</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:700,fontSize:13,opacity:0.92,flex:1,lineHeight:1.35}}>{phrase}</span>{isAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"3px 10px",cursor:"not-allowed",fontSize:12,fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}} title="In arrivo 🚀">💪 God Mode</button>}</div>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column"}}>
-      {messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/>
-    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column"}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
     <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.csv,.doc,.docx,.txt" style={{display:"none"}} onChange={onFile}/>
   </div>);
 }
@@ -1065,87 +760,47 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
   const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
   const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
   const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
-  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(avvisi[0]?.id||anagraficaAv[0]?.id||""));
+  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(anagraficaAv[0]?.id||""));
   const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
   const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
   const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
   const[avEnd,setAvEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.end:(prefill?.end||13)));
   const inp={display:"block",width:"100%",marginBottom:10,padding:"6px 8px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   const tBtn=(t,l)=><button onClick={()=>setTab(t)} style={{flex:1,padding:"8px 0",border:"none",cursor:"pointer",fontWeight:600,fontSize:13,borderRadius:6,background:tab===t?"#4f86c6":"#f0f4f8",color:tab===t?"#fff":"#555"}}>{l}</button>;
-  const selT=tutors.find(t=>t.id===tutTutor);
-  const selAnaT=anagraficaAv.find(a=>a.id===tutAvId);
-  const selAnaAv=anagraficaAv.find(a=>a.id===avId);
-
+  const selT=tutors.find(t=>t.id===tutTutor);const selAnaT=anagraficaAv.find(a=>a.id===tutAvId);const selAnaAv=anagraficaAv.find(a=>a.id===avId);
   return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center"}}>
     <div style={{background:"#fff",borderRadius:14,padding:24,width:390,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",maxHeight:"92vh",overflowY:"auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><span style={{fontWeight:700,fontSize:15}}>{isEdit?"✏️ Modifica":"➕ Aggiungi"}</span><button onClick={onClose} style={{background:"none",border:"none",fontSize:18,cursor:"pointer",color:"#888"}}>✕</button></div>
       {!isEdit&&<div style={{display:"flex",gap:6,marginBottom:16}}>{tBtn("tutoraggio","📌 Tutoraggio")}{tBtn("avviso","📋 Avviso/Progetto")}</div>}
-
       {tab==="tutoraggio"&&(<>
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Tutor</label>
-        {tutors.length===0
-          ?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun tutor. <button onClick={()=>{onClose();onOpenTutorPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-          :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenTutorPanel();}else setTutTutor(e.target.value);}} style={inp}>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
+        {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun tutor. <button onClick={()=>{onClose();onOpenTutorPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenTutorPanel();}else setTutTutor(e.target.value);}} style={inp}>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
         {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:hexToRgba(selT.color||"#4f86c6",0.12)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"#4f86c6"}}/><span style={{fontSize:12,color:"#555"}}>Colore tutor</span></div>}
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
-        {anagraficaAv.length===0
-          ?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-          :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setTutAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
-        {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:hexToRgba(selAnaT.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",0.3)}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><div style={{width:12,height:12,borderRadius:3,background:selAnaT.colore||"#4f86c6"}}/><span style={{fontSize:12,fontWeight:600,color:"#1a3a5c"}}>{selAnaT.nome}</span></div>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{selAnaT.durataOre&&<span style={{fontSize:11,color:"#888"}}>Durata: {selAnaT.durataOre}h</span>}{selAnaT.stato&&<span style={{fontSize:11,color:"#888"}}>Stato: {selAnaT.stato}</span>}</div>
-        </div>}
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setTutAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:hexToRgba(selAnaT.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",0.3)}`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><div style={{width:12,height:12,borderRadius:3,background:selAnaT.colore||"#4f86c6"}}/><span style={{fontSize:12,fontWeight:600,color:"#1a3a5c"}}>{selAnaT.nome}</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{selAnaT.durataOre&&<span style={{fontSize:11,color:"#888"}}>Durata: {selAnaT.durataOre}h</span>}{selAnaT.stato&&<span style={{fontSize:11,color:"#888"}}>Stato: {selAnaT.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:14}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&<button onClick={()=>{if(confirm("Eliminare?"))onDeleteTut(editTarget.ev.id);onClose();}} style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
-          <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
-            <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-            <button onClick={()=>{
-              const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);
-              if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;
-              const ana=anagraficaAv.find(a=>a.id===tutAvId);
-              const mk=MONTHS[tutMonthIdx].key;
-              if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);
-              else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);
-              onClose();
-            }} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
-          </div>
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
-
       {tab==="avviso"&&(<>
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
-        {anagraficaAv.length===0
-          ?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-          :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
-        {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:8,background:hexToRgba(selAnaAv.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",0.3)}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><div style={{width:14,height:14,borderRadius:3,background:selAnaAv.colore||"#4f86c6"}}/><span style={{fontSize:13,fontWeight:700,color:"#1a3a5c"}}>{selAnaAv.nome}</span></div>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            {selAnaAv.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"2px 8px",fontWeight:600}}>{selAnaAv.durataOre}h da bando</span>}
-            {selAnaAv.stato&&<span style={{fontSize:11,background:"#f0f0f0",color:"#555",borderRadius:6,padding:"2px 8px"}}>{selAnaAv.stato}</span>}
-            {selAnaAv.codice&&<span style={{fontSize:11,color:"#888"}}>{selAnaAv.codice}</span>}
-          </div>
-          <p style={{fontSize:11,color:"#aaa",marginTop:6}}>Colore e durata dall'anagrafica.</p>
-        </div>}
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:8,background:hexToRgba(selAnaAv.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",0.3)}`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><div style={{width:14,height:14,borderRadius:3,background:selAnaAv.colore||"#4f86c6"}}/><span style={{fontSize:13,fontWeight:700,color:"#1a3a5c"}}>{selAnaAv.nome}</span></div><div style={{display:"flex",gap:10,flexWrap:"wrap"}}>{selAnaAv.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"2px 8px",fontWeight:600}}>{selAnaAv.durataOre}h da bando</span>}{selAnaAv.stato&&<span style={{fontSize:11,background:"#f0f0f0",color:"#555",borderRadius:6,padding:"2px 8px"}}>{selAnaAv.stato}</span>}{selAnaAv.codice&&<span style={{fontSize:11,color:"#888"}}>{selAnaAv.codice}</span>}</div><p style={{fontSize:11,color:"#aaa",marginTop:6}}>Colore e durata dall'anagrafica.</p></div>}
         <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
         {!isEdit&&<p style={{fontSize:11,color:"#888",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&<button onClick={()=>{if(confirm("Eliminare?"))onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}} style={{padding:"7px 14px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:12}}>🗑️ Elimina</button>}
-          <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
-            <button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
-            <button onClick={()=>{
-              const s=timeStrToH(avStart),e=timeStrToH(avEnd);
-              if(e<=s||!avId||avId==="__open__")return;
-              const ana=anagraficaAv.find(a=>a.id===avId);
-              const mk=MONTHS[avMonthIdx].key;
-              const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};
-              if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,evData);
-              else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});
-              onClose();
-            }} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button>
-          </div>
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} style={{padding:"7px 16px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaAv.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,evData);else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} style={{padding:"7px 16px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
     </div>
@@ -1154,79 +809,19 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App({user}){
-  const[view,setView]=useState("tutoraggio");
-  const[tutors,setTutors]=useState([]);
-  const[activeTutorIds,setActiveTutorIds]=useState(null);
-  const[monthIdx,setMonthIdx]=useState(2);
-  const[avvisi,setAvvisi]=useState([]);
-  const[anagraficaAv,setAnagraficaAv]=useState([]);
-  const[activeAvvisi,setActiveAvvisi]=useState(new Set());
-  const[tutEvents,setTutEvents]=useState({});
-  const tutEvRef=useRef({});
-  const avRef=useRef([]);
-  const anaRef=useRef([]);
-  const[settings,setSettings]=useState({});
-  const[showOvr,setShowOvr]=useState(false);
-  const[zoomIdx,setZoomIdx]=useState(2);
-  const[calView,setCalView]=useState("day");
-  const[weekStart,setWeekStart]=useState(null);
-  const[modal,setModal]=useState(null);
-  const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);
-  const[showTutPanel2,setShowTutPanel2]=useState(false);
-  const[showTutPanel,setShowTutPanel]=useState(false);
-  const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);
-  const[showUsers,setShowUsers]=useState(false);
-  const[showRiep,setShowRiep]=useState(false);
-  const[showSettings,setShowSettings]=useState(false);
-  const[showAi,setShowAi]=useState(false);
-  const[showVerifica,setShowVerifica]=useState(false);
-  const[verificaErr,setVerificaErr]=useState([]);
-  const[isAdmin,setIsAdmin]=useState(false);
-  const[loading,setLoading]=useState(true);
-  const[importErr,setImportErr]=useState("");
+  const[view,setView]=useState("tutoraggio");const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(2);const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
+  const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
+  const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showUsers,setShowUsers]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showSettings,setShowSettings]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);const[verificaErr,setVerificaErr]=useState([]);const[isAdmin,setIsAdmin]=useState(false);const[loading,setLoading]=useState(true);const[importErr,setImportErr]=useState("");
   const importRef=useRef();
-  const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];
-  const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];
-  const month=MONTHS[monthIdx];
+  const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
 
-  useEffect(()=>{
-    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{
-      setAvvisi(a);avRef.current=a;
-      setAnagraficaAv(an);anaRef.current=an;
-      setTutors(t);
-      setTutEvents(te);tutEvRef.current=te;
-      setSettings(s);
-      setActiveAvvisi(new Set(a.map(x=>x.id)));
-      setLoading(false);
-    });
-    db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdmin(true);}).catch(()=>{});
-  },[]);
+  useEffect(()=>{fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdmin(true);}).catch(()=>{});},[]);
+  useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
 
-  useEffect(()=>{
-    const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;
-    const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));
-  },[monthIdx]);
-
-  function getVisibleDays(){
-    if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);
-    if(calView==="week"&&weekStart){
-      const m=MONTHS[monthIdx];const days=[];
-      for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}
-      return days.length?days:Array.from({length:month.days},(_,i)=>i+1);
-    }
-    return Array.from({length:month.days},(_,i)=>i+1);
-  }
-  function navWeek(dir){
-    setWeekStart(prev=>{
-      const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);
-      const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));
-      const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));
-      if(d<fmon)return fmon;if(d>lmon)return lmon;return d;
-    });
-  }
+  function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
+  function navWeek(dir){setWeekStart(prev=>{const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));if(d<fmon)return fmon;if(d>lmon)return lmon;return d;});}
   const vdays=getVisibleDays();
 
-  // Build derived data
   const allTEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
   const visTEvs=activeTutorIds===null?allTEvs:allTEvs.filter(e=>activeTutorIds.has(e.tutorId));
   const avNamesInMonth=new Set(allTEvs.map(e=>e.name));
@@ -1251,86 +846,25 @@ function App({user}){
   function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
-  // ── Mutations (always via refs to avoid stale closures) ──
-  async function addTutoraggio(ev,monthKey){
-    const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;
-    const cur=tutEvRef.current;
-    const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};
-    tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);
-  }
-  async function editTutoraggio(evId,updated){
-    const cur=JSON.parse(JSON.stringify(tutEvRef.current));
-    for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}
-  }
-  async function deleteTutoraggio(evId){
-    const cur=JSON.parse(JSON.stringify(tutEvRef.current));
-    for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}
-  }
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){
-    const avId=existingId||newId||`av-${Date.now()}`;
-    if(events&&events.length>0){
-      const existing=avRef.current.find(a=>a.id===avId);
-      const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];
-      avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);return;
-    }
-    const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};
-    const existing=avRef.current.find(a=>a.id===avId);
-    let upd;
-    if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);
-    else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}
-    avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);
-  }
-  async function editAvviso(avId,evId,evData){
-    const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});
-    avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);
-  }
-  async function deleteAvviso(avId,evId){
-    const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});
-    avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);
-  }
+  async function addTutoraggio(ev,monthKey){const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);}
+  async function editTutoraggio(evId,updated){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}}
+  async function deleteTutoraggio(evId){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}}
+  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
+  async function editAvviso(avId,evId,evData){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
+  async function deleteAvviso(avId,evId){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
   async function handleSaveTutors(list){setTutors(list);setActiveTutorIds(null);setShowTutPanel(false);await fsSaveTutors(list);}
   async function handleSaveAna(list){anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
   async function handleTutDragEnd(evId,u){await editTutoraggio(evId,u);}
   async function handleAvDragEnd(avId,evId,u){await editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}
-  async function handleLoadDemo(){
-    if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;
-    const{tutors:t,anagraficaAv:an,avvisi:a,tutEvents:te}=generateDemoData();
-    setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents(te);tutEvRef.current=te;
-    setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
-    await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);
-    for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
-    setShowSettings(false);alert("Dati demo caricati!");
-  }
-  async function handleClearDb(){
-    if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;
-    if(!confirm("Sei sicuro? Operazione irreversibile."))return;
-    await fsClearAll();
-    setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];
-    setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);
-    setShowSettings(false);alert("Database svuotato.");
-  }
-  async function handleImport(e){
-    const file=e.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=async ev=>{
-      try{
-        const raw=JSON.parse(ev.target.result);
-        const a=raw.avvisi||[],t=raw.tutors||[],te=raw.tutEvents||{},an=raw.anagraficaAv||[];
-        setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;
-        setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);setImportErr("");
-        await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);
-        for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
-      }catch(err){setImportErr("File non valido: "+err.message);}
-    };
-    reader.readAsText(file);e.target.value="";
-  }
+  async function handleLoadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;const{tutors:t,anagraficaAv:an,avvisi:a,tutEvents:te}=generateDemoData();setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);setShowSettings(false);alert("Dati demo caricati!");}
+  async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setShowSettings(false);alert("Database svuotato.");}
+  async function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const a=raw.avvisi||[],t=raw.tutors||[],te=raw.tutEvents||{},an=raw.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);setImportErr("");await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}catch(err){setImportErr("File non valido: "+err.message);}};reader.readAsText(file);e.target.value="";}
   function handleVerifica(){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerifica(true);}
   function onVerificaNav(mk){const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0)setMonthIdx(idx);}
 
   const vBtn=(v,l)=>({padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,background:view===v?"#fff":"rgba(255,255,255,0.15)",color:view===v?"#1a3a5c":"#fff",boxShadow:view===v?"0 2px 8px rgba(0,0,0,0.15)":"none",transition:"all .15s"});
   const hBtn=(x={})=>({background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600,...x});
-
   if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"#888"}}>⏳ Caricamento...</div>;
 
   return(<React.Fragment>
@@ -1338,19 +872,13 @@ function App({user}){
       <HamburgerMenu isAdmin={isAdmin} onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onUsers={()=>setShowUsers(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents,anagraficaAv)} onImport={()=>importRef.current.click()} importRef={importRef}/>
       <input ref={importRef} type="file" accept=".json" style={{display:"none"}} onChange={handleImport}/>
       <span style={{fontWeight:700,fontSize:16}}>📅</span>
-      <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}>
-        <button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button>
-        <button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button>
-      </div>
+      <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}><button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button><button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button></div>
       <button onClick={()=>setShowTutPanel2(true)} style={hBtn()}>📌 Riepilogo Tutoraggi</button>
       <button onClick={()=>setShowRiepilogoAv(true)} style={hBtn()}>📋 Riepilogo Avvisi/Progetti</button>
       <button onClick={()=>setShowRiep(true)} style={hBtn()}>📊 Riepilogo Ore</button>
       <button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>
       <button onClick={handleVerifica} style={hBtn({background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)"})}>✅ Verifica</button>
-      <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:12,opacity:0.6}}>{user?.email}</span>
-        <button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button>
-      </div>
+      <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,opacity:0.6}}>{user?.email}</span><button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button></div>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===0?0.4:1}}>‹</button>
         <span style={{fontWeight:600,minWidth:150,textAlign:"center"}}>{month.label}</span>
@@ -1358,13 +886,11 @@ function App({user}){
         <button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} style={{background:"#4f86c6",border:"none",color:"#fff",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontWeight:600}}>+ Aggiungi</button>
       </div>
     </div>
-
     {importErr&&<div style={{background:"#ffeaea",borderBottom:"1px solid #f5c6cb",padding:"6px 20px",fontSize:12,color:"#c0392b",display:"flex",justifyContent:"space-between"}}>⚠️ {importErr}<button onClick={()=>setImportErr("")} style={{background:"none",border:"none",cursor:"pointer",color:"#c0392b"}}>✕</button></div>}
 
     {view==="tutoraggio"&&(<div style={{background:"#fff",borderBottom:"1px solid #dde",flexShrink:0}}>
       <div style={{padding:"5px 20px",borderBottom:"1px solid #f0f0f0",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-        <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {totTOre%1===0?totTOre:totTOre.toFixed(1)}h tutoraggio</span>
-        <span style={{color:"#ddd"}}>│</span>
+        <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {totTOre%1===0?totTOre:totTOre.toFixed(1)}h tutoraggio</span><span style={{color:"#ddd"}}>│</span>
         {tutors.length===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessun tutor</span>:tutors.map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} style={{fontSize:11,padding:"3px 10px",borderRadius:20,cursor:"pointer",fontWeight:700,border:`2px solid ${col}`,background:active?col:"transparent",color:active?"#fff":col,opacity:active?1:0.5}}>{t.cognome||t.nome}</button>;})}
         <span style={{color:"#ddd"}}>│</span>
         <button onClick={()=>setShowOvr(o=>!o)} style={{fontSize:11,padding:"3px 12px",borderRadius:20,cursor:"pointer",fontWeight:700,border:"2px solid #e07b39",background:showOvr?"#e07b39":"transparent",color:showOvr?"#fff":"#e07b39"}}>{showOvr?"👁 Nascondi avvisi":"👁 Mostra avvisi"}</button>
@@ -1391,7 +917,6 @@ function App({user}){
       :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={handleGridClick} onTutDragEnd={handleTutDragEnd} onAvDragEnd={handleAvDragEnd}/>}
 
     <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek}/>
-
     {showTutPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutPanel(false)}/>}
     {showAnagraficaAv&&<AnagraficaAvPanel anagraficaAv={anagraficaAv} onSave={handleSaveAna} onClose={()=>setShowAnagraficaAv(false)}/>}
     {showTutPanel2&&<TutoraggiPanel tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onClose={()=>setShowTutPanel2(false)}/>}
@@ -1404,7 +929,6 @@ function App({user}){
     {modal&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
   </React.Fragment>);
 }
-
 window.__mountApp=(user)=>{const root=ReactDOM.createRoot(document.getElementById("root"));root.render(<App user={user}/>);};
 </script>
 </body>
