@@ -367,11 +367,26 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,overlayActive,slotH,colW
     <div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.15)",borderRadius:"0 0 5px 5px",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,0.6)",borderRadius:1}}/></div>
   </div>);
 }
-function AvOverlaySlot({ev,col,numCols,color,slotH}){
+function AvOverlaySlot({ev,col,numCols,color,slotH,tutEvs=[]}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const w=`calc(${100/numCols}% - 3px)`,left=`calc(${(col/numCols)*100}% + 1px)`;
-  return(<div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,boxSizing:"border-box",zIndex:10,background:"transparent",border:`2.5px solid ${color}`,pointerEvents:"none"}}>
-    <div style={{position:"absolute",top:-10,left:4,fontSize:9,fontWeight:700,color,background:"#fff",padding:"1px 4px",borderRadius:3,border:`1px solid ${color}`,whiteSpace:"nowrap",overflow:"hidden",maxWidth:"90%",textOverflow:"ellipsis",lineHeight:1.4}}>{(ev.avvisoName||"").substring(0,20)}</div>
+  // layout tutor events within this avviso slot
+  const laid=layoutEvents(tutEvs);
+  return(<div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,boxSizing:"border-box",zIndex:4,background:hexToRgba(color,0.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
+    {/* label */}
+    <div style={{position:"absolute",top:2,left:4,fontSize:9,fontWeight:700,color,background:"rgba(255,255,255,0.85)",padding:"1px 5px",borderRadius:3,border:`1px solid ${color}`,whiteSpace:"nowrap",maxWidth:"90%",overflow:"hidden",textOverflow:"ellipsis",zIndex:5}}>{(ev.avvisoName||"").substring(0,22)}</div>
+    {/* nested tutor slots */}
+    {laid.map(({ev:tev,col:tc,numCols:tnc},i)=>{
+      const tTop=(tev.start-ev.start)*slotH;
+      const tH=Math.max((tev.end-tev.start)*slotH,16);
+      const pad=4;
+      const tw=`calc(${100/tnc}% - ${pad*2}px)`;
+      const tLeft=`calc(${(tc/tnc)*100}% + ${pad}px)`;
+      return(<div key={i} onMouseDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();tev._onEdit&&tev._onEdit();}} style={{position:"absolute",top:tTop,left:tLeft,width:tw,height:tH,borderRadius:4,background:tev._color||"#4f86c6",boxSizing:"border-box",zIndex:6,pointerEvents:"all",cursor:"pointer",overflow:"hidden",userSelect:"none"}} title={`${tev.name}\n${fmt(tev.start)}–${fmt(tev.end)}${tev._tutorLabel?"\n"+tev._tutorLabel:""}`}>
+        <div style={{padding:"1px 4px",fontSize:9,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{tev._tutorLabel||tev.name}</div>
+        <div style={{padding:"0 4px",fontSize:9,color:"rgba(255,255,255,0.85)"}}>{fmt(tev.start)}–{fmt(tev.end)}</div>
+      </div>);
+    })}
   </div>);
 }
 function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onClick,onDragEnd}){
@@ -409,8 +424,14 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
           </div>
           <div onClick={e=>{if(!wasDrag())onGridClick&&onGridClick(d,e);}} style={{position:"relative",height:12*slotH,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"crosshair",overflow:"visible"}}>
             {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*slotH,left:0,right:0,height:slotH,borderTop:"1px solid #f0f0f0"}}/>)}
-            {lT.map(({ev,col,numCols},i)=><DraggableSlot key={"t"+i} ev={ev} col={col} numCols={numCols} color={ev._color||"#4f86c6"} tutorLabel={ev._tutorLabel} overlayActive={overlayActive} slotH={slotH} colW={colW} onEdit={ev._onEdit} onClick={ev._onClick} onDragEnd={u=>onTutDragEnd&&onTutDragEnd(ev.id,u)}/>)}
-            {lO.map(({ev,col,numCols},i)=><AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>)}
+            {/* In overlay mode: show avviso containers with nested tutor slots */}
+            {overlayActive && lO.map(({ev,col,numCols},i)=>{
+              // collect tutor events belonging to this avviso for this day
+              const nested=(tutByDay?.[d]||[]).filter(te=>te.name===ev.avvisoName);
+              return <AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} tutEvs={nested}/>;
+            })}
+            {/* In normal mode: show draggable tutor slots freely */}
+            {!overlayActive && lT.map(({ev,col,numCols},i)=><DraggableSlot key={"t"+i} ev={ev} col={col} numCols={numCols} color={ev._color||"#4f86c6"} tutorLabel={ev._tutorLabel} overlayActive={false} slotH={slotH} colW={colW} onEdit={ev._onEdit} onClick={ev._onClick} onDragEnd={u=>onTutDragEnd&&onTutDragEnd(ev.id,u)}/>)}
             {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onClick={ev._onClick} onDragEnd={u=>onAvDragEnd&&onAvDragEnd(ev.avvisoId,ev.id,u)}/>)}
           </div>
           <div style={{height:20,background:wk?"#f0ebf8":"#f5f8fc",borderTop:"1px solid #dde",display:"flex",alignItems:"center",justifyContent:"center"}}>
