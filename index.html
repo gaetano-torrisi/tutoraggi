@@ -99,7 +99,7 @@ const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ec
 const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const AV_STATI=["In corso","Concluso","Sospeso"];
-const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quale riunione avresti potuto essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?"];
+const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quante riunioni di oggi potevano essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?"];
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
 function markDrag(){_dragDone=true;setTimeout(()=>{_dragDone=false;},50);}
@@ -276,6 +276,13 @@ function useDrag({onDragEnd,onClick}){
 // OVR_PAD: padding interno quando lo slot tutoraggio è dentro il contorno avviso
 const OVR_PAD=4;
 
+// Auto-selezione modello OpenAI
+function pickOpenAiModel(file){
+  if(file.type==="application/pdf")return"gpt-5-mini";
+  if(file.type.startsWith("image/"))return file.size>500000?"gpt-5-mini":"gpt-5-nano";
+  return"gpt-5-nano";
+}
+
 function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd({...ev,...u}),onClick});
   const defaultTop=(ev.start-8)*slotH;
@@ -370,16 +377,12 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
                     posOverride={{top:topPx,left:leftPx,width:widthPx,height:heightPx}}
                   />);
                 })
-              : tEvs.map((tev,i)=>{
-                  const layout=layoutEvents(tEvs);
-                  const found=layout.find(x=>x.ev===tev)||{col:0,numCols:1};
-                  return(<DraggableSlot key={"t"+i} ev={tev} col={found.col} numCols={found.numCols}
-                    color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel}
-                    slotH={slotH} colW={colW}
-                    onEdit={tev._onEdit} onClick={tev._onClick}
-                    onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tev.id,u)}
-                  />);
-                })
+              : (()=>{const layout=layoutEvents(tEvs);return tEvs.map((tev,i)=>{const found=layout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"t"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tev.id,u)}/>);});})()
+            }
+
+            {/* Tutor slots senza avviso abbinato in modalità overlay — layout normale, opzione B */}
+            {overlayActive&&(()=>{const layout=layoutEvents(tEvs);return tEvs.filter(tev=>!avPosMap[tev.name]).map((tev,i)=>{const found=layout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"tb"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tev.id,u)}/>);});})()
+
             }
 
             {/* Overlay avvisi — zIndex 20, sempre sopra i tutor slots */}
@@ -429,7 +432,7 @@ function ZoomBar({calView,zoomIdx,onZoomChange,onCalViewChange,onWeekNav}){
 }
 
 // ── HAMBURGER ─────────────────────────────────────────────────────────────────
-function HamburgerMenu({isAdmin,onTutor,onAnagraficaAv,onUsers,onSettings,onExport,onImport,importRef}){
+function HamburgerMenu({isAdmin,isViewer,onTutor,onAnagraficaAv,onUsers,onSettings,onExport,onImport,importRef}){
   const[open,setOpen]=useState(false);const ref=useRef();
   useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const item=(icon,label,fn,extra={})=>(<button onClick={()=>{fn();setOpen(false);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:"#1a3a5c",fontWeight:600,textAlign:"left",...extra}} onMouseEnter={e=>e.currentTarget.style.background="#f0f4f8"} onMouseLeave={e=>e.currentTarget.style.background="none"}><span style={{fontSize:16}}>{icon}</span>{label}</button>);
@@ -437,16 +440,16 @@ function HamburgerMenu({isAdmin,onTutor,onAnagraficaAv,onUsers,onSettings,onExpo
   return(<div ref={ref} style={{position:"relative",flexShrink:0}}>
     <button onClick={()=>setOpen(o=>!o)} style={{background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:18,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center",width:38,height:34}}>☰</button>
     {open&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:600,minWidth:220,overflow:"hidden",border:"1px solid #eee"}}>
-      {item("👤","Anagrafica Tutor",onTutor)}
-      {sep()}
-      {item("📋","Anagrafica Avvisi/Progetti",onAnagraficaAv)}
-      {sep()}
+      {!isViewer&&item("👤","Anagrafica Tutor",onTutor)}
+      {!isViewer&&sep()}
+      {!isViewer&&item("📋","Anagrafica Avvisi/Progetti",onAnagraficaAv)}
+      {!isViewer&&sep()}
       {isAdmin&&item("🔐","Utenti",onUsers)}
       {isAdmin&&sep()}
       {isAdmin&&item("⚙️","Impostazioni",onSettings)}
       {isAdmin&&sep()}
       {item("💾","Esporta JSON",onExport,{color:"#27ae60"})}
-      {item("📂","Importa JSON",()=>importRef.current.click(),{color:"#2980b9"})}
+      {!isViewer&&item("📂","Importa JSON",()=>importRef.current.click(),{color:"#2980b9"})}
     </div>}
   </div>);
 }
@@ -504,14 +507,14 @@ function UsersPanel({onClose}){
       <div style={{flex:1,overflowY:"auto",padding:16}}>
         <div style={{background:"#f0f6ff",borderRadius:10,padding:14,marginBottom:16,border:"1px solid #4f86c6"}}>
           <label style={{fontSize:12,color:"#555"}}>Email</label><input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="email@azienda.it" style={inp}/>
-          <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{...inp,marginBottom:10}}><option value="user">Utente</option><option value="admin">Amministratore</option></select>
+          <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{...inp,marginBottom:10}}><option value="user">Utente</option><option value="admin">Amministratore</option><option value="viewer">Visualizzatore</option></select>
           <button onClick={handleAdd} disabled={saving} style={{width:"100%",padding:"8px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>{saving?"...":"Aggiungi"}</button>
         </div>
         {loading?<p style={{color:"#aaa",fontSize:13}}>Caricamento...</p>:emails.map(e=>(<div key={e.email} style={{padding:"10px 12px",borderRadius:8,border:"1px solid #eee",marginBottom:8,background:"#fafbfc"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:"#1a3a5c"}}>{e.email}</div>
-              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12}}><option value="user">Utente</option><option value="admin">Amministratore</option></select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>
-              :<div style={{fontSize:11,color:e.role==="admin"?"#e07b39":"#888"}}>{e.role==="admin"?"👑 Admin":"👤 Utente"}</div>}
+              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12}}><option value="user">Utente</option><option value="admin">Amministratore</option><option value="viewer">Visualizzatore</option></select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}}>Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} style={{padding:"4px 8px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>
+              :<div style={{fontSize:11,color:e.role==="admin"?"#e07b39":e.role==="viewer"?"#9b59b6":"#888"}}>{e.role==="admin"?"👑 Admin":e.role==="viewer"?"👁 Visualizzatore":"👤 Utente"}</div>}
             </div>
             <div style={{display:"flex",gap:6}}><button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>handleRemove(e.email)} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,color:"#c0392b"}}>🗑️</button></div>
           </div>
@@ -534,7 +537,7 @@ function TutorPanel({tutors,onSave,onClose}){
         {list.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
         {list.map((t,i)=>(<div key={t.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fafbfc"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:14,height:14,borderRadius:4,background:t.color||"#4f86c6",flexShrink:0}}/><div><div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{fn(t)}</div>{t.cf&&<div style={{fontSize:11,color:"#888"}}>CF: {t.cf}</div>}{t.azienda&&<div style={{fontSize:11,color:"#888"}}>{t.azienda}</div>}</div></div>
-          <div style={{display:"flex",gap:6}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>setList(p=>p.filter((_,j)=>j!==i))} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
+          <div style={{display:"flex",gap:6}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>{if(confirm(`Eliminare il tutor "${fn(t)}"?`))setList(p=>p.filter((_,j)=>j!==i));}} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
         </div>))}
         {editing!==null&&(<div style={{marginTop:12,borderRadius:10,border:"1px solid #4f86c6",padding:"14px",background:"#f0f6ff"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#1a3a5c"}}>{editing===-1?"➕ Nuovo":"✏️ Modifica"}</div>
@@ -572,7 +575,7 @@ function AnagraficaAvPanel({anagraficaAv,onSave,onClose}){
               <div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>{a.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.durataOre}h</span>}<span style={{fontSize:11,background:hexToRgba(statoColor[a.stato]||"#888",0.12),color:statoColor[a.stato]||"#888",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.stato}</span>{a.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>{a.dataInizio}{a.dataFine?` → ${a.dataFine}`:""}</span>}</div>
             </div>
           </div>
-          <div style={{display:"flex",gap:6,flexShrink:0}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>setList(p=>p.filter((_,j)=>j!==i))} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
+          <div style={{display:"flex",gap:6,flexShrink:0}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>{if(confirm(`Eliminare l'avviso "${a.nome}"?`))setList(p=>p.filter((_,j)=>j!==i));}} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
         </div>))}
         {editing!==null&&(<div style={{marginTop:12,borderRadius:10,border:"1px solid #4f86c6",padding:"14px",background:"#f0f6ff"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#1a3a5c"}}>{editing===-1?"➕ Nuovo Avviso":"✏️ Modifica Avviso"}</div>
@@ -734,7 +737,7 @@ function AiPanel({tutors,anagraficaAv,settings,user,isAdmin,onAddTut,onAddAv,onO
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento.",showAvSel:true});}
   async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file);setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
-  async function analyzeDoc(file){const prov=settings.aiProvider||"gemini";const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});const mime=file.type||"application/octet-stream";const prompt=`Estrai appuntamenti da questo documento. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");const isImg=mime.startsWith("image/");const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");}}
+  async function analyzeDoc(file){const prov=settings.aiProvider||"gemini";const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});const mime=file.type||"application/octet-stream";const prompt=`Estrai appuntamenti da questo documento. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");const parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");const isImg=mime.startsWith("image/");const msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];  const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:pickOpenAiModel(file),messages:msgs,max_tokens:2000})});if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");}}
   function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
   async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
   function renderMsg(msg,idx){const isAi=msg.role==="ai";return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
@@ -821,11 +824,11 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
 function App({user}){
   const[view,setView]=useState("tutoraggio");const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(2);const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
-  const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showUsers,setShowUsers]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showSettings,setShowSettings]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);const[verificaErr,setVerificaErr]=useState([]);const[isAdmin,setIsAdmin]=useState(false);const[loading,setLoading]=useState(true);const[importErr,setImportErr]=useState("");
+  const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showUsers,setShowUsers]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showSettings,setShowSettings]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);const[verificaErr,setVerificaErr]=useState([]);  const[isAdmin,setIsAdmin]=useState(false);const[isViewer,setIsViewer]=useState(false);const[loading,setLoading]=useState(true);const[importErr,setImportErr]=useState("");
   const importRef=useRef();
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
 
-  useEffect(()=>{fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists&&snap.data().role==="admin")setIsAdmin(true);}).catch(()=>{});},[]);
+  useEffect(()=>{fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});  db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists){const r=snap.data().role;if(r==="admin")setIsAdmin(true);if(r==="viewer")setIsViewer(true);}}).catch(()=>{});},[]);
   useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
 
   function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
@@ -846,9 +849,9 @@ function App({user}){
 
   const getTCol=id=>tutors.find(x=>x.id===id)?.color||"#4f86c6";
   const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
-  function buildTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:()=>setModal({type:"edit-tut",ev,monthKey:month.key}),_onClick:()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return b;}
+  function buildTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:isViewer?null:()=>setModal({type:"edit-tut",ev,monthKey:month.key}),_onClick:isViewer?null:()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return b;}
   function buildOvByDay(){const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
-  function buildAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});},_onClick:()=>setModal({type:"add",mode:"avviso",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return b;}
+  function buildAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:isViewer?null:()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});},_onClick:isViewer?null:()=>setModal({type:"add",mode:"avviso",prefill:{day:ev.day,start:ev.start,end:ev.end}})});}return b;}
   function buildMTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;}
   function buildMAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
 
@@ -879,21 +882,21 @@ function App({user}){
 
   return(<React.Fragment>
     <div style={{background:"#1a3a5c",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",gap:10,flexShrink:0,flexWrap:"wrap"}}>
-      <HamburgerMenu isAdmin={isAdmin} onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onUsers={()=>setShowUsers(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents,anagraficaAv)} onImport={()=>importRef.current.click()} importRef={importRef}/>
+      <HamburgerMenu isAdmin={isAdmin} isViewer={isViewer} onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onUsers={()=>setShowUsers(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents,anagraficaAv)} onImport={()=>importRef.current.click()} importRef={importRef}/>
       <input ref={importRef} type="file" accept=".json" style={{display:"none"}} onChange={handleImport}/>
       <span style={{fontWeight:700,fontSize:16}}>📅</span>
       <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}><button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button><button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button></div>
       <button onClick={()=>setShowTutPanel2(true)} style={hBtn()}>📌 Riepilogo Tutoraggi</button>
       <button onClick={()=>setShowRiepilogoAv(true)} style={hBtn()}>📋 Riepilogo Avvisi/Progetti</button>
       <button onClick={()=>setShowRiep(true)} style={hBtn()}>📊 Riepilogo Ore</button>
-      <button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>
+      {!isViewer&&<button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>}
       <button onClick={handleVerifica} style={hBtn({background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)"})}>✅ Verifica</button>
       <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,opacity:0.6}}>{user?.email}</span><button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button></div>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===0?0.4:1}}>‹</button>
         <span style={{fontWeight:600,minWidth:150,textAlign:"center"}}>{month.label}</span>
         <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===MONTHS.length-1?0.4:1}}>›</button>
-        <button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} style={{background:"#4f86c6",border:"none",color:"#fff",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontWeight:600}}>+ Aggiungi</button>
+        {!isViewer&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} style={{background:"#4f86c6",border:"none",color:"#fff",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontWeight:600}}>+ Aggiungi</button>}
       </div>
     </div>
     {importErr&&<div style={{background:"#ffeaea",borderBottom:"1px solid #f5c6cb",padding:"6px 20px",fontSize:12,color:"#c0392b",display:"flex",justifyContent:"space-between"}}>⚠️ {importErr}<button onClick={()=>setImportErr("")} style={{background:"none",border:"none",cursor:"pointer",color:"#c0392b"}}>✕</button></div>}
@@ -924,7 +927,7 @@ function App({user}){
 
     {calView==="month"
       ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="tutoraggio"?(showOvr?buildOvByDay():null):buildMAvByDay()} onDayClick={d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}})}/>
-      :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={handleGridClick} onTutDragEnd={handleTutDragEnd} onAvDragEnd={handleAvDragEnd}/>}
+      :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={isViewer?null:handleGridClick} onTutDragEnd={isViewer?null:handleTutDragEnd} onAvDragEnd={isViewer?null:handleAvDragEnd}/>}
 
     <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek}/>
     {showTutPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutPanel(false)}/>}
