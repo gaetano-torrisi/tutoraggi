@@ -98,7 +98,28 @@ const MONTHS=[
 const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ecc71","#27ae60","#1abc9c","#16a085","#3498db","#2980b9","#9b59b6","#8e44ad","#34495e","#2c3e50","#e91e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688","#4caf50","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#795548","#9e9e9e","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#fff176","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a","#80deea","#c5e1a5","#ffe082"];
 const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
-const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quale riunione avresti potuto essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?"];
+const FUNNY_PHRASES=[
+  "Cosa importiamo oggi nel calendario del dolore?",
+  "Quale riunione avresti potuto essere una email?",
+  "Quale documento ti ha rovinato la giornata?",
+  "Quale deadline ti ha svegliato stanotte?",
+  "Cosa ottimizziamo oggi per non farlo mai più manualmente?",
+  "Quale foglio Excel vorresti bruciare?",
+  "Cosa posso fare per renderti la giornata meno lunga?",
+  "Cosa ti manca per staccare prima delle 18?",
+  "Cosa vuoi fare oggi invece di goderti il sole?",
+  "Quale collega ti ha già scritto tre email oggi?",
+  "Quale procedura amministrativa vorresti semplificare per sempre?",
+  "Quante ore di riunioni avresti potuto evitare questa settimana?",
+  "Quale scadenza regionale ti tiene sveglio la notte?",
+  "Cosa vuoi delegare a me prima di andare a pranzo?",
+  "Quale modulo hai compilato tre volte perché il sistema è andato giù?",
+  "Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?",
+  "Quale progetto giace abbandonato in una cartella del desktop?",
+  "Quanti allegati stai per inviare a qualcuno che non li leggerà mai?",
+  "Cosa sistemiamo oggi per non doverci pensare più?",
+  "Quale report hai rimandato abbastanza da renderlo urgente?",
+];
 const AV_STATI=["In corso","Concluso","Sospeso"];
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
@@ -127,6 +148,73 @@ function exportJSON(avvisi,tutors,tutEvents,anagraficaAv){
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
   const a=document.createElement("a");a.href=`data:application/json;base64,${b64}`;a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ── DEMO DATA ─────────────────────────────────────────────────────────────────
+function generateDemoData(){
+  // 1. Anagrafica tutor
+  const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
+  const tutors=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:TUTOR_COLORS[i]}));
+
+  // 2. Anagrafica avvisi
+  const anaDefs=[
+    {nome:"Avviso 1",codice:"DDG 001/2026",colore:PALETTE[10],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},
+    {nome:"Avviso 2",codice:"DDG 002/2026",colore:PALETTE[2], durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""},
+    {nome:"Avviso 3",codice:"DDG 003/2026",colore:PALETTE[12],durataOre:400,stato:"In corso",dataInizio:"01/05/2026",dataFine:"31/08/2026",note:""},
+    {nome:"Avviso 4",codice:"DDG 004/2026",colore:PALETTE[0], durataOre:400,stato:"In corso",dataInizio:"01/08/2026",dataFine:"30/11/2026",note:""},
+    {nome:"Avviso 5",codice:"DDG 005/2026",colore:PALETTE[5], durataOre:400,stato:"In corso",dataInizio:"01/10/2026",dataFine:"31/12/2026",note:""},
+  ];
+  const anagraficaAv=anaDefs.map((d,i)=>({...d,id:`av-demo-${i}`}));
+
+  // 3. Distribuzione avvisi per mesi
+  const avMonthIdxs=[[0,1,2,3],[2,3,4,5],[4,5,6,7],[7,8,9,10],[9,10,11]];
+  const avStartH=[9,14,9,14,9];
+  const avEndH=[13,18,13,18,13];
+
+  function getWeekdays(mIdx){
+    const m=MONTHS[mIdx];const days=[];
+    for(let d=1;d<=m.days;d++)if(isWeekday(m.year,m.month,d))days.push({mIdx,day:d,mk:m.key});
+    return days;
+  }
+
+  // 4. Genera eventi calendario avvisi (~100 sessioni da 4h = ~400h)
+  const avvisi=anagraficaAv.map((ana,ai)=>{
+    const monthIdxs=avMonthIdxs[ai];const startH=avStartH[ai];const endH=avEndH[ai];
+    const sessH=endH-startH;const targetSess=Math.round(ana.durataOre/sessH);
+    const allSlots=monthIdxs.flatMap(mi=>getWeekdays(mi));
+    const byMonth={};for(const s of allSlots){if(!byMonth[s.mk])byMonth[s.mk]=[];byMonth[s.mk].push(s);}
+    const spm=Math.ceil(targetSess/monthIdxs.length);
+    const events=[];let ei=0;
+    for(const mk of Object.keys(byMonth)){
+      const kept=byMonth[mk].filter(()=>Math.random()>0.15).slice(0,spm);
+      for(const s of kept)events.push({id:`ave-demo-${ai}-${ei++}`,month:s.mk,day:s.day,start:startH,end:endH,ore:sessH});
+    }
+    return{id:ana.id,events};
+  });
+
+  // 5. Genera tutoraggi: 2 tutor per avviso, ≤30% giorni, ore intere o mezzore
+  const tutEvents={};
+  anagraficaAv.forEach((ana,ai)=>{
+    const av=avvisi[ai];const startH=avStartH[ai];const sessH=avEndH[ai]-startH;
+    const tutH=Math.max(0.5,Math.round(sessH*0.28*2)/2);
+    const pair=ai%2===0?[0,1]:[2,3];
+    for(let ti=0;ti<2;ti++){
+      const tId=tutors[pair[ti]].id;
+      if(!tutEvents[tId])tutEvents[tId]={};
+      const byMonth={};
+      for(const e of av.events){if(!byMonth[e.month])byMonth[e.month]=[];byMonth[e.month].push(e);}
+      for(const[mk,evs]of Object.entries(byMonth)){
+        if(!tutEvents[tId][mk])tutEvents[tId][mk]=[];
+        const n=Math.max(1,Math.round(evs.length*0.15));
+        const start=ti*Math.floor(evs.length/2);
+        evs.slice(start,start+n).forEach((e,j)=>{
+          tutEvents[tId][mk].push({id:`tut-demo-${ai}-${ti}-${mk}-${j}`,day:e.day,name:ana.nome,start:startH,end:startH+tutH,ore:tutH,tutorId:tId});
+        });
+      }
+    }
+  });
+
+  return{tutors,anagraficaAv,avvisi,tutEvents};
 }
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────────
@@ -693,7 +781,7 @@ function VerificaModal({errors,onClose,onNavigate}){
   </div>);
 }
 
-function SettingsPanel({settings,onSave,onClose,isAdmin,onClearDb}){
+function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
   const[aiProvider,setAiProvider]=useState(settings.aiProvider||"gemini");
   const[geminiKey,setGeminiKey]=useState(settings.geminiApiKey||"");
   const[openaiKey,setOpenaiKey]=useState(settings.openaiApiKey||"");
@@ -730,6 +818,8 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onClearDb}){
         </div>
         {isAdmin&&<div style={{padding:16,background:"#fff8f0",borderRadius:12,border:"1px solid #f0c080"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#c0392b",marginBottom:12}}>🛠️ Strumenti Admin</div>
+          <button onClick={onLoadDemo} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600,marginBottom:8,fontSize:13}}>🎲 Carica dati demo</button>
+          <p style={{fontSize:11,color:"#888",marginBottom:16}}>Crea anagrafica tutor, anagrafica avvisi e sessioni di esempio. Sovrascrive i dati esistenti.</p>
           <button onClick={onClearDb} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#e74c3c",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>🗑️ Cancella database</button>
           <p style={{fontSize:11,color:"#888",marginTop:6}}>Operazione irreversibile.</p>
         </div>}
@@ -865,14 +955,16 @@ function AiPanel({tutors,anagraficaAv,settings,user,isAdmin,onAddTut,onAddAv,onO
     {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%",maxWidth:340}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"#555",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
   </div>);}
 
-  return(<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"33vw",minWidth:340,zIndex:500,background:"#fff",boxShadow:"0 -4px 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",height:"42vh",borderRadius:"14px 14px 0 0",border:"2px solid #1a3a5c",borderBottom:"none"}}>
-    <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,borderRadius:"12px 12px 0 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",overflow:"hidden"}}>
-        <span style={{fontWeight:800,fontSize:15,whiteSpace:"nowrap"}}>🤖 {uname}</span>
-        <span style={{fontWeight:700,fontSize:13,opacity:0.85,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:160}}>{phrase}</span>
-        {isAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"2px 8px",cursor:"not-allowed",fontSize:12,fontWeight:700,flexShrink:0}} title="In arrivo 🚀">💪</button>}
+  return(<div style={{position:"fixed",bottom:0,left:0,width:"33vw",minWidth:340,zIndex:500,background:"#fff",boxShadow:"4px -4px 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",height:"42vh",borderRadius:"0 14px 0 0",border:"2px solid #1a3a5c",borderBottom:"none",borderLeft:"none"}}>
+    <div style={{background:"linear-gradient(135deg,#1a3a5c,#2980b9)",color:"#fff",padding:"10px 16px",display:"flex",flexDirection:"column",gap:4,flexShrink:0,borderRadius:"0 12px 0 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span style={{fontWeight:800,fontSize:16}}>🤖 Ciao, {uname}!</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",flexShrink:0}}>✕</button>
       </div>
-      <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",flexShrink:0}}>✕</button>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontWeight:700,fontSize:13,opacity:0.9,flex:1,lineHeight:1.3}}>{phrase}</span>
+        {isAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"3px 10px",cursor:"not-allowed",fontSize:12,fontWeight:700,flexShrink:0,whiteSpace:"nowrap"}} title="In arrivo 🚀">💪 God Mode</button>}
+      </div>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column"}}>
       {messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/>
@@ -1093,7 +1185,22 @@ function App({user}){
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
   async function handleTutDragEnd(evId,u){await editTutoraggio(evId,u);}
   async function handleAvDragEnd(avId,evId,u){await editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}
-  async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setShowSettings(false);alert("Database svuotato.");}
+  async function handleLoadDemo(){
+    if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;
+    const{tutors:t,anagraficaAv:ana,avvisi:a,tutEvents:te}=generateDemoData();
+    setTutors(t);
+    setAnagraficaAv(ana);anaRef.current=ana;
+    setAvvisi(a);avRef.current=a;
+    setTutEvents(te);tutEvRef.current=te;
+    setActiveAvvisi(new Set(a.map(x=>x.id)));
+    setActiveTutorIds(null);
+    await fsSaveTutors(t);
+    await fsSaveAnagraficaAv(ana);
+    await fsSaveAvvisi(a);
+    for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
+    setShowSettings(false);
+    alert("Dati demo caricati!");
+  }if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setShowSettings(false);alert("Database svuotato.");}
   async function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const a=raw.avvisi||[],t=raw.tutors||[],te=raw.tutEvents||{},ana=raw.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(ana);anaRef.current=ana;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);setImportErr("");await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAnagraficaAv(ana);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}catch(err){setImportErr("File non valido: "+err.message);}};reader.readAsText(file);e.target.value="";}
   function handleVerifica(){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerifica(true);}
   function onVerificaNav(mk){const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0)setMonthIdx(idx);}
@@ -1168,7 +1275,7 @@ function App({user}){
     {showRiepilogoAv&&<RiepilogoAvPanel avvisi={avvisi} anagraficaAv={anagraficaAv} onClose={()=>setShowRiepilogoAv(false)}/>}
     {showUsers&&<UsersPanel onClose={()=>setShowUsers(false)}/>}
     {showRiep&&<RiepilogoPanel avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowRiep(false)}/>}
-    {showSettings&&<SettingsPanel settings={settings} onSave={handleSaveSettings} onClose={()=>setShowSettings(false)} isAdmin={isAdmin} onClearDb={handleClearDb}/>}
+    {showSettings&&<SettingsPanel settings={settings} onSave={handleSaveSettings} onClose={()=>setShowSettings(false)} isAdmin={isAdmin} onLoadDemo={handleLoadDemo} onClearDb={handleClearDb}/>}
     {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isAdmin={isAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)} onClose={()=>setShowAi(false)}/>}
     {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
     {modal&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
