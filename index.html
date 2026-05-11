@@ -273,9 +273,11 @@ function useDrag({onDragEnd,onClick}){
 }
 
 // ── SLOTS ─────────────────────────────────────────────────────────────────────
+// OVR_PAD: padding interno quando lo slot tutoraggio è dentro il contorno avviso
+const OVR_PAD=4;
+
 function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd({...ev,...u}),onClick});
-  // posOverride: {top,left,width,height} in px/strings — used when inside avviso overlay
   const defaultTop=(ev.start-8)*slotH;
   const defaultH=Math.max((ev.end-ev.start)*slotH,20);
   const defLeft=`calc(${(col/numCols)*100}% + 2px)`;
@@ -293,9 +295,16 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
 function AvOverlaySlot({ev,col,numCols,color,slotH}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const w=`calc(${100/numCols}% - 3px)`,left=`calc(${(col/numCols)*100}% + 1px)`;
-  return(<div style={{position:"absolute",top,left,width:w,height:h,borderRadius:5,boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
-    {/* Etichetta sopra il bordo */}
-    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"rgba(255,255,255,0.95)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:10,pointerEvents:"none"}}>{(ev.avvisoName||"").substring(0,26)}</div>
+  return(<div style={{
+    position:"absolute",top,left,width:w,height:h,
+    borderRadius:5,boxSizing:"border-box",
+    // zIndex 20: sempre sopra lo slot tutoraggio (zIndex 5)
+    zIndex:20,
+    background:hexToRgba(color,0.07),
+    border:`2px solid ${color}`,
+    pointerEvents:"none"
+  }}>
+    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"rgba(255,255,255,0.95)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none"}}>{(ev.avvisoName||"").substring(0,26)}</div>
   </div>);
 }
 
@@ -328,10 +337,9 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
         const avOvEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
         const avEvs=avByDay?.[d]||[];
         const lA=layoutEvents(avEvs);
-
-        // Build shared layout for overlay: avvisi get columns, tutor slots follow same column
         const lOv=layoutEvents(avOvEvs);
-        // Map: avvisoName -> {col, numCols} from the overlay layout
+
+        // Map avvisoName -> {col, numCols} dalla layout overlay
         const avPosMap={};
         lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.avvisoName]={col,numCols};});
 
@@ -343,22 +351,17 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
           <div onClick={e=>{if(!wasDrag())onGridClick&&onGridClick(d,e);}} style={{position:"relative",height:12*slotH,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"crosshair",overflow:"visible"}}>
             {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*slotH,left:0,right:0,height:slotH,borderTop:"1px solid #f0f0f0"}}/>)}
 
-            {/* Avviso overlay containers */}
-            {overlayActive&&lOv.map(({ev,col,numCols},i)=>
-              <AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>
-            )}
-
-            {/* Tutor slots — inside avviso column when overlay active, free otherwise */}
+            {/* Tutor slots */}
             {overlayActive
               ? tEvs.map((tev,i)=>{
                   const pos=avPosMap[tev.name];
                   if(!pos)return null;
-                  const PAD=3;
+                  // Slot ristretto con OVR_PAD per far vedere il bordo avviso
                   const colFrac=1/pos.numCols;
-                  const leftPx=pos.col*colFrac*colW+PAD+1;
-                  const widthPx=colFrac*colW-PAD*2-2;
-                  const topPx=(tev.start-8)*slotH;
-                  const heightPx=Math.max((tev.end-tev.start)*slotH,20);
+                  const leftPx=pos.col*colFrac*colW+OVR_PAD+1;
+                  const widthPx=colFrac*colW-OVR_PAD*2-2;
+                  const topPx=(tev.start-8)*slotH+OVR_PAD;
+                  const heightPx=Math.max((tev.end-tev.start)*slotH-OVR_PAD*2,20);
                   return(<DraggableSlot key={"to"+i} ev={tev} col={0} numCols={1}
                     color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel}
                     slotH={slotH} colW={colW}
@@ -367,15 +370,22 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
                     posOverride={{top:topPx,left:leftPx,width:widthPx,height:heightPx}}
                   />);
                 })
-              : tEvs.map(({...tev}=tev,i)=>
-                  <DraggableSlot key={"t"+i} ev={tEvs[i]} col={layoutEvents(tEvs).find(x=>x.ev===tEvs[i])?.col||0} numCols={layoutEvents(tEvs).find(x=>x.ev===tEvs[i])?.numCols||1}
-                    color={tEvs[i]._color||"#4f86c6"} tutorLabel={tEvs[i]._tutorLabel}
+              : tEvs.map((tev,i)=>{
+                  const layout=layoutEvents(tEvs);
+                  const found=layout.find(x=>x.ev===tev)||{col:0,numCols:1};
+                  return(<DraggableSlot key={"t"+i} ev={tev} col={found.col} numCols={found.numCols}
+                    color={tev._color||"#4f86c6"} tutorLabel={tev._tutorLabel}
                     slotH={slotH} colW={colW}
-                    onEdit={tEvs[i]._onEdit} onClick={tEvs[i]._onClick}
-                    onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tEvs[i].id,u)}
-                  />
-                )
+                    onEdit={tev._onEdit} onClick={tev._onClick}
+                    onDragEnd={u=>onTutDragEnd&&onTutDragEnd(tev.id,u)}
+                  />);
+                })
             }
+
+            {/* Overlay avvisi — zIndex 20, sempre sopra i tutor slots */}
+            {overlayActive&&lOv.map(({ev,col,numCols},i)=>
+              <AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>
+            )}
 
             {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onClick={ev._onClick} onDragEnd={u=>onAvDragEnd&&onAvDragEnd(ev.avvisoId,ev.id,u)}/>)}
           </div>
