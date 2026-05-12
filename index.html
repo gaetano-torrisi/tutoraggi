@@ -143,6 +143,16 @@ async function fsSaveSettings(s){await db.collection("settings").doc("app").set(
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 
+// ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
+async function fsLog(userEmail,type,detail){
+  try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error("Log error",e);}
+}
+async function fsLoadLog(){
+  try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();
+    return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate?.()||new Date(0)};});
+  }catch(e){console.error(e);return[];}
+}
+
 // ── DEMO DATA ─────────────────────────────────────────────────────────────────
 function generateDemoData(){
   const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
@@ -432,7 +442,7 @@ function ZoomBar({calView,zoomIdx,onZoomChange,onCalViewChange,onWeekNav}){
 }
 
 // ── HAMBURGER ─────────────────────────────────────────────────────────────────
-function HamburgerMenu({isAdmin,isViewer,onTutor,onAnagraficaAv,onUsers,onSettings,onExport,onImport,importRef}){
+function HamburgerMenu({isAdmin,isViewer,onTutor,onAnagraficaAv,onUsers,onLog,onSettings,onExport,onImport,importRef}){
   const[open,setOpen]=useState(false);const ref=useRef();
   useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const item=(icon,label,fn,extra={})=>(<button onClick={()=>{fn();setOpen(false);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:"#1a3a5c",fontWeight:600,textAlign:"left",...extra}} onMouseEnter={e=>e.currentTarget.style.background="#f0f4f8"} onMouseLeave={e=>e.currentTarget.style.background="none"}><span style={{fontSize:16}}>{icon}</span>{label}</button>);
@@ -446,6 +456,8 @@ function HamburgerMenu({isAdmin,isViewer,onTutor,onAnagraficaAv,onUsers,onSettin
       {!isViewer&&sep()}
       {isAdmin&&item("🔐","Utenti",onUsers)}
       {isAdmin&&sep()}
+      {isAdmin&&item("📋","Log Attività",onLog)}
+      {isAdmin&&sep()}
       {isAdmin&&item("⚙️","Impostazioni",onSettings)}
       {isAdmin&&sep()}
       {item("💾","Esporta JSON",onExport,{color:"#27ae60"})}
@@ -454,7 +466,70 @@ function HamburgerMenu({isAdmin,isViewer,onTutor,onAnagraficaAv,onUsers,onSettin
   </div>);
 }
 
-// ── VERIFICA ──────────────────────────────────────────────────────────────────
+// ── LOG PANEL ─────────────────────────────────────────────────────────────────
+const LOG_TYPE_LABELS={
+  add_tut:"➕ Slot tutoraggio",edit_tut:"✏️ Slot tutoraggio",delete_tut:"🗑️ Slot tutoraggio",
+  add_av:"➕ Slot avviso",edit_av:"✏️ Slot avviso",delete_av:"🗑️ Slot avviso",
+  add_tutor_ana:"➕ Tutor anagrafica",edit_tutor_ana:"✏️ Tutor anagrafica",delete_tutor_ana:"🗑️ Tutor anagrafica",
+  add_av_ana:"➕ Avviso anagrafica",edit_av_ana:"✏️ Avviso anagrafica",delete_av_ana:"🗑️ Avviso anagrafica",
+};
+function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+
+function LogPanel({onClose}){
+  const[rows,setRows]=useState([]);const[loading,setLoading]=useState(true);
+  const[filterUser,setFilterUser]=useState("");const[sortCol,setSortCol]=useState("ts");const[sortDir,setSortDir]=useState("desc");
+  useEffect(()=>{fsLoadLog().then(r=>{setRows(r);setLoading(false);});},[]);
+  const users=[...new Set(rows.map(r=>r.userEmail))].sort();
+  const filtered=rows.filter(r=>!filterUser||r.userEmail===filterUser);
+  const sorted=[...filtered].sort((a,b)=>{
+    let va=sortCol==="ts"?a.ts:sortCol==="type"?(LOG_TYPE_LABELS[a.type]||a.type):a.userEmail;
+    let vb=sortCol==="ts"?b.ts:sortCol==="type"?(LOG_TYPE_LABELS[b.type]||b.type):b.userEmail;
+    if(sortCol==="ts")return sortDir==="desc"?vb-va:va-vb;
+    return sortDir==="desc"?vb.localeCompare(va):va.localeCompare(vb);
+  });
+  function thClick(col){if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("desc");}}
+  const thStyle=(col)=>({padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",borderBottom:"2px solid #dde",background:sortCol===col?"#e8f0ff":"#f5f8fc"});
+  const arrow=col=>sortCol===col?(sortDir==="desc"?" ↓":" ↑"):"";
+  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
+    <ResizablePanel defaultWidth={620} minWidth={400}>
+      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <span style={{fontWeight:700,fontSize:15}}>📋 Log Attività</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
+      </div>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",flexShrink:0}}>
+        <label style={{fontSize:12,color:"#555",flexShrink:0}}>Filtra utente:</label>
+        <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{padding:"5px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12,flex:1}}>
+          <option value="">— Tutti —</option>
+          {users.map(u=><option key={u} value={u}>{u}</option>)}
+        </select>
+        <span style={{fontSize:11,color:"#aaa",flexShrink:0}}>{sorted.length} righe</span>
+      </div>
+      <div style={{flex:1,overflowY:"auto"}}>
+        {loading?<p style={{padding:20,color:"#aaa",fontSize:13}}>Caricamento...</p>:sorted.length===0?<p style={{padding:20,color:"#aaa",fontSize:13,fontStyle:"italic"}}>Nessuna attività registrata.</p>:
+        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+          <thead style={{position:"sticky",top:0,zIndex:2}}>
+            <tr>
+              <th onClick={()=>thClick("ts")} style={thStyle("ts")}>Data{arrow("ts")}</th>
+              <th onClick={()=>thClick("user")} style={thStyle("user")}>Utente{arrow("user")}</th>
+              <th onClick={()=>thClick("type")} style={thStyle("type")}>Tipo{arrow("type")}</th>
+              <th style={{...thStyle("detail"),cursor:"default"}}>Dettaglio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r,i)=>(
+              <tr key={r.id} style={{background:i%2===0?"#fff":"#f9fbff"}}>
+                <td style={{padding:"7px 12px",color:"#555",whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td>
+                <td style={{padding:"7px 12px",color:"#555",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.userEmail}</td>
+                <td style={{padding:"7px 12px",whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td>
+                <td style={{padding:"7px 12px",color:"#777",lineHeight:1.4}}>{r.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   const errors=[];
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
@@ -463,12 +538,14 @@ function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});}}}
   for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});}}}
   for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso nel calendario (${totAv}h).`});if(ana.durataOre){const tot=totAv;if(tot!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${tot}h) ≠ durata da bando (${ana.durataOre}h).`});}}
+  // Verifica ore giornaliere per tutor (max 8h/giorno)
+  for(const[tid,months]of Object.entries(tutEvents)){const t=tutors.find(x=>x.id===tid);for(const[mk,evs]of Object.entries(months)){const dayOre={};for(const ev of evs)dayOre[ev.day]=(dayOre[ev.day]||0)+(ev.ore||0);for(const[day,ore]of Object.entries(dayOre)){if(ore>8)errors.push({type:"ore_giornaliere",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": ${ore}h il giorno ${day} ${mk} (limite 8h/giorno).`});}}}
   return errors;
 }
 
 function VerificaModal({errors,onClose,onNavigate}){
-  const icons={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋"};
-  const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
+  const icons={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋",ore_giornaliere:"🕗"};
+  const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente",ore_giornaliere:"Ore giornaliere >8h"};
   const[pos,setPos]=useState({x:Math.max(0,window.innerWidth/2-290),y:Math.max(0,window.innerHeight/2-240)});
   const dr=useRef(false),off=useRef({x:0,y:0});
   function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
@@ -695,7 +772,7 @@ function SettingsPanel({settings,onSave,onClose,isAdmin,onLoadDemo,onClearDb}){
       <div style={{flex:1,overflowY:"auto",padding:20}}>
         <div style={{marginBottom:20,padding:16,background:"#f8f9ff",borderRadius:12,border:"1px solid #dde"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c",marginBottom:12}}>🤖 Assistente AI</div>
-          <div style={{display:"flex",gap:6,marginBottom:14}}><button style={pBtn("gemini","#1a73e8")} onClick={()=>setAiProvider("gemini")}>✨ Gemini 2.0 Flash</button><button style={pBtn("openai","#10a37f")} onClick={()=>setAiProvider("openai")}>💬 GPT-4o mini</button></div>
+          <div style={{display:"flex",gap:6,marginBottom:14}}><button style={pBtn("gemini","#1a73e8")} onClick={()=>setAiProvider("gemini")}>✨ Gemini</button><button style={pBtn("openai","#10a37f")} onClick={()=>setAiProvider("openai")}>💬 OpenAI</button></div>
           <div style={{marginBottom:12,padding:12,borderRadius:8,border:`1px solid ${aiProvider==="gemini"?"#1a73e8":"#e8edf3"}`,background:aiProvider==="gemini"?"#fff":"#fafbfc"}}>
             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}><span style={{fontSize:13,fontWeight:700,color:aiProvider==="gemini"?"#1a73e8":"#aaa"}}>✨ Gemini</span>{aiProvider==="gemini"&&<span style={{fontSize:10,background:"#1a73e8",color:"#fff",padding:"1px 6px",borderRadius:8,fontWeight:600}}>ATTIVO</span>}</div>
             <input type="password" value={geminiKey} onChange={e=>setGeminiKey(e.target.value)} placeholder="AIza..." style={inp}/>
@@ -859,14 +936,14 @@ function App({user}){
   function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
-  async function addTutoraggio(ev,monthKey){const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);}
-  async function editTutoraggio(evId,updated){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}}
-  async function deleteTutoraggio(evId){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){if(evs.find(e=>e.id===evId)){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);return;}}}}
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
-  async function editAvviso(avId,evId,evData){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
-  async function deleteAvviso(avId,evId){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);}
-  async function handleSaveTutors(list){setTutors(list);setActiveTutorIds(null);setShowTutPanel(false);await fsSaveTutors(list);}
-  async function handleSaveAna(list){anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);}
+  async function addTutoraggio(ev,monthKey){const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)})`);}
+  async function editTutoraggio(evId,updated){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){cur[tid][mk][idx]={...cur[tid][mk][idx],...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"edit_tut",`Modificato slot "${updated.name||evs[idx]?.name}" il ${updated.day||evs[idx]?.day} ${mk}`);return;}}}}
+  async function deleteTutoraggio(evId){const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)})`);return;}}}}
+  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Importati ${events.length} slot per avviso id ${avId}`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Aggiunto slot avviso "${name||avId}" il ${day} ${mk} (${fmt(start)}–${fmt(end)})`);}
+  async function editAvviso(avId,evId,evData){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});const ana=anaRef.current.find(a=>a.id===avId);avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot avviso "${ana?.nome||avId}" il ${evData.day} ${evData.month}`);}
+  async function deleteAvviso(avId,evId){const av=avRef.current.find(a=>a.id===avId);const ev=av?.events.find(e=>e.id===evId);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});const ana=anaRef.current.find(a=>a.id===avId);avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot avviso "${ana?.nome||avId}" il ${ev?.day} ${ev?.month}`);}
+  async function handleSaveTutors(list){const prev=tutors;setTutors(list);setActiveTutorIds(null);setShowTutPanel(false);await fsSaveTutors(list);list.forEach(t=>{const old=prev.find(p=>p.id===t.id);if(!old)fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${t.cognome} ${t.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(t))fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${t.cognome} ${t.nome}"`);});prev.forEach(p=>{if(!list.find(t=>t.id===p.id))fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${p.cognome} ${p.nome}"`);});}
+  async function handleSaveAna(list){const prev=anaRef.current;anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(!old)fsLog(user.email,"add_av_ana",`Aggiunto avviso "${a.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(a))fsLog(user.email,"edit_av_ana",`Modificato avviso "${a.nome}"`);});prev.forEach(p=>{if(!list.find(a=>a.id===p.id))fsLog(user.email,"delete_av_ana",`Eliminato avviso "${p.nome}"`);});}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
   async function handleTutDragEnd(evId,u){await editTutoraggio(evId,u);}
   async function handleAvDragEnd(avId,evId,u){await editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}
@@ -882,7 +959,7 @@ function App({user}){
 
   return(<React.Fragment>
     <div style={{background:"#1a3a5c",color:"#fff",padding:"10px 20px",display:"flex",alignItems:"center",gap:10,flexShrink:0,flexWrap:"wrap"}}>
-      <HamburgerMenu isAdmin={isAdmin} isViewer={isViewer} onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onUsers={()=>setShowUsers(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents,anagraficaAv)} onImport={()=>importRef.current.click()} importRef={importRef}/>
+      <HamburgerMenu isAdmin={isAdmin} isViewer={isViewer} onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onUsers={()=>setShowUsers(true)} onLog={()=>setShowLog(true)} onSettings={()=>setShowSettings(true)} onExport={()=>exportJSON(avvisi,tutors,tutEvents,anagraficaAv)} onImport={()=>importRef.current.click()} importRef={importRef}/>
       <input ref={importRef} type="file" accept=".json" style={{display:"none"}} onChange={handleImport}/>
       <span style={{fontWeight:700,fontSize:16}}>📅</span>
       <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}><button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button><button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button></div>
