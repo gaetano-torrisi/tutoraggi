@@ -119,7 +119,7 @@ function hToTimeStr(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return`${
 function snapH(h){return Math.round(h*4)/4;}
 function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
-function pickOpenAiModel(file){if(file.type==="application/pdf")return"gpt-5-mini";if(file.type.startsWith("image/"))return file.size>500000?"gpt-5-mini":"gpt-5-nano";return"gpt-5-nano";}
+function pickOpenAiModel(file){return"gpt-4o-mini";}
 function layoutEvents(evs){
   const sorted=[...evs].sort((a,b)=>a.start-b.start);const cols=[];
   const res=sorted.map(ev=>{for(let c=0;c<cols.length;c++)if(cols[c].end<=ev.start){cols[c]={end:ev.end};return{ev,col:c};}cols.push({end:ev.end});return{ev,col:cols.length-1};});
@@ -1002,7 +1002,40 @@ function App({user}){
   async function editAvviso(avId,evId,evData){const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});const ana=anaRef.current.find(a=>a.id===avId);avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot avviso "${ana?.nome||avId}" il ${evData.day} ${evData.month}`);}
   async function deleteAvviso(avId,evId){const av=avRef.current.find(a=>a.id===avId);const ev=av?.events.find(e=>e.id===evId);const ana=anaRef.current.find(a=>a.id===avId);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot avviso "${ana?.nome||avId}" il ${ev?.day} ${ev?.month}`);}
   async function handleSaveTutors(list){const prev=tutors;setTutors(list);setActiveTutorIds(null);setShowTutPanel(false);await fsSaveTutors(list);list.forEach(t=>{const old=prev.find(p=>p.id===t.id);if(!old)fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${t.cognome} ${t.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(t))fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${t.cognome} ${t.nome}"`);});prev.forEach(p=>{if(!list.find(t=>t.id===p.id))fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${p.cognome} ${p.nome}"`);});}
-  async function handleSaveAna(list){const prev=anaRef.current;anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(!old)fsLog(user.email,"add_av_ana",`Aggiunto avviso "${a.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(a))fsLog(user.email,"edit_av_ana",`Modificato avviso "${a.nome}"`);});prev.forEach(p=>{if(!list.find(a=>a.id===p.id))fsLog(user.email,"delete_av_ana",`Eliminato avviso "${p.nome}"`);});}
+  async function handleSaveAna(list){
+    const prev=anaRef.current;
+    anaRef.current=list;
+    setAnagraficaAv(list);
+    setShowAnagraficaAv(false);
+    await fsSaveAna(list);
+
+    // Propaga rinominazione avvisi agli slot tutoraggio
+    const renames=[];
+    list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(old&&old.nome!==a.nome)renames.push({oldNome:old.nome,newNome:a.nome});});
+    if(renames.length>0){
+      const cur=JSON.parse(JSON.stringify(tutEvRef.current));
+      let changed=false;
+      for(const[tid,months]of Object.entries(cur)){
+        for(const[mk,evs]of Object.entries(months)){
+          evs.forEach((ev,i)=>{
+            const r=renames.find(r=>r.oldNome===ev.name);
+            if(r){cur[tid][mk][i]={...ev,name:r.newNome};changed=true;}
+          });
+        }
+      }
+      if(changed){
+        tutEvRef.current=cur;
+        setTutEvents(cur);
+        for(const[tid,months]of Object.entries(cur))
+          for(const[mk,evs]of Object.entries(months))
+            await fsSaveTutEvents(tid,mk,evs);
+      }
+    }
+
+    // Log
+    list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(!old)fsLog(user.email,"add_av_ana",`Aggiunto avviso "${a.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(a))fsLog(user.email,"edit_av_ana",`Modificato avviso "${a.nome}"${old.nome!==a.nome?` (rinominato da "${old.nome}")`:"" }`);});
+    prev.forEach(p=>{if(!list.find(a=>a.id===p.id))fsLog(user.email,"delete_av_ana",`Eliminato avviso "${p.nome}"`);});
+  }
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
   async function handleTutDragEnd(evId,u){await editTutoraggio(evId,u);}
   async function handleAvDragEnd(avId,evId,u){await editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}
