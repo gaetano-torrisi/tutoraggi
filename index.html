@@ -478,6 +478,9 @@ function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>S
 function LogPanel({onClose}){
   const[rows,setRows]=useState([]);const[loading,setLoading]=useState(true);
   const[filterUser,setFilterUser]=useState("");const[sortCol,setSortCol]=useState("ts");const[sortDir,setSortDir]=useState("desc");
+  const[pos,setPos]=useState({x:Math.max(0,window.innerWidth/2-400),y:Math.max(0,window.innerHeight/2-280)});
+  const dr=useRef(false),off=useRef({x:0,y:0});
+  function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   useEffect(()=>{fsLoadLog().then(r=>{setRows(r);setLoading(false);});},[]);
   const users=[...new Set(rows.map(r=>r.userEmail))].sort();
   const filtered=rows.filter(r=>!filterUser||r.userEmail===filterUser);
@@ -485,49 +488,60 @@ function LogPanel({onClose}){
     let va=sortCol==="ts"?a.ts:sortCol==="type"?(LOG_TYPE_LABELS[a.type]||a.type):a.userEmail;
     let vb=sortCol==="ts"?b.ts:sortCol==="type"?(LOG_TYPE_LABELS[b.type]||b.type):b.userEmail;
     if(sortCol==="ts")return sortDir==="desc"?vb-va:va-vb;
-    return sortDir==="desc"?vb.localeCompare(va):va.localeCompare(vb);
+    return sortDir==="desc"?String(vb).localeCompare(String(va)):String(va).localeCompare(String(vb));
   });
   function thClick(col){if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("desc");}}
   const thStyle=(col)=>({padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",borderBottom:"2px solid #dde",background:sortCol===col?"#e8f0ff":"#f5f8fc"});
   const arrow=col=>sortCol===col?(sortDir==="desc"?" ↓":" ↑"):"";
-  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
-    <ResizablePanel defaultWidth={620} minWidth={400}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+  return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
+    <div style={{position:"absolute",left:pos.x,top:pos.y,width:700,maxWidth:"95vw",maxHeight:"78vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
+      {/* Header trascinabile */}
+      <div onMouseDown={onHD} style={{background:"#1a3a5c",color:"#fff",padding:"12px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"grab",userSelect:"none",flexShrink:0}}>
         <span style={{fontWeight:700,fontSize:15}}>📋 Log Attività</span>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
       </div>
-      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",flexShrink:0}}>
-        <label style={{fontSize:12,color:"#555",flexShrink:0}}>Filtra utente:</label>
-        <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{padding:"5px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12,flex:1}}>
+      {/* Filtri */}
+      <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"#f8f9ff"}}>
+        <label style={{fontSize:12,color:"#555",flexShrink:0}}>Utente:</label>
+        <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{padding:"5px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12,minWidth:180}}>
           <option value="">— Tutti —</option>
           {users.map(u=><option key={u} value={u}>{u}</option>)}
         </select>
-        <span style={{fontSize:11,color:"#aaa",flexShrink:0}}>{sorted.length} righe</span>
+        <span style={{fontSize:11,color:"#aaa",marginLeft:"auto"}}>{sorted.length} record · clicca intestazione per ordinare</span>
       </div>
+      {/* Tabella */}
       <div style={{flex:1,overflowY:"auto"}}>
-        {loading?<p style={{padding:20,color:"#aaa",fontSize:13}}>Caricamento...</p>:sorted.length===0?<p style={{padding:20,color:"#aaa",fontSize:13,fontStyle:"italic"}}>Nessuna attività registrata.</p>:
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-          <thead style={{position:"sticky",top:0,zIndex:2}}>
-            <tr>
-              <th onClick={()=>thClick("ts")} style={thStyle("ts")}>Data{arrow("ts")}</th>
-              <th onClick={()=>thClick("user")} style={thStyle("user")}>Utente{arrow("user")}</th>
-              <th onClick={()=>thClick("type")} style={thStyle("type")}>Tipo{arrow("type")}</th>
-              <th style={{...thStyle("detail"),cursor:"default"}}>Dettaglio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((r,i)=>(
-              <tr key={r.id} style={{background:i%2===0?"#fff":"#f9fbff"}}>
-                <td style={{padding:"7px 12px",color:"#555",whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td>
-                <td style={{padding:"7px 12px",color:"#555",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.userEmail}</td>
-                <td style={{padding:"7px 12px",whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td>
-                <td style={{padding:"7px 12px",color:"#777",lineHeight:1.4}}>{r.detail}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>}
+        {loading
+          ?<p style={{padding:24,color:"#aaa",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
+          :sorted.length===0
+            ?<p style={{padding:24,color:"#aaa",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessuna attività registrata.</p>
+            :<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead style={{position:"sticky",top:0,zIndex:2}}>
+                <tr>
+                  <th onClick={()=>thClick("ts")} style={thStyle("ts")}>Data{arrow("ts")}</th>
+                  <th onClick={()=>thClick("user")} style={thStyle("user")}>Utente{arrow("user")}</th>
+                  <th onClick={()=>thClick("type")} style={thStyle("type")}>Tipo{arrow("type")}</th>
+                  <th style={{...thStyle("detail"),cursor:"default",width:"40%"}}>Dettaglio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((r,i)=>(
+                  <tr key={r.id} style={{background:i%2===0?"#fff":"#f9fbff"}}>
+                    <td style={{padding:"7px 12px",color:"#555",whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td>
+                    <td style={{padding:"7px 12px",color:"#555",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.userEmail}</td>
+                    <td style={{padding:"7px 12px",whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td>
+                    <td style={{padding:"7px 12px",color:"#777",lineHeight:1.4}}>{r.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
       </div>
-    </ResizablePanel>
+      <div style={{padding:"10px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <span style={{fontSize:11,color:"#aaa"}}>Trascina l'intestazione per spostare</span>
+        <button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button>
+      </div>
+    </div>
   </div>);
 }
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
@@ -1015,6 +1029,7 @@ function App({user}){
     {showRiep&&<RiepilogoPanel avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowRiep(false)}/>}
     {showSettings&&<SettingsPanel settings={settings} onSave={handleSaveSettings} onClose={()=>setShowSettings(false)} isAdmin={isAdmin} onLoadDemo={handleLoadDemo} onClearDb={handleClearDb}/>}
     {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isAdmin={isAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)} onClose={()=>setShowAi(false)}/>}
+    {showLog&&<LogPanel onClose={()=>setShowLog(false)}/>}
     {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
     {modal&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
   </React.Fragment>);
