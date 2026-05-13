@@ -94,12 +94,56 @@ const MONTHS=[
   {key:"ott-26",label:"Ottobre 2026",year:2026,month:9,days:31},
   {key:"nov-26",label:"Novembre 2026",year:2026,month:10,days:30},
   {key:"dic-26",label:"Dicembre 2026",year:2026,month:11,days:31},
+  {key:"gen-27",label:"Gennaio 2027",year:2027,month:0,days:31},
+  {key:"feb-27",label:"Febbraio 2027",year:2027,month:1,days:28},
+  {key:"mar-27",label:"Marzo 2027",year:2027,month:2,days:31},
+  {key:"apr-27",label:"Aprile 2027",year:2027,month:3,days:30},
+  {key:"mag-27",label:"Maggio 2027",year:2027,month:4,days:31},
+  {key:"giu-27",label:"Giugno 2027",year:2027,month:5,days:30},
+  {key:"lug-27",label:"Luglio 2027",year:2027,month:6,days:31},
+  {key:"ago-27",label:"Agosto 2027",year:2027,month:7,days:31},
+  {key:"set-27",label:"Settembre 2027",year:2027,month:8,days:30},
+  {key:"ott-27",label:"Ottobre 2027",year:2027,month:9,days:31},
+  {key:"nov-27",label:"Novembre 2027",year:2027,month:10,days:30},
+  {key:"dic-27",label:"Dicembre 2027",year:2027,month:11,days:31},
 ];
+const MONTH_NAMES_SHORT=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const PALETTE=["#e74c3c","#c0392b","#e67e22","#d35400","#f1c40f","#f39c12","#2ecc71","#27ae60","#1abc9c","#16a085","#3498db","#2980b9","#9b59b6","#8e44ad","#34495e","#2c3e50","#e91e63","#9c27b0","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688","#4caf50","#8bc34a","#cddc39","#ffeb3b","#ffc107","#ff9800","#ff5722","#795548","#9e9e9e","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#fff176","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a","#80deea","#c5e1a5","#ffe082"];
-const TUTOR_COLORS=["#3498db","#e74c3c","#2ecc71","#9b59b6","#e67e22","#1abc9c","#e91e63","#f39c12","#34495e","#16a085","#8e44ad","#c0392b"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const AV_STATI=["In corso","Concluso","Sospeso"];
-const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quante riunioni di oggi potevano essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?"];
+const FUNNY_PHRASES=[
+  "Cosa importiamo oggi nel calendario del dolore?",
+  "Quante riunioni di oggi potevano essere una email?",
+  "Quale documento ti ha rovinato la giornata?",
+  "Quale deadline ti ha svegliato stanotte?",
+  "Cosa ottimizziamo oggi per non farlo mai più manualmente?",
+  "Quale foglio Excel vorresti bruciare?",
+  "Cosa posso fare per renderti la giornata meno lunga?",
+  "Cosa ti manca per staccare prima delle 18?",
+  "Cosa vuoi fare oggi invece di goderti il sole?",
+  "Quale collega ti ha già scritto tre email oggi?",
+  "Quale procedura amministrativa vorresti semplificare per sempre?",
+  "Quante ore di riunioni avresti potuto evitare questa settimana?",
+  "Quale scadenza regionale ti tiene sveglio la notte?",
+  "Cosa vuoi delegare a me prima di andare a pranzo?",
+  "Quale modulo hai compilato tre volte perché il sistema era offline?",
+  "Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?",
+  "Quale progetto giace abbandonato in una cartella del desktop?",
+  "Quanti allegati stai per inviare a qualcuno che non li leggerà mai?",
+  "Cosa sistemiamo oggi per non doverci pensare più?",
+  "Quale report hai rimandato abbastanza da renderlo urgente?",
+  "Quante volte hai riscritto la stessa email oggi?",
+  "Quale call potresti cancellare senza che nessuno se ne accorga?",
+  "Stai ottimizzando qualcosa che potevi eliminare direttamente?",
+  "Quanti tab hai aperti in questo momento?",
+  "Quale collega ti ha mandato un \"ok\" invece di leggere tutto il documento?",
+  "Cosa hai rimandato a lunedì tre lunedì fa?",
+  "Hai mai pensato che questo calendario potrebbe gestirsi da solo?",
+  "Quanti \"urgente\" hai ricevuto oggi che non erano urgenti?",
+  "Quale norma regionale hai riletto tre volte senza capirla?",
+  "Cosa faresti con un'ora in più al giorno? Perché non me la deleghi?",
+  "Ricorda che se lavori qui lo devi a una persona sola.",
+];
 const LOG_TYPE_LABELS={add_tut:"➕ Slot tutoraggio",edit_tut:"✏️ Slot tutoraggio",delete_tut:"🗑️ Slot tutoraggio",add_av:"➕ Slot avviso",edit_av:"✏️ Slot avviso",delete_av:"🗑️ Slot avviso",add_tutor_ana:"➕ Tutor anagrafica",edit_tutor_ana:"✏️ Tutor anagrafica",delete_tutor_ana:"🗑️ Tutor anagrafica",add_av_ana:"➕ Avviso anagrafica",edit_av_ana:"✏️ Avviso anagrafica",delete_av_ana:"🗑️ Avviso anagrafica"};
 const ROLE_LABEL={superadmin:"⭐ Super Admin",admin:"👑 Admin",user:"👤 Utente",viewer:"👁 Viewer"};
 const ROLE_COLOR={superadmin:"#c0392b",admin:"#e07b39",user:"#4f86c6",viewer:"#9b59b6"};
@@ -116,6 +160,7 @@ function hToTimeStr(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return`${
 function snapH(h){return Math.round(h*4)/4;}
 function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
 function pickOpenAiModel(){return"gpt-4o-mini";}
 function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i,/\b(lun|mar|mer|gio|ven|sab|dom)\b/i,/\b\d{1,2}\s+(gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/i].some(p=>p.test(text));}
 function layoutEvents(evs){
@@ -129,20 +174,17 @@ function cleanObj(obj){
   return obj;
 }
 function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv){
-  const data={version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents};
-  return JSON.stringify(data,null,2);
+  return JSON.stringify({version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents},null,2);
 }
 function downloadJSON(avvisi,tutors,tutEvents,anagraficaAv){
-  const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv);
-  const b64=btoa(unescape(encodeURIComponent(json)));
+  const b64=btoa(unescape(encodeURIComponent(makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv))));
   const a=document.createElement("a");a.href=`data:application/json;base64,${b64}`;a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────────
 async function fsLoad(){
-  try{
-    const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);
+  try{const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);
     const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});
     return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaAv:an.docs.map(d=>d.data())};
   }catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{},anagraficaAv:[]};}
@@ -179,7 +221,7 @@ async function fsApplyBackupPolicy(backups){
 // ── DEMO DATA ─────────────────────────────────────────────────────────────────
 function generateDemoData(){
   const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
-  const tutors=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:TUTOR_COLORS[i]}));
+  const tutors=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:PALETTE[i]}));
   const anaDefs=[{nome:"Avviso 1",codice:"DDG 001/2026",colore:PALETTE[10],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},{nome:"Avviso 2",codice:"DDG 002/2026",colore:PALETTE[2],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""},{nome:"Avviso 3",codice:"DDG 003/2026",colore:PALETTE[12],durataOre:400,stato:"In corso",dataInizio:"01/05/2026",dataFine:"31/08/2026",note:""},{nome:"Avviso 4",codice:"DDG 004/2026",colore:PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/08/2026",dataFine:"30/11/2026",note:""},{nome:"Avviso 5",codice:"DDG 005/2026",colore:PALETTE[5],durataOre:400,stato:"In corso",dataInizio:"01/10/2026",dataFine:"31/12/2026",note:""}];
   const anagraficaAv=anaDefs.map((d,i)=>({...d,id:`av-demo-${i}`}));
   const avMonthIdxs=[[0,1,2,3],[2,3,4,5],[4,5,6,7],[7,8,9,10],[9,10,11]];
@@ -203,13 +245,13 @@ function ResizablePanel({children,defaultWidth=400,minWidth=320}){
   </div>);
 }
 
-// ── FLOATING MODAL BASE ───────────────────────────────────────────────────────
-function FloatingModal({title,titleBg,width,maxHeight,children,footer,onClose}){
+// ── FLOATING MODAL ────────────────────────────────────────────────────────────
+function FloatingModal({title,titleBg,width,children,footer,onClose}){
   const[pos,setPos]=useState({x:Math.max(0,window.innerWidth/2-(width||580)/2),y:Math.max(0,window.innerHeight/2-280)});
   const dr=useRef(false),off=useRef({x:0,y:0});
   function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
-    <div style={{position:"absolute",left:pos.x,top:pos.y,width:width||580,maxWidth:"95vw",maxHeight:maxHeight||"78vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
+    <div style={{position:"absolute",left:pos.x,top:pos.y,width:width||580,maxWidth:"95vw",maxHeight:"78vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
       <div onMouseDown={onHD} style={{background:titleBg||"#1a3a5c",color:"#fff",padding:"12px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"grab",userSelect:"none",flexShrink:0}}>
         <span style={{fontWeight:700,fontSize:15}}>{title}</span>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -217,6 +259,17 @@ function FloatingModal({title,titleBg,width,maxHeight,children,footer,onClose}){
       <div style={{flex:1,overflowY:"auto"}}>{children}</div>
       {footer&&<div style={{padding:"10px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>{footer}</div>}
     </div>
+  </div>);
+}
+
+// ── PANEL HEADER WITH BACK ────────────────────────────────────────────────────
+function PanelHeader({title,onBack,onClose}){
+  return(<div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      {onBack&&<button onClick={onBack} style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:600}}>← Indietro</button>}
+      <span style={{fontWeight:700,fontSize:15}}>{title}</span>
+    </div>
+    <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button>
   </div>);
 }
 
@@ -232,7 +285,7 @@ function MiniCalendar({initialMonthIdx,selected,onSelect}){
       <button onClick={()=>setMIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={mIdx===MONTHS.length-1} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:mIdx===MONTHS.length-1?"#ccc":"#555",padding:"0 4px"}}>›</button>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
-      {DAY_NAMES_SHORT.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:"#888",padding:"2px 0"}}>{d}</div>)}
+      {["L","M","M","G","V","S","D"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:"#888",padding:"2px 0"}}>{d}</div>)}
       {cells.map((d,i)=>{const isSel=d===selected&&mIdx===initialMonthIdx,dow=i%7,isWk=dow===5||dow===6;return(<div key={i} onClick={()=>d&&onSelect(d,mIdx)} style={{textAlign:"center",fontSize:12,padding:"4px 2px",borderRadius:6,cursor:d?"pointer":"default",background:isSel?"#4f86c6":"transparent",color:isSel?"#fff":isWk?"#9b59b6":d?"#333":"transparent",fontWeight:isSel?700:400}} onMouseEnter={e=>{if(d&&!isSel)e.currentTarget.style.background="#f0f4f8";}} onMouseLeave={e=>{if(d&&!isSel)e.currentTarget.style.background="transparent";}}>{d||""}</div>);})}
     </div>
   </div>);
@@ -260,6 +313,32 @@ function TimePicker({label,value,onChange}){
         {[0,15,30,45].map(m=><option key={m} value={m}>{String(m).padStart(2,"0")}</option>)}
       </select>
     </div>
+  </div>);
+}
+
+// ── MONTH PICKER (click sul nome mese) ────────────────────────────────────────
+function MonthPicker({monthIdx,onChange,onClose}){
+  const years=[...new Set(MONTHS.map(m=>m.year))];
+  const[selYear,setSelYear]=useState(MONTHS[monthIdx].year);
+  const filtered=MONTHS.filter(m=>m.year===selYear);
+  return(<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",background:"#fff",border:"1px solid #dde",borderRadius:12,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:700,minWidth:280}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+      <span style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>Seleziona mese</span>
+      <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#888"}}>✕</button>
+    </div>
+    <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
+      {years.map(y=><button key={y} onClick={()=>setSelYear(y)} style={{padding:"5px 14px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,background:selYear===y?"#1a3a5c":"#f0f4f8",color:selYear===y?"#fff":"#555"}}>{y}</button>)}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+      {filtered.map(m=>{const idx=MONTHS.indexOf(m);const isSel=idx===monthIdx;return(<button key={m.key} onClick={()=>{onChange(idx);onClose();}} style={{padding:"8px 4px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:isSel?"#4f86c6":"#f0f4f8",color:isSel?"#fff":"#555"}} onMouseEnter={e=>{if(!isSel)e.currentTarget.style.background="#e8f0ff";}} onMouseLeave={e=>{if(!isSel)e.currentTarget.style.background="#f0f4f8";}}>{MONTH_NAMES_SHORT[m.month]}</button>);})}
+    </div>
+  </div>);
+}
+
+// ── COLOR PICKER WITH USED COLORS ─────────────────────────────────────────────
+function ColorPicker({value,onChange,usedColors=[]}){
+  return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
+    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box",opacity:used?0.25:1,position:"relative"}} title={used?"Già in uso":""}/>);})}
   </div>);
 }
 
@@ -344,11 +423,15 @@ function MonthView({month,tutByDay,avByDay,onDayClick}){
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
       {["Lun","Mar","Mer","Gio","Ven","Sab","Dom"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"#888",padding:"4px 0"}}>{d}</div>)}
       {Array.from({length:firstDow},(_,i)=><div key={`e${i}`}/>)}
-      {daysArr.map(d=>{const wk=isWE(d),tEvs=tutByDay?.[d]||[],aEvs=avByDay?.[d]||[];const all=[...tEvs,...aEvs];return(<div key={d} style={{minHeight:70,border:`1px solid ${wk?"#e0d8f0":"#dde"}`,borderRadius:8,padding:4,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"pointer"}} onClick={()=>onDayClick&&onDayClick(d)} onMouseEnter={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.08)":"#f5f8fc"} onMouseLeave={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.04)":"#fff"}>
-        <div style={{fontSize:12,fontWeight:700,color:wk?"#9b59b6":"#1a3a5c",marginBottom:2}}>{d}</div>
-        {all.slice(0,3).map((ev,i)=><div key={i} style={{height:5,borderRadius:3,background:ev.avColor||ev._color||"#4f86c6",opacity:0.85,marginBottom:2}}/>)}
-        {all.length>3&&<div style={{fontSize:9,color:"#888"}}>+{all.length-3}</div>}
-      </div>);})}
+      {daysArr.map(d=>{
+        const wk=isWE(d),tEvs=tutByDay?.[d]||[],aEvs=avByDay?.[d]||[];
+        const all=[...tEvs,...aEvs];
+        return(<div key={d} style={{minHeight:70,border:`1px solid ${wk?"#e0d8f0":"#dde"}`,borderRadius:8,padding:4,background:wk?"rgba(155,89,182,0.04)":"#fff",cursor:"pointer"}} onClick={()=>onDayClick&&onDayClick(d)} onMouseEnter={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.08)":"#f5f8fc"} onMouseLeave={e=>e.currentTarget.style.background=wk?"rgba(155,89,182,0.04)":"#fff"}>
+          <div style={{fontSize:12,fontWeight:700,color:wk?"#9b59b6":"#1a3a5c",marginBottom:2}}>{d}</div>
+          {all.slice(0,3).map((ev,i)=><div key={i} style={{height:5,borderRadius:3,background:ev.avColor||ev._color||"#4f86c6",opacity:0.85,marginBottom:2}}/>)}
+          {all.length>3&&<div style={{fontSize:9,color:"#888"}}>+{all.length-3}</div>}
+        </div>);
+      })}
     </div>
   </div>);
 }
@@ -384,6 +467,22 @@ function HamburgerMenu({onTutor,onAnagraficaAv,onSettings,isViewer}){
   </div>);
 }
 
+// ── INSIGHT DROPDOWN ──────────────────────────────────────────────────────────
+function InsightMenu({onTutoraggi,onAvvisi,onOre}){
+  const[open,setOpen]=useState(false);const ref=useRef();
+  useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+  const item=(icon,label,fn)=>(<button onClick={()=>{fn();setOpen(false);}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:"#1a3a5c",fontWeight:600,textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="#f0f4f8"} onMouseLeave={e=>e.currentTarget.style.background="none"}><span style={{fontSize:16}}>{icon}</span>{label}</button>);
+  const hBtn={background:"rgba(255,255,255,0.12)",border:"1.5px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:5};
+  return(<div ref={ref} style={{position:"relative",flexShrink:0}}>
+    <button onClick={()=>setOpen(o=>!o)} style={{...hBtn,background:open?"rgba(255,255,255,0.25)":"rgba(255,255,255,0.12)"}}>📊 Insight ▾</button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"#fff",borderRadius:12,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:600,minWidth:230,overflow:"hidden",border:"1px solid #eee"}}>
+      {item("📌","Riepilogo Tutoraggi",onTutoraggi)}
+      {item("📋","Riepilogo Avvisi/Progetti",onAvvisi)}
+      {item("📊","Riepilogo Ore",onOre)}
+    </div>}
+  </div>);
+}
+
 // ── SETTINGS HUB ──────────────────────────────────────────────────────────────
 function SettingsHub({role,onClose,onOpenPanel}){
   const isSA=role==="superadmin",isAd=role==="admin"||isSA;
@@ -396,9 +495,9 @@ function SettingsHub({role,onClose,onOpenPanel}){
   ].filter(Boolean);
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={360}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>⚙️ Impostazioni</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="⚙️ Impostazioni" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {items.map(it=>(<button key={it.key} onClick={()=>{onClose();onOpenPanel(it.key);}} style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 16px",borderRadius:10,border:"1px solid #eee",background:"#fafbfc",cursor:"pointer",marginBottom:10,textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="#f0f6ff"} onMouseLeave={e=>e.currentTarget.style.background="#fafbfc"}>
+        {items.map(it=>(<button key={it.key} onClick={()=>onOpenPanel(it.key)} style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 16px",borderRadius:10,border:"1px solid #eee",background:"#fafbfc",cursor:"pointer",marginBottom:10,textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="#f0f6ff"} onMouseLeave={e=>e.currentTarget.style.background="#fafbfc"}>
           <span style={{fontSize:24,flexShrink:0}}>{it.icon}</span>
           <div><div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{it.label}</div><div style={{fontSize:11,color:"#888",marginTop:2}}>{it.desc}</div></div>
           <span style={{marginLeft:"auto",color:"#ccc",fontSize:16}}>›</span>
@@ -412,8 +511,8 @@ function SettingsHub({role,onClose,onOpenPanel}){
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   const errors=[],avById={},avByName={};
   avvisi.forEach(av=>avById[av.id]=av);anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot sull'avviso "${ev.name}" non presente in anagrafica (${mk}, giorno ${ev.day}).`});}}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione dell'avviso.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario avviso (${fmt(avDay.start)}–${fmt(avDay.end)}).`});}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot sull'avviso "${ev.name}" non in anagrafica (${mk}, giorno ${ev.day}).`});}}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario (${fmt(avDay.start)}–${fmt(avDay.end)}).`});}}}
   for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});}}}
   for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso (${totAv}h).`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`});}
   for(const[tid,months]of Object.entries(tutEvents)){const t=tutors.find(x=>x.id===tid);for(const[mk,evs]of Object.entries(months)){const dayOre={};for(const ev of evs)dayOre[ev.day]=(dayOre[ev.day]||0)+(ev.ore||0);for(const[day,ore]of Object.entries(dayOre)){if(ore>8)errors.push({type:"ore_giornaliere",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": ${ore}h il giorno ${day} ${mk} (limite 8h/giorno).`});}}}
@@ -435,7 +534,7 @@ function VerificaModal({errors,onClose,onNavigate}){
 }
 
 // ── LOG PANEL ─────────────────────────────────────────────────────────────────
-function LogPanel({onClose}){
+function LogPanel({onBack,onClose}){
   const[rows,setRows]=useState([]);const[loading,setLoading]=useState(true);const[filterUser,setFilterUser]=useState("");const[sortCol,setSortCol]=useState("ts");const[sortDir,setSortDir]=useState("desc");
   useEffect(()=>{fsLoadLog().then(r=>{setRows(r);setLoading(false);});},[]);
   const users=[...new Set(rows.map(r=>r.userEmail))].sort();
@@ -444,8 +543,8 @@ function LogPanel({onClose}){
   function thClick(col){if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("desc");}}
   const thS=(col)=>({padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",borderBottom:"2px solid #dde",background:sortCol===col?"#e8f0ff":"#f5f8fc"});
   const arrow=col=>sortCol===col?(sortDir==="desc"?" ↓":" ↑"):"";
-  return(<FloatingModal title="📋 Log Attività" width={720} onClose={onClose} footer={<><span style={{fontSize:11,color:"#aaa"}}>Trascina per spostare</span><button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button></>}>
-    <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",background:"#f8f9ff",flexShrink:0}}>
+  return(<FloatingModal title="📋 Log Attività" width={720} onClose={onClose} footer={<><button onClick={onBack} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #dde",background:"#f5f8fc",cursor:"pointer",fontWeight:600,fontSize:13}}>← Indietro</button><button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button></>}>
+    <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",background:"#f8f9ff"}}>
       <label style={{fontSize:12,color:"#555",flexShrink:0}}>Utente:</label>
       <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{padding:"5px 8px",borderRadius:6,border:"1px solid #ccc",fontSize:12,minWidth:180}}><option value="">— Tutti —</option>{users.map(u=><option key={u} value={u}>{u}</option>)}</select>
       <span style={{fontSize:11,color:"#aaa",marginLeft:"auto"}}>{sorted.length} record</span>
@@ -460,7 +559,7 @@ function LogPanel({onClose}){
 }
 
 // ── BACKUP PANEL ──────────────────────────────────────────────────────────────
-function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onClose}){
+function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onBack,onClose}){
   const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState("");
   function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
   async function load(){setLoading(true);setBackups(await fsListBackups());setLoading(false);}
@@ -469,17 +568,20 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onClose}){
   async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}? I dati attuali saranno sovrascritti.`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg("✅ Ripristinato.");onClose();}catch(e){setMsg(`❌ ${e.message}`);}}
   function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
   async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
-  return(<FloatingModal title="💾 Gestione Backup" width={640} onClose={onClose} footer={<><span style={{fontSize:11,color:"#aaa"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili</span><button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button></>}>
+  return(<FloatingModal title="💾 Gestione Backup" width={640} onClose={onClose} footer={<><button onClick={onBack} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #dde",background:"#f5f8fc",cursor:"pointer",fontWeight:600,fontSize:13}}>← Indietro</button><span style={{fontSize:11,color:"#aaa"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili</span><button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"none",background:"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>Chiudi</button></>}>
     <div style={{padding:"12px 16px",borderBottom:"1px solid #eee",display:"flex",gap:10,alignItems:"center",background:"#f8f9ff",flexWrap:"wrap"}}>
       <button onClick={doBackup} disabled={saving} style={{padding:"7px 16px",borderRadius:8,border:"none",background:"#27ae60",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>{saving?"⏳ Salvataggio...":"💾 Crea backup ora"}</button>
       <div style={{display:"flex",gap:6}}>
         <button onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} style={{padding:"6px 12px",borderRadius:8,border:"1px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:600,fontSize:12}}>⬇️ Esporta JSON</button>
         <label style={{padding:"6px 12px",borderRadius:8,border:"1px solid #2980b9",background:"#fff",color:"#2980b9",cursor:"pointer",fontWeight:600,fontSize:12}}>📂 Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg("✅ Importato.");onClose();}catch(err){setMsg(`❌ ${err.message}`);}};reader.readAsText(file);e.target.value="";}}/></label>
+        <button disabled style={{padding:"6px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",color:"#aaa",cursor:"not-allowed",fontWeight:600,fontSize:12,display:"flex",alignItems:"center",gap:4}} title="Funzione in arrivo">
+          <span style={{fontSize:14}}>📊</span> Export Excel
+        </button>
       </div>
       {msg&&<span style={{fontSize:12,color:msg.startsWith("✅")?"#27ae60":"#e74c3c",fontWeight:600}}>{msg}</span>}
     </div>
     {loading?<p style={{padding:24,color:"#aaa",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
-    :backups.length===0?<p style={{padding:24,color:"#aaa",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessun backup disponibile. Crea il primo backup!</p>
+    :backups.length===0?<p style={{padding:24,color:"#aaa",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessun backup disponibile.</p>
     :<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
       <thead style={{position:"sticky",top:0,zIndex:2}}><tr><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Data e ora</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Dimensione</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Azioni</th></tr></thead>
       <tbody>{backups.map((b,i)=>(<tr key={b.id} style={{background:i%2===0?"#fff":"#f9fbff"}}><td style={{padding:"8px 12px",color:"#555"}}>{fmtTs(b.created)}</td><td style={{padding:"8px 12px",color:"#888"}}>{fmtSize(b.size)}</td><td style={{padding:"8px 12px"}}><div style={{display:"flex",gap:6}}><button onClick={()=>doDownload(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#e8f0ff",color:"#2980b9",cursor:"pointer",fontWeight:600,fontSize:11}}>⬇️</button><button onClick={()=>doRestore(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#fff8e0",color:"#e07b39",cursor:"pointer",fontWeight:600,fontSize:11}}>↩️</button><button onClick={()=>doDelete(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:11}}>🗑️</button></div></td></tr>))}</tbody>
@@ -488,7 +590,7 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onClose}){
 }
 
 // ── PANELS ────────────────────────────────────────────────────────────────────
-function UsersPanel({isSuperAdmin,onClose}){
+function UsersPanel({isSuperAdmin,onBack,onClose}){
   const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[editingRole,setEditingRole]=useState({});
   const inp={display:"block",width:"100%",marginBottom:8,padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);});},[]);
@@ -496,9 +598,9 @@ function UsersPanel({isSuperAdmin,onClose}){
   async function handleRemove(email){if(!confirm(`Rimuovere ${email}?`))return;await db.collection("authorizedEmails").doc(email).delete();setEmails(p=>p.filter(e=>e.email!==email));}
   async function handleRoleChange(email,r){await db.collection("authorizedEmails").doc(email).update({role:r});setEmails(p=>p.map(e=>e.email===email?{...e,role:r}:e));setEditingRole(p=>({...p,[email]:false}));}
   const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
-  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
+  return(<div style={{position:"fixed",inset:0,zIndex:510,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={400}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>🔐 Utenti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="🔐 Utenti" onBack={onBack} onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
         <div style={{background:"#f0f6ff",borderRadius:10,padding:14,marginBottom:16,border:"1px solid #4f86c6"}}>
           <label style={{fontSize:12,color:"#555"}}>Email</label><input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="email@azienda.it" style={inp}/>
@@ -519,10 +621,10 @@ function UsersPanel({isSuperAdmin,onClose}){
   </div>);
 }
 
-function DemoPanel({onLoadDemo,onClearDb,isSuperAdmin,onClose}){
-  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
+function DemoPanel({onLoadDemo,onClearDb,isSuperAdmin,onBack,onClose}){
+  return(<div style={{position:"fixed",inset:0,zIndex:510,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={400}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>🎲 Dati Demo</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="🎲 Dati Demo" onBack={onBack} onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:20}}>
         <div style={{padding:16,background:"#f0f6ff",borderRadius:12,border:"1px solid #4f86c6",marginBottom:16}}>
           <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c",marginBottom:8}}>🎲 Carica dati demo</div>
@@ -531,7 +633,7 @@ function DemoPanel({onLoadDemo,onClearDb,isSuperAdmin,onClose}){
         </div>
         {isSuperAdmin&&<div style={{padding:16,background:"#fff8f0",borderRadius:12,border:"1px solid #f0c080"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#c0392b",marginBottom:8}}>🗑️ Cancella database</div>
-          <p style={{fontSize:12,color:"#555",marginBottom:14,lineHeight:1.6}}>Elimina tutti i dati dell'applicazione. Operazione irreversibile.</p>
+          <p style={{fontSize:12,color:"#555",marginBottom:14,lineHeight:1.6}}>Elimina tutti i dati. Operazione irreversibile.</p>
           <button onClick={onClearDb} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#e74c3c",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>🗑️ Cancella database</button>
         </div>}
       </div>
@@ -539,7 +641,7 @@ function DemoPanel({onLoadDemo,onClearDb,isSuperAdmin,onClose}){
   </div>);
 }
 
-function ApiPanel({settings,onSave,onClose}){
+function ApiPanel({settings,onSave,onBack,onClose}){
   const[aiProvider,setAiProvider]=useState(settings.aiProvider||"gemini");const[geminiKey,setGeminiKey]=useState(settings.geminiApiKey||"");const[openaiKey,setOpenaiKey]=useState(settings.openaiApiKey||"");const[saved,setSaved]=useState(false);
   const[testG,setTestG]=useState(null);const[testO,setTestO]=useState(null);const[tstgG,setTstgG]=useState(false);const[tstgO,setTstgO]=useState(false);const[cdG,setCdG]=useState(0);const[cdO,setCdO]=useState(0);const CD=60;
   useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
@@ -549,9 +651,9 @@ function ApiPanel({settings,onSave,onClose}){
   async function testOpenai(){if(!openaiKey){setTestO("❌ Chiave non inserita");return;}setTstgO(true);setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?"✅ Connessione riuscita":r.status===429?"❌ Quota esaurita":r.status===401?"❌ Chiave non valida":`❌ Errore ${r.status}`);}catch{setTestO("❌ Errore di rete");}setTstgO(false);setCdO(CD);}
   const inp={display:"block",width:"100%",padding:"8px 10px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13,fontFamily:"monospace",marginTop:4};
   const pBtn=(v,c)=>({flex:1,padding:"9px 0",border:"none",cursor:"pointer",fontWeight:700,fontSize:13,borderRadius:8,background:aiProvider===v?c:"#f0f4f8",color:aiProvider===v?"#fff":"#555"});
-  return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
+  return(<div style={{position:"fixed",inset:0,zIndex:510,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={440}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>⚙️ Impostazioni API</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="⚙️ Impostazioni API" onBack={onBack} onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:20}}>
         <div style={{padding:16,background:"#f8f9ff",borderRadius:12,border:"1px solid #dde"}}>
           <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c",marginBottom:12}}>🤖 Assistente AI</div>
@@ -570,35 +672,37 @@ function ApiPanel({settings,onSave,onClose}){
         </div>
       </div>
       <div style={{padding:"12px 20px",borderTop:"1px solid #eee",display:"flex",justifyContent:"flex-end",gap:10}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button>
+        <button onClick={onBack} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #dde",background:"#f5f8fc",cursor:"pointer",fontWeight:600}}>← Indietro</button>
         <button onClick={handleSave} style={{padding:"8px 20px",borderRadius:8,border:"none",background:saved?"#2ecc71":"#1a3a5c",color:"#fff",cursor:"pointer",fontWeight:600}}>{saved?"✓ Salvato":"Salva"}</button>
       </div>
     </ResizablePanel>
   </div>);
 }
 
-function TutorPanel({tutors,onSave,onClose}){
-  const[list,setList]=useState(tutors.map(t=>({...t})));const[editing,setEditing]=useState(null);const[form,setForm]=useState({id:"",nome:"",cognome:"",cf:"",azienda:"",color:TUTOR_COLORS[0]});
+function TutorPanel({tutors,anagraficaAv,onSave,onClose}){
+  const usedColors=tutors.map(t=>t.color).filter(Boolean);
+  const[list,setList]=useState(tutors.map(t=>({...t})));const[editing,setEditing]=useState(null);const[form,setForm]=useState({id:"",nome:"",cognome:"",cf:"",azienda:"",color:PALETTE[0]});
   const inp={display:"block",width:"100%",marginBottom:8,padding:"6px 8px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
-  function startEdit(i){setEditing(i);if(i===-1)setForm({id:`tutor-${Date.now()}`,nome:"",cognome:"",cf:"",azienda:"",color:TUTOR_COLORS[list.length%TUTOR_COLORS.length]});else setForm({...list[i]});}
+  function startEdit(i){setEditing(i);if(i===-1){const used=list.map(t=>t.color);const free=PALETTE.find(c=>!used.includes(c))||PALETTE[0];setForm({id:`tutor-${Date.now()}`,nome:"",cognome:"",cf:"",azienda:"",color:free});}else setForm({...list[i]});}
   function saveForm(){if(!form.nome.trim()&&!form.cognome.trim())return;if(editing===-1)setList(p=>[...p,form]);else setList(p=>p.map((t,i)=>i===editing?form:t));setEditing(null);}
   const fn=t=>`${t.cognome} ${t.nome}`.trim()||"—";
+  const currentUsed=list.filter((_,i)=>i!==editing).map(t=>t.color);
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={420}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>👤 Anagrafica Tutor</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="👤 Anagrafica Tutor" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:"14px 16px"}}>
         {list.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
-        {list.map((t,i)=>(<div key={t.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fafbfc"}}>
+        {[...list].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map((t)=>{const i=list.indexOf(t);return(<div key={t.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fafbfc"}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:14,height:14,borderRadius:4,background:t.color||"#4f86c6",flexShrink:0}}/><div><div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{fn(t)}</div>{t.cf&&<div style={{fontSize:11,color:"#888"}}>CF: {t.cf}</div>}{t.azienda&&<div style={{fontSize:11,color:"#888"}}>{t.azienda}</div>}</div></div>
           <div style={{display:"flex",gap:6}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>{if(confirm(`Eliminare il tutor "${fn(t)}"?`))setList(p=>p.filter((_,j)=>j!==i));}} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
-        </div>))}
+        </div>);})}
         {editing!==null&&(<div style={{marginTop:12,borderRadius:10,border:"1px solid #4f86c6",padding:"14px",background:"#f0f6ff"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#1a3a5c"}}>{editing===-1?"➕ Nuovo":"✏️ Modifica"}</div>
           <div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Nome</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={inp}/></div><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Cognome</label><input value={form.cognome} onChange={e=>setForm(f=>({...f,cognome:e.target.value}))} style={inp}/></div></div>
           <label style={{fontSize:12,color:"#555"}}>CF</label><input value={form.cf} onChange={e=>setForm(f=>({...f,cf:e.target.value.toUpperCase()}))} style={inp} maxLength={16}/>
           <label style={{fontSize:12,color:"#555"}}>Azienda</label><input value={form.azienda} onChange={e=>setForm(f=>({...f,azienda:e.target.value}))} style={inp}/>
           <label style={{fontSize:12,color:"#555"}}>Colore</label>
-          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:5,marginBottom:10}}>{TUTOR_COLORS.map(c=><div key={c} onClick={()=>setForm(f=>({...f,color:c}))} style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:form.color===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
+          <ColorPicker value={form.color} onChange={c=>setForm(f=>({...f,color:c}))} usedColors={currentUsed}/>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button onClick={()=>setEditing(null)} style={{padding:"6px 14px",borderRadius:6,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer"}}>Annulla</button><button onClick={saveForm} style={{padding:"6px 14px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontWeight:600}}>Salva</button></div>
         </div>)}
         {editing===null&&<button onClick={()=>startEdit(-1)} style={{marginTop:10,width:"100%",padding:"9px",borderRadius:8,border:"2px dashed #4f86c6",background:"transparent",color:"#4f86c6",cursor:"pointer",fontWeight:600,fontSize:13}}>+ Aggiungi tutor</button>}
@@ -610,27 +714,28 @@ function TutorPanel({tutors,onSave,onClose}){
 
 function AnagraficaAvPanel({anagraficaAv,onSave,onClose}){
   const[list,setList]=useState(anagraficaAv.map(a=>({...a})));const[editing,setEditing]=useState(null);
-  const emptyForm=()=>({id:`av-${Date.now()}`,nome:"",codice:"",colore:PALETTE[10],durataOre:"",dataInizio:"",dataFine:"",stato:"In corso",note:""});
+  const emptyForm=()=>{const used=list.map(a=>a.colore);const free=PALETTE.find(c=>!used.includes(c))||PALETTE[0];return{id:`av-${Date.now()}`,nome:"",codice:"",colore:free,durataOre:"",dataInizio:"",dataFine:"",stato:"In corso",note:""};};
   const[form,setForm]=useState(emptyForm());
   const inp={display:"block",width:"100%",marginBottom:8,padding:"6px 8px",borderRadius:6,border:"1px solid #ccc",boxSizing:"border-box",fontSize:13};
   function startEdit(i){setEditing(i);if(i===-1)setForm(emptyForm());else setForm({...list[i]});}
   function saveForm(){if(!form.nome.trim())return;if(editing===-1)setList(p=>[...p,form]);else setList(p=>p.map((a,i)=>i===editing?form:a));setEditing(null);}
   const statoColor={"In corso":"#27ae60","Concluso":"#888","Sospeso":"#e07b39"};
+  const currentUsed=list.filter((_,i)=>i!==editing).map(a=>a.colore);
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={480}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Anagrafica Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="📋 Anagrafica Avvisi/Progetti" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:"14px 16px"}}>
         {list.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso.</p>}
-        {list.map((a,i)=>(<div key={a.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",background:"#fafbfc"}}>
+        {[...list].sort((a,b)=>a.nome.localeCompare(b.nome)).map((a)=>{const i=list.indexOf(a);return(<div key={a.id} style={{marginBottom:10,borderRadius:10,border:"1px solid #eee",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",background:"#fafbfc"}}>
           <div style={{display:"flex",alignItems:"flex-start",gap:10,flex:1}}><div style={{width:14,height:14,borderRadius:4,background:a.colore||"#4f86c6",flexShrink:0,marginTop:2}}/><div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"#1a3a5c"}}>{a.nome}</div>{a.codice&&<div style={{fontSize:11,color:"#888"}}>Codice: {a.codice}</div>}<div style={{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}}>{a.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.durataOre}h</span>}<span style={{fontSize:11,background:hexToRgba(statoColor[a.stato]||"#888",0.12),color:statoColor[a.stato]||"#888",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{a.stato}</span>{a.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>{a.dataInizio}{a.dataFine?` → ${a.dataFine}`:""}</span>}</div></div></div>
           <div style={{display:"flex",gap:6,flexShrink:0}}><button onClick={()=>startEdit(i)} style={{background:"#e8edf3",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>✏️</button><button onClick={()=>{if(confirm(`Eliminare l'avviso "${a.nome}"?`))setList(p=>p.filter((_,j)=>j!==i));}} style={{background:"#ffeaea",border:"none",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:12}}>🗑️</button></div>
-        </div>))}
+        </div>);})}
         {editing!==null&&(<div style={{marginTop:12,borderRadius:10,border:"1px solid #4f86c6",padding:"14px",background:"#f0f6ff"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"#1a3a5c"}}>{editing===-1?"➕ Nuovo Avviso":"✏️ Modifica Avviso"}</div>
           <label style={{fontSize:12,color:"#555"}}>Nome *</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={inp} placeholder="Nome avviso/progetto"/>
           <label style={{fontSize:12,color:"#555"}}>Codice avviso</label><input value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={inp} placeholder="Es. DDG 1381/2026"/>
           <label style={{fontSize:12,color:"#555"}}>Colore</label>
-          <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>{PALETTE.map(c=><div key={c} onClick={()=>setForm(f=>({...f,colore:c}))} style={{width:22,height:22,borderRadius:4,background:c,cursor:"pointer",border:form.colore===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
+          <ColorPicker value={form.colore} onChange={c=>setForm(f=>({...f,colore:c}))} usedColors={currentUsed}/>
           <div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Durata (ore)</label><input type="number" min="0" value={form.durataOre||""} onChange={e=>setForm(f=>({...f,durataOre:e.target.value===""?"":Number(e.target.value)}))} style={inp} placeholder="Es. 400"/></div><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Stato</label><select value={form.stato||"In corso"} onChange={e=>setForm(f=>({...f,stato:e.target.value}))} style={inp}>{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div></div>
           <div style={{display:"flex",gap:8}}><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data inizio</label><input value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))} style={inp} placeholder="01/01/2026"/></div><div style={{flex:1}}><label style={{fontSize:12,color:"#555"}}>Data fine</label><input value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))} style={inp} placeholder="31/12/2026"/></div></div>
           <label style={{fontSize:12,color:"#555"}}>Note</label><textarea value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} style={{...inp,height:60,resize:"vertical"}} placeholder="Note aggiuntive..."/>
@@ -644,19 +749,20 @@ function AnagraficaAvPanel({anagraficaAv,onSave,onClose}){
 }
 
 function RiepilogoAvPanel({avvisi,anagraficaAv,onClose}){
-  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;const fo=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
+  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
   const avById={};avvisi.forEach(av=>avById[av.id]=av);const statoColor={"In corso":"#27ae60","Concluso":"#888","Sospeso":"#e07b39"};
+  const sorted=[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome));
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={420}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📋 Riepilogo Avvisi/Progetti</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="📋 Riepilogo Avvisi/Progetti" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
-        {anagraficaAv.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso in anagrafica.</p>}
-        {anagraficaAv.map(ana=>{const av=avById[ana.id];const tot=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+        {sorted.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun avviso in anagrafica.</p>}
+        {sorted.map(ana=>{const av=avById[ana.id];const tot=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
           <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"8px 12px"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{ana.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{ana.durataOre}h da bando</span>}<span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} tot.</span></div></div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{ana.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{ana.durataOre}h da bando</span>}<span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} calendario</span></div></div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><span style={{fontSize:11,color:statoColor[ana.stato]||"#888",fontWeight:600}}>{ana.stato}</span>{ana.codice&&<span style={{fontSize:11,color:"#888"}}>· {ana.codice}</span>}{ana.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>· {ana.dataInizio}{ana.dataFine?` → ${ana.dataFine}`:""}</span>}</div>
           </div>
-          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento nel calendario.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort().map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
+          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort(([a],[b])=>a.localeCompare(b)).map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
         </div>);})}
       </div>
     </ResizablePanel>
@@ -664,18 +770,19 @@ function RiepilogoAvPanel({avvisi,anagraficaAv,onClose}){
 }
 
 function TutoraggiPanel({tutors,tutEvents,anagraficaAv,onClose}){
-  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;const fo=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;
+  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
   const avCol={};for(const a of anagraficaAv)avCol[a.nome]=a.colore||"#4f86c6";
+  const sorted=[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome));
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={420}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📌 Riepilogo Tutoraggi</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="📌 Riepilogo Tutoraggi" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
-        {tutors.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
-        {tutors.map(t=>{const td=tutEvents[t.id]||{};let tot=0;const mes=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);if(mes.length===0)return null;
+        {sorted.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
+        {sorted.map(t=>{const td=tutEvents[t.id]||{};let tot=0;const mes=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);if(mes.length===0)return null;
           return(<div key={t.id} style={{marginBottom:16,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
             <div style={{background:hexToRgba(t.color||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div>
-              <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} totali</span>
+              <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} calendario</span>
             </div>
             <div style={{padding:"8px 12px"}}>{mes.map(([mk,evs])=>{const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fo(mo)}</span></div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div></div>);})}</div>
           </div>);
@@ -692,25 +799,27 @@ function RiepilogoPanel({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   function getOreFiltered(tId,avName){let t=0;const ana=anagraficaAv.find(a=>a.nome===avName);if(!ana)return 0;const av=avById[ana.id];if(!av)return 0;const td=tutEvents[tId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)t+=en-s;}}}return t;}
   function getAvOre(anaId){const av=avById[anaId];if(!av)return 0;if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
   function getTotOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
-  function getAvNamesForTut(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)n.add(ev.name);}return[...n];}
-  function getTutsForAv(avName){return tutors.filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;});}
-  const fo=o=>o%1===0?`${o}h`:`${o.toFixed(1)}h`;const fp=p=>`${Math.round(p)}%`;
+  function getAvNamesForTut(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)n.add(ev.name);}return[...n].sort();}
+  function getTutsForAv(avName){return[...tutors].filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;}).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
+  const fp=p=>`${Math.round(p)}%`;
   const bSt=a=>({padding:"5px 14px",borderRadius:8,border:"none",cursor:"pointer",fontWeight:600,fontSize:12,background:a?"#4f86c6":"#f0f4f8",color:a?"#fff":"#555"});
   const pctBadge=(oreAnno,durataOre)=>{if(!durataOre)return null;const p=oreAnno/durataOre*100;return(<span style={{fontSize:10,padding:"1px 6px",borderRadius:8,background:p>100?"#ffeaea":p>=80?"#e8f8ee":"#f0f4f8",color:p>100?"#c0392b":p>=80?"#27ae60":"#888",fontWeight:600}}>{fp(p)} annuo</span>);};
+  const sortedTutors=[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome));
+  const sortedAna=[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome));
   return(<div style={{position:"fixed",inset:0,zIndex:500,display:"flex"}}><div onClick={onClose} style={{flex:1,background:"rgba(0,0,0,0.35)"}}/>
     <ResizablePanel defaultWidth={440}>
-      <div style={{background:"#1a3a5c",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}><span style={{fontWeight:700,fontSize:15}}>📊 Riepilogo Ore</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer"}}>✕</button></div>
+      <PanelHeader title="📊 Riepilogo Ore" onClose={onClose}/>
       <div style={{padding:"10px 16px",borderBottom:"1px solid #eee",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{display:"flex",gap:4}}><button style={bSt(viewMode==="tutor")} onClick={()=>setViewMode("tutor")}>👤 Per tutor</button><button style={bSt(viewMode==="avviso")} onClick={()=>setViewMode("avviso")}>📋 Per avviso</button></div>
         <div style={{display:"flex",gap:4,marginLeft:"auto"}}><button style={bSt(timeMode==="mese")} onClick={()=>setTimeMode("mese")}>Mese</button><button style={bSt(timeMode==="anno")} onClick={()=>setTimeMode("anno")}>Anno</button></div>
       </div>
       <div style={{padding:"6px 16px",background:"#f8f9ff",borderBottom:"1px solid #eee",fontSize:11,color:"#888"}}>💡 % = quota annua del tutor sulla durata da bando</div>
       <div style={{flex:1,overflowY:"auto",padding:16}}>
-        {viewMode==="tutor"&&tutors.map(t=>{const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+        {viewMode==="tutor"&&sortedTutors.map(t=>{const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
           <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6"}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div><span style={{fontWeight:700,color:"#1a3a5c"}}>{fo(tot)}</span></div>
           <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{const ana=anagraficaAv.find(a=>a.nome===nm);const ore=getOreFiltered(t.id,nm);const oreA=getTutOreAnnoPerAv(t.id,nm);return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><span style={{color:"#555"}}>{nm}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana?.durataOre)}</div></div>);})}</div>
         </div>);})}
-        {viewMode==="avviso"&&anagraficaAv.map(ana=>{const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
+        {viewMode==="avviso"&&sortedAna.map(ana=>{const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);return(<div key={ana.id} style={{marginBottom:14,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
           <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span>{ana.durataOre&&<span style={{fontSize:11,color:"#888",fontWeight:400}}>· {ana.durataOre}h da bando</span>}</div><span style={{fontWeight:700,color:"#1a3a5c",flexShrink:0}}>{fo(avTot)}</span></div>
           <div style={{padding:"8px 14px"}}>{tuts.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tuts.map(t=>{const ore=getOreFiltered(t.id,ana.nome);const oreA=getTutOreAnnoPerAv(t.id,ana.nome);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid #f5f5f5",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:2,background:t.color||"#4f86c6"}}/><span style={{color:"#555"}}>{t.cognome} {t.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"#1a3a5c"}}>{fo(ore)}</span>{pctBadge(oreA,ana.durataOre)}</div></div>);})}</div>
         </div>);})}
@@ -729,69 +838,27 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   const phrase=useRef(FUNNY_PHRASES[Math.floor(Math.random()*FUNNY_PHRASES.length)]).current;
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-
   function makeResizeHandler(dir){return function(e){e.preventDefault();const sx=e.clientX,sy=e.clientY,sw=size.w,sh=size.h;function mv(me){if(dir==="right"||dir==="corner")setSize(s=>({...s,w:Math.max(300,sw+(me.clientX-sx))}));if(dir==="top"||dir==="corner")setSize(s=>({...s,h:Math.max(250,sh-(me.clientY-sy))}));}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);};}
-
   function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"⚠️ Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"⚠️ Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
-
-  function buildSelectionSummary(){
-    const parts=[];
-    if(importType==="tutoraggio"&&selTutor){const t=tutors.find(x=>x.id===selTutor);if(t)parts.push({color:t.color||"#4f86c6",text:`👤 ${t.cognome} ${t.nome}${t.azienda?" · "+t.azienda:""}`});}
-    if(selAv){const a=anagraficaAv.find(x=>x.id===selAv);if(a)parts.push({color:a.colore||"#4f86c6",text:`📋 ${a.nome}${a.durataOre?" · "+a.durataOre+"h":""}${a.stato?" · "+a.stato:""}`});}
-    return parts;
-  }
-
-  async function processSource(file,text){
-    const sum=buildSelectionSummary();if(sum.length)addMsg({role:"summary",parts:sum});
-    if(file)addMsg({role:"user",text:`📎 ${file.name}`});else addMsg({role:"user",text:`📋 Testo incollato (${text.length} caratteri)`});
-    setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});
-    try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}
-    setLoading(false);
-  }
-  async function processPaste(){
-    if(!pasteText.trim()){addMsg({role:"ai",text:"⚠️ Testo vuoto."});return;}
-    if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"⚠️ Il testo non sembra contenere date o orari. Questa funzione supporta solo l'importazione di calendari."});setPasteText("");setShowPaste(false);return;}
-    setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);
-  }
-  function handleResult(res){
-    setMessages(p=>p.filter(m=>!m.isLoading));
-    if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}
-    else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}
-    else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});
-  }
-  async function analyzeDoc(file,text){
-    const prov=settings.aiProvider||"gemini";const prompt=`Estrai appuntamenti da questo documento/testo. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;
-    if(prov==="gemini"){
-      if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");
-      let parts;
-      if(text){parts=[{text:`${prompt}\n\n${text}`}];}
-      else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];}
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});
-      if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}
-      const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");
-    }else{
-      if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");
-      let msgs;
-      if(text){msgs=[{role:"user",content:`${prompt}\n\n${text}`}];}
-      else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isImg=mime.startsWith("image/");msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];}
-      const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:pickOpenAiModel(),messages:msgs,max_tokens:2000})});
-      if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);
-      const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");
-    }
+  function buildSelectionSummary(){const parts=[];if(importType==="tutoraggio"&&selTutor){const t=tutors.find(x=>x.id===selTutor);if(t)parts.push({color:t.color||"#4f86c6",text:`👤 ${t.cognome} ${t.nome}${t.azienda?" · "+t.azienda:""}`});}if(selAv){const a=anagraficaAv.find(x=>x.id===selAv);if(a)parts.push({color:a.colore||"#4f86c6",text:`📋 ${a.nome}${a.durataOre?" · "+a.durataOre+"h":""}${a.stato?" · "+a.stato:""}`});}return parts;}
+  async function processSource(file,text){const sum=buildSelectionSummary();if(sum.length)addMsg({role:"summary",parts:sum});if(file)addMsg({role:"user",text:`📎 ${file.name}`});else addMsg({role:"user",text:`📋 Testo incollato (${text.length} caratteri)`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function processPaste(){if(!pasteText.trim()){addMsg({role:"ai",text:"⚠️ Testo vuoto."});return;}if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"⚠️ Il testo non sembra contenere date o orari."});setPasteText("");setShowPaste(false);return;}setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);}
+  function handleResult(res){setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}
+  async function analyzeDoc(file,text){const prov=settings.aiProvider||"gemini";const prompt=`Estrai appuntamenti da questo documento/testo. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;
+    if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");let parts;if(text){parts=[{text:`${prompt}\n\n${text}`}];}else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];}const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}
+    else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");let msgs;if(text){msgs=[{role:"user",content:`${prompt}\n\n${text}`}];}else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isImg=mime.startsWith("image/");msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];}const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:pickOpenAiModel(),messages:msgs,max_tokens:2000})});if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");}
   }
   function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});}
   function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
   async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}await processSource(file,null);}
   async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
-
   const uploadButtons=()=>(<div style={{display:"flex",gap:6,flexDirection:"column",width:"100%",marginTop:6}}>
     <button onClick={()=>fileRef.current.click()} style={{width:"100%",padding:"7px",borderRadius:10,border:"2px dashed #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>📎 Carica documento</button>
     <button onClick={()=>setShowPaste(s=>!s)} style={{width:"100%",padding:"7px",borderRadius:10,border:"2px dashed #27ae60",background:"#f0fff4",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>📋 Incolla testo</button>
     {showPaste&&<div style={{marginTop:4}}><textarea value={pasteText} onChange={e=>setPasteText(e.target.value)} placeholder="Incolla qui il testo con le date..." style={{width:"100%",height:90,padding:"8px",borderRadius:8,border:"1px solid #27ae60",fontSize:12,resize:"vertical",boxSizing:"border-box"}}/><button onClick={processPaste} disabled={loading||!pasteText.trim()} style={{width:"100%",padding:"6px",borderRadius:8,border:"none",background:"#27ae60",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12,marginTop:4}}>Analizza testo</button></div>}
   </div>);
-
   function renderMsg(msg,idx){const isAi=msg.role==="ai";
     if(msg.role==="summary")return(<div key={idx} style={{display:"flex",flexDirection:"column",gap:4,marginBottom:10}}>{msg.parts.map((p,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",borderRadius:8,background:hexToRgba(p.color,0.12),border:`1px solid ${hexToRgba(p.color,0.35)}`}}><div style={{width:10,height:10,borderRadius:3,background:p.color,flexShrink:0}}/><span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>{p.text}</span></div>)}</div>);
     return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
@@ -802,19 +869,18 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
       {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
       {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
       {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona tutor —</option>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
+        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
         {(!selTutor||!selAv)?<div style={{fontSize:11,color:"#aaa",fontStyle:"italic",padding:"4px 0"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}
       </div>}
       {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
         {!selAv?<div style={{fontSize:11,color:"#aaa",fontStyle:"italic",padding:"4px 0"}}>Seleziona un avviso per procedere.</div>:uploadButtons()}
       </div>}
       {msg.showUpload&&uploadButtons()}
       {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid #dde",borderRadius:8,background:"#fff",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid #f0f0f0",fontSize:11}}><span style={{color:"#555"}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"#1a3a5c"}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"#2ecc71",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file o incolla del testo.",showUpload:true});}} style={{padding:"8px 12px",borderRadius:8,border:"1px solid #ccc",background:"#f5f5f5",cursor:"pointer",fontSize:12}}>✕</button></div>}</div>}
       {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:8,border:"1px solid #f0c040",background:"#fffbea",fontSize:11}}><div style={{fontWeight:700,color:"#b8860b",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"#555",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} style={{padding:"3px 9px",borderRadius:6,border:"none",background:"#4f86c6",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600}}>✓ Confermo</button></div>)}</div>}
     </div>);}
-
   const rS={position:"absolute",background:"transparent",zIndex:10};
   return(<div style={{position:"fixed",bottom:0,left:0,width:size.w,zIndex:500,background:"#fff",boxShadow:"4px -4px 24px rgba(0,0,0,0.18)",display:"flex",flexDirection:"column",height:size.h,borderRadius:"0 14px 0 0",border:"2px solid #1a3a5c",borderBottom:"none",borderLeft:"none"}}>
     <div onMouseDown={makeResizeHandler("top")} style={{...rS,top:-4,left:0,right:20,height:8,cursor:"ns-resize"}}/>
@@ -854,11 +920,11 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
       {tab==="tutoraggio"&&(<>
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Tutor</label>
         {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun tutor. <button onClick={()=>{onClose();onOpenTutorPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-        :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenTutorPanel();}else setTutTutor(e.target.value);}} style={inp}>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
+        :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenTutorPanel();}else setTutTutor(e.target.value);}} style={inp}>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
         {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:hexToRgba(selT.color||"#4f86c6",0.12)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"#4f86c6"}}/><span style={{fontSize:12,color:"#555"}}>Colore tutor</span></div>}
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
         {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setTutAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setTutAvId(e.target.value);}} style={inp}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
         {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:hexToRgba(selAnaT.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",0.3)}`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><div style={{width:12,height:12,borderRadius:3,background:selAnaT.colore||"#4f86c6"}}/><span style={{fontSize:12,fontWeight:600,color:"#1a3a5c"}}>{selAnaT.nome}</span></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{selAnaT.durataOre&&<span style={{fontSize:11,color:"#888"}}>Durata: {selAnaT.durataOre}h</span>}{selAnaT.stato&&<span style={{fontSize:11,color:"#888"}}>Stato: {selAnaT.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:14}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
@@ -871,7 +937,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
       {tab==="avviso"&&(<>
         <label style={{fontSize:12,color:"#555",display:"block",marginBottom:3}}>Avviso/Progetto</label>
         {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:8,background:"#fff8f0",border:"1px solid #f0c080",fontSize:12,color:"#e07b39"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"#4f86c6",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
-        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setAvId(e.target.value);}} style={inp}>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setAvId(e.target.value);}} style={inp}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
         {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:8,background:hexToRgba(selAnaAv.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",0.3)}`}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><div style={{width:14,height:14,borderRadius:3,background:selAnaAv.colore||"#4f86c6"}}/><span style={{fontSize:13,fontWeight:700,color:"#1a3a5c"}}>{selAnaAv.nome}</span></div><div style={{display:"flex",gap:10,flexWrap:"wrap"}}>{selAnaAv.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"2px 8px",fontWeight:600}}>{selAnaAv.durataOre}h da bando</span>}{selAnaAv.stato&&<span style={{fontSize:11,background:"#f0f0f0",color:"#555",borderRadius:6,padding:"2px 8px"}}>{selAnaAv.stato}</span>}{selAnaAv.codice&&<span style={{fontSize:11,color:"#888"}}>{selAnaAv.codice}</span>}</div><p style={{fontSize:11,color:"#aaa",marginTop:6}}>Colore e durata dall'anagrafica.</p></div>}
         <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
@@ -893,62 +959,76 @@ function App({user}){
   const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
-  const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);
+  const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);
   const[showSettingsHub,setShowSettingsHub]=useState(false);const[activePanel,setActivePanel]=useState(null);
+  const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
-  const undoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);
-  const importRef=useRef();
+  const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
+  const monthPickerRef=useRef();
+
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
   const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
 
-  function pushUndo(snapTutEvents,snapAvvisi){undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTutEvents)),avvisi:JSON.parse(JSON.stringify(snapAvvisi))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
+  function pushUndo(snapTE,snapAv){
+    redoStack.current=[];setRedoCount(0);
+    undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTE)),avvisi:JSON.parse(JSON.stringify(snapAv))},...undoStack.current].slice(0,UNDO_LIMIT);
+    setUndoCount(undoStack.current.length);
+  }
+  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
+  async function handleRedo(){if(!redoStack.current.length)return;const snap=redoStack.current[0];redoStack.current=redoStack.current.slice(1);setRedoCount(redoStack.current.length);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);await applySnap(snap);}
+  async function applySnap(snap){tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);await fsSaveAvvisi(snap.avvisi);for(const[tId,ms]of Object.entries(snap.tutEvents))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}
 
   useEffect(()=>{
     fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
   },[]);
 
-  window.__restoreBackup=async(data)=>{
-    const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];
-    setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
-    await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
-  };
+  // Close month picker on outside click
+  useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+
+  window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
 
   useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
 
   function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
   function navWeek(dir){setWeekStart(prev=>{const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));if(d<fmon)return fmon;if(d>lmon)return lmon;return d;});}
   const vdays=getVisibleDays();
+
+  // Use visTEvs for footer (filtered) but allTEvs for avNamesInMonth
   const allTEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
   const visTEvs=activeTutorIds===null?allTEvs:allTEvs.filter(e=>activeTutorIds.has(e.tutorId));
   const avNamesInMonth=new Set(allTEvs.map(e=>e.name));
   const avForBar=anagraficaAv.filter(a=>avNamesInMonth.has(a.nome));
-  const dayTOre={};for(const ev of allTEvs)dayTOre[ev.day]=(dayTOre[ev.day]||0)+ev.ore;
+  // Footer uses filtered ore
+  const dayTOre={};for(const ev of visTEvs)dayTOre[ev.day]=(dayTOre[ev.day]||0)+ev.ore;
   const totTOre=visTEvs.reduce((a,e)=>a+e.ore,0);
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
   const avEvs=anagraficaAv.flatMap(ana=>{const av=avById[ana.id];if(!av)return[];return av.events.filter(e=>e.month===month.key).map(e=>({...e,avvisoId:ana.id,avvisoName:ana.nome,avColor:ana.colore||"#4f86c6"}));});
   const avThisMonth=anagraficaAv.filter(a=>{const av=avById[a.id];return av&&av.events.some(e=>e.month===month.key);});
   const visAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
   const totAvOre=avEvs.reduce((a,e)=>a+e.ore,0);
+
   const getTCol=id=>tutors.find(x=>x.id===id)?.color||"#4f86c6";
   const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
   function buildTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:canEdit?()=>setModal({type:"edit-tut",ev,monthKey:month.key}):null,_onClick:canEdit?()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}}):null});}return b;}
   function buildOvByDay(){const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
   function buildAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:canEdit?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});}:null});}return b;}
   function buildMTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;}
+  // Month view avvisi: build by day from visAvEvs
+  function buildMAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
+
   function handleGridClick(d,e){if(!canEdit)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
   function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
   async function addTutoraggio(ev,monthKey){pushUndo(tutEvRef.current,avRef.current);const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)})`);}
-  async function editTutoraggio(evId,updated){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];cur[tid][mk][idx]={...old,...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"edit_tut",`Modificato slot "${updated.name||old.name}" il ${updated.day||old.day} ${mk}`);return;}}}}
-  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot "${ev.name}" il ${ev.day} ${mk}`);return;}}}}
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,avRef.current);const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Importati ${events.length} slot per avviso id ${avId}`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Aggiunto slot avviso "${name||avId}" il ${day} ${mk}`);}
-  async function editAvviso(avId,evId,evData){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});const ana=anaRef.current.find(a=>a.id===avId);avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot avviso "${ana?.nome||avId}"`);}
-  async function deleteAvviso(avId,evId){pushUndo(tutEvRef.current,avRef.current);const av=avRef.current.find(a=>a.id===avId);const ev=av?.events.find(e=>e.id===evId);const ana=anaRef.current.find(a=>a.id===avId);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot avviso "${ana?.nome||avId}"`);}
-  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);await fsSaveAvvisi(snap.avvisi);for(const[tId,ms]of Object.entries(snap.tutEvents))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}
+  async function editTutoraggio(evId,updated){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];cur[tid][mk][idx]={...old,...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"edit_tut",`Modificato slot "${updated.name||old.name}"`);return;}}}}
+  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot "${ev.name}"`);return;}}}}
+  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,avRef.current);const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Importati ${events.length} slot`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Aggiunto slot "${name||avId}" il ${day} ${mk}`);}
+  async function editAvviso(avId,evId,evData){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});const ana=anaRef.current.find(a=>a.id===avId);avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot "${ana?.nome||avId}"`);}
+  async function deleteAvviso(avId,evId){pushUndo(tutEvRef.current,avRef.current);const av=avRef.current.find(a=>a.id===avId);const ev=av?.events.find(e=>e.id===evId);const ana=anaRef.current.find(a=>a.id===avId);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot "${ana?.nome||avId}"`);}
   async function handleSaveTutors(list){const prev=tutors;setTutors(list);setActiveTutorIds(null);setShowTutPanel(false);await fsSaveTutors(list);list.forEach(t=>{const old=prev.find(p=>p.id===t.id);if(!old)fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${t.cognome} ${t.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(t))fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${t.cognome} ${t.nome}"`);});prev.forEach(p=>{if(!list.find(t=>t.id===p.id))fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${p.cognome} ${p.nome}"`);});}
-  async function handleSaveAna(list){const prev=anaRef.current;anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);const renames=[];list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(old&&old.nome!==a.nome)renames.push({oldNome:old.nome,newNome:a.nome});});if(renames.length>0){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{const r=renames.find(r=>r.oldNome===ev.name);if(r){cur[tid][mk][i]={...ev,name:r.newNome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(!old)fsLog(user.email,"add_av_ana",`Aggiunto avviso "${a.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(a))fsLog(user.email,"edit_av_ana",`Modificato avviso "${a.nome}"${old.nome!==a.nome?` (da "${old.nome}")`:"" }`);});prev.forEach(p=>{if(!list.find(a=>a.id===p.id))fsLog(user.email,"delete_av_ana",`Eliminato avviso "${p.nome}"`);});}
+  async function handleSaveAna(list){const prev=anaRef.current;anaRef.current=list;setAnagraficaAv(list);setShowAnagraficaAv(false);await fsSaveAna(list);const renames=[];list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(old&&old.nome!==a.nome)renames.push({oldNome:old.nome,newNome:a.nome});});if(renames.length>0){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{const r=renames.find(r=>r.oldNome===ev.name);if(r){cur[tid][mk][i]={...ev,name:r.newNome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}list.forEach(a=>{const old=prev.find(p=>p.id===a.id);if(!old)fsLog(user.email,"add_av_ana",`Aggiunto avviso "${a.nome}"`);else if(JSON.stringify(old)!==JSON.stringify(a))fsLog(user.email,"edit_av_ana",`Modificato avviso "${a.nome}"`);});prev.forEach(p=>{if(!list.find(a=>a.id===p.id))fsLog(user.email,"delete_av_ana",`Eliminato avviso "${p.nome}"`);});}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
   async function handleLoadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti verranno sovrascritti."))return;const{tutors:t,anagraficaAv:an,avvisi:a,tutEvents:te}=generateDemoData();setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);setActivePanel(null);alert("Dati demo caricati!");}
   async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setActivePanel(null);alert("Database svuotato.");}
@@ -964,33 +1044,35 @@ function App({user}){
       <HamburgerMenu onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onSettings={()=>setShowSettingsHub(true)} isViewer={isViewer}/>
       <span style={{fontWeight:700,fontSize:16}}>📅</span>
       <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"3px"}}><button style={vBtn("tutoraggio")} onClick={()=>setView("tutoraggio")}>Calendario Tutoraggi</button><button style={vBtn("avviso")} onClick={()=>setView("avviso")}>Calendario Avvisi/Progetti</button></div>
-      <button onClick={()=>setShowTutPanel2(true)} style={hBtn()}>📌 Riepilogo Tutoraggi</button>
-      <button onClick={()=>setShowRiepilogoAv(true)} style={hBtn()}>📋 Riepilogo Avvisi/Progetti</button>
-      <button onClick={()=>setShowRiep(true)} style={hBtn()}>📊 Riepilogo Ore</button>
+      <InsightMenu onTutoraggi={()=>setShowTutPanel2(true)} onAvvisi={()=>setShowRiepilogoAv(true)} onOre={()=>setShowRiep(true)}/>
       {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>}
       <button onClick={handleVerifica} style={hBtn({background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)"})}>✅ Verifica</button>
-      {!isViewer&&<button onClick={()=>{setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;});}} style={hBtn({background:editMode?"rgba(231,76,60,0.5)":"rgba(255,255,255,0.12)",border:editMode?"1.5px solid rgba(231,76,60,0.8)":"1.5px solid rgba(255,255,255,0.3)"})}>{editMode?"🔒 View Mode":"✏️ Editor Mode"}</button>}
-      {canEdit&&undoCount>0&&<button onClick={handleUndo} style={hBtn({background:"rgba(155,89,182,0.3)",border:"1.5px solid rgba(155,89,182,0.6)"})} title={`Annulla (${undoCount} disponibili)`}>↩ Annulla</button>}
+      {!isViewer&&<button onClick={()=>{setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;});}} style={hBtn({background:editMode?"rgba(231,76,60,0.5)":"rgba(255,255,255,0.12)",border:editMode?"1.5px solid rgba(231,76,60,0.8)":"1.5px solid rgba(255,255,255,0.3)"})}>{editMode?"👁 View Mode":"✏️ Edit Mode"}</button>}
+      {canEdit&&undoCount>0&&<button onClick={handleUndo} style={hBtn({background:"rgba(155,89,182,0.3)",border:"1.5px solid rgba(155,89,182,0.6)"})} title={`Annulla (${undoCount})`}>↩ Annulla</button>}
+      {canEdit&&redoCount>0&&<button onClick={handleRedo} style={hBtn({background:"rgba(52,152,219,0.3)",border:"1.5px solid rgba(52,152,219,0.6)"})} title={`Ripristina (${redoCount})`}>↪ Ripristina</button>}
       <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
           <span style={{fontSize:12,opacity:0.8}}>{user?.email}</span>
-          <span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"#aaa",opacity:0.9}}>{ROLE_LABEL[role]||role}</span>
+          <span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"#aaa"}}>{ROLE_LABEL[role]||role}</span>
         </div>
         <button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:8}}>
         <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===0?0.4:1}}>‹</button>
-        <span style={{fontWeight:600,minWidth:150,textAlign:"center"}}>{month.label}</span>
+        <div ref={monthPickerRef} style={{position:"relative"}}>
+          <button onClick={()=>setShowMonthPicker(o=>!o)} style={{fontWeight:600,minWidth:150,textAlign:"center",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",color:"#fff",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:13}}>{month.label}</button>
+          {showMonthPicker&&<MonthPicker monthIdx={monthIdx} onChange={idx=>{setMonthIdx(idx);}} onClose={()=>setShowMonthPicker(false)}/>}
+        </div>
         <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} style={{background:"rgba(255,255,255,0.15)",border:"none",color:"#fff",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:16,opacity:monthIdx===MONTHS.length-1?0.4:1}}>›</button>
         {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} style={{background:"#4f86c6",border:"none",color:"#fff",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontWeight:600}}>+ Aggiungi</button>}
       </div>
     </div>
-    {!editMode&&!isViewer&&<div style={{background:"#fff8e0",borderBottom:"1px solid #f0c040",padding:"5px 20px",fontSize:12,color:"#b8860b",display:"flex",alignItems:"center",gap:8}}>👁 View Mode — clicca <strong>✏️ Editor Mode</strong> per apportare modifiche.</div>}
+    {!editMode&&!isViewer&&<div style={{background:"#fff8e0",borderBottom:"1px solid #f0c040",padding:"5px 20px",fontSize:12,color:"#b8860b",display:"flex",alignItems:"center",gap:8}}>👁 View Mode — clicca <strong>✏️ Edit Mode</strong> per apportare modifiche.</div>}
 
     {view==="tutoraggio"&&(<div style={{background:"#fff",borderBottom:"1px solid #dde",flexShrink:0}}>
       <div style={{padding:"5px 20px",borderBottom:"1px solid #f0f0f0",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {totTOre%1===0?totTOre:totTOre.toFixed(1)}h tutoraggio</span><span style={{color:"#ddd"}}>│</span>
-        {tutors.length===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessun tutor</span>:tutors.map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} style={{fontSize:11,padding:"3px 10px",borderRadius:20,cursor:"pointer",fontWeight:700,border:`2px solid ${col}`,background:active?col:"transparent",color:active?"#fff":col,opacity:active?1:0.5}}>{t.cognome||t.nome}</button>;})}
+        {tutors.length===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} style={{fontSize:11,padding:"3px 10px",borderRadius:20,cursor:"pointer",fontWeight:700,border:`2px solid ${col}`,background:active?col:"transparent",color:active?"#fff":col,opacity:active?1:0.5}}>{t.cognome||t.nome}</button>;})}
         <span style={{color:"#ddd"}}>│</span>
         <button onClick={()=>setShowOvr(o=>!o)} style={{fontSize:11,padding:"3px 12px",borderRadius:20,cursor:"pointer",fontWeight:700,border:"2px solid #e07b39",background:showOvr?"#e07b39":"transparent",color:showOvr?"#fff":"#e07b39"}}>{showOvr?"👁 Nascondi avvisi":"👁 Mostra avvisi"}</button>
       </div>
@@ -1000,7 +1082,7 @@ function App({user}){
       </div>
       <div style={{padding:"5px 20px",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
         <span style={{fontSize:11,fontWeight:700,color:"#888",minWidth:120,flexShrink:0}}>Tutoraggio</span><span style={{color:"#ddd",flexShrink:0}}>│</span>
-        {avNamesInMonth.size===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessuno</span>:[...avNamesInMonth].map(nm=><span key={nm} style={{fontSize:11,padding:"3px 9px",borderRadius:12,fontWeight:600,color:"#444",background:"#f0f4f8",border:"1px solid #dde"}}>{nm.substring(0,28)}</span>)}
+        {avNamesInMonth.size===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessuno</span>:[...avNamesInMonth].sort().map(nm=><span key={nm} style={{fontSize:11,padding:"3px 9px",borderRadius:12,fontWeight:600,color:"#444",background:"#f0f4f8",border:"1px solid #dde"}}>{nm.substring(0,28)}</span>)}
       </div>
     </div>)}
     {view==="avviso"&&(<div style={{background:"#fff",borderBottom:"1px solid #dde",flexShrink:0}}>
@@ -1012,13 +1094,12 @@ function App({user}){
     </div>)}
 
     {calView==="month"
-      ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>
+      ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>
       :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
 
     <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek}/>
 
-    {/* Panels */}
-    {showTutPanel&&<TutorPanel tutors={tutors} onSave={handleSaveTutors} onClose={()=>setShowTutPanel(false)}/>}
+    {showTutPanel&&<TutorPanel tutors={tutors} anagraficaAv={anagraficaAv} onSave={handleSaveTutors} onClose={()=>setShowTutPanel(false)}/>}
     {showAnagraficaAv&&<AnagraficaAvPanel anagraficaAv={anagraficaAv} onSave={handleSaveAna} onClose={()=>setShowAnagraficaAv(false)}/>}
     {showTutPanel2&&<TutoraggiPanel tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onClose={()=>setShowTutPanel2(false)}/>}
     {showRiepilogoAv&&<RiepilogoAvPanel avvisi={avvisi} anagraficaAv={anagraficaAv} onClose={()=>setShowRiepilogoAv(false)}/>}
@@ -1026,13 +1107,12 @@ function App({user}){
     {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)} onClose={()=>setShowAi(false)}/>}
     {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
 
-    {/* Settings hub */}
-    {showSettingsHub&&<SettingsHub role={role} onClose={()=>setShowSettingsHub(false)} onOpenPanel={key=>{setActivePanel(key);}}/>}
-    {activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onClose={()=>setActivePanel(null)}/>}
-    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onClose={()=>setActivePanel(null)}/>}
-    {activePanel==="log"&&<LogPanel onClose={()=>setActivePanel(null)}/>}
-    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onClose={()=>setActivePanel(null)}/>}
-    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onClose={()=>setActivePanel(null)}/>}
+    {showSettingsHub&&<SettingsHub role={role} onClose={()=>setShowSettingsHub(false)} onOpenPanel={key=>setActivePanel(key)}/>}
+    {activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="log"&&<LogPanel onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
 
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
   </React.Fragment>);
