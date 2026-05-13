@@ -7,7 +7,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -68,7 +67,7 @@
 <script>
   const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
   firebase.initializeApp(firebaseConfig);
-  const auth=firebase.auth(),db=firebase.firestore(),storage=firebase.storage();
+  const auth=firebase.auth(),db=firebase.firestore();
   function showLoginTab(t){document.getElementById("tab-login").style.display=t==="login"?"block":"none";document.getElementById("tab-register").style.display=t==="register"?"block":"none";document.querySelectorAll(".login-tab").forEach((b,i)=>b.classList.toggle("active",(t==="login"&&i===0)||(t==="register"&&i===1)));document.getElementById("login-error").textContent="";}
   function showErr(m){document.getElementById("login-error").textContent=m;}
   document.getElementById("login-google-btn").onclick=()=>{showErr("");auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>showErr(e.message));};
@@ -160,36 +159,29 @@ async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEv
 async function fsLog(userEmail,type,detail){try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error("Log error",e);}}
 async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate?.()||new Date(0)};});}catch(e){console.error(e);return[];}}
 
-// ── BACKUP (Firebase Storage) ─────────────────────────────────────────────────
+// ── BACKUP (Firestore) ────────────────────────────────────────────────────────
 async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv){
   const data={version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents};
-  const json=JSON.stringify(data,null,2);
-  const ts=new Date().toISOString().replace(/[:.]/g,"-");
-  const ref=storage.ref(`backups/backup_${ts}.json`);
-  await ref.putString(json,"raw",{contentType:"application/json"});
-  return`backup_${ts}.json`;
+  const json=JSON.stringify(data);
+  const size=new Blob([json]).size;
+  const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size});
+  return ref.id;
 }
 async function fsListBackups(){
   try{
-    const res=await storage.ref("backups").listAll();
-    const items=await Promise.all(res.items.map(async r=>{
-      const meta=await r.getMetadata();
-      const url=await r.getDownloadURL();
-      return{name:r.name,fullPath:r.fullPath,url,size:meta.size,created:new Date(meta.timeCreated)};
-    }));
-    return items.sort((a,b)=>b.created-a.created);
+    const s=await db.collection("backups").orderBy("createdAt","desc").get();
+    return s.docs.map(d=>({id:d.id,size:d.data().size||0,created:d.data().createdAt?.toDate()||new Date(0),data:d.data().data}));
   }catch(e){console.error(e);return[];}
 }
-async function fsDeleteBackup(fullPath){await storage.ref(fullPath).delete();}
+async function fsDeleteBackup(id){await db.collection("backups").doc(id).delete();}
 async function fsApplyBackupPolicy(backups){
-  // Policy: 7 giornalieri, 4 settimanali, 12 mensili
   const now=new Date();
   const keep=new Set();
   const byDay={},byWeek={},byMonth={};
   backups.forEach(b=>{
     const d=b.created;
     const dk=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const wk=`${d.getFullYear()}-W${Math.floor(d.getDate()/7)}`;
+    const wk=`${d.getFullYear()}-W${Math.floor((d.getDate()-1)/7)}`;
     const mk=`${d.getFullYear()}-${d.getMonth()}`;
     if(!byDay[dk])byDay[dk]=b;
     if(!byWeek[wk])byWeek[wk]=b;
@@ -199,13 +191,13 @@ async function fsApplyBackupPolicy(backups){
   backups.forEach(b=>{
     const dd=diffDays(b);
     const dk=`${b.created.getFullYear()}-${b.created.getMonth()}-${b.created.getDate()}`;
-    const wk=`${b.created.getFullYear()}-W${Math.floor(b.created.getDate()/7)}`;
+    const wk=`${b.created.getFullYear()}-W${Math.floor((b.created.getDate()-1)/7)}`;
     const mk=`${b.created.getFullYear()}-${b.created.getMonth()}`;
-    if(dd<=7&&byDay[dk]?.name===b.name)keep.add(b.name);
-    else if(dd<=28&&byWeek[wk]?.name===b.name)keep.add(b.name);
-    else if(dd<=365&&byMonth[mk]?.name===b.name)keep.add(b.name);
+    if(dd<=7&&byDay[dk]?.id===b.id)keep.add(b.id);
+    else if(dd<=28&&byWeek[wk]?.id===b.id)keep.add(b.id);
+    else if(dd<=365&&byMonth[mk]?.id===b.id)keep.add(b.id);
   });
-  for(const b of backups){if(!keep.has(b.name))try{await fsDeleteBackup(b.fullPath);}catch(e){console.error(e);}}
+  for(const b of backups){if(!keep.has(b.id))try{await fsDeleteBackup(b.id);}catch(e){console.error(e);}}
 }
 
 // ── DEMO DATA ─────────────────────────────────────────────────────────────────
@@ -575,9 +567,10 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onClose}){
   function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
   async function load(){setLoading(true);const list=await fsListBackups();setBackups(list);setLoading(false);}
   useEffect(()=>{load();},[]);
-  async function doBackup(){setSaving(true);setMsg("");try{const name=await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg(`✅ Backup creato: ${name}`);await load();}catch(e){setMsg(`❌ Errore: ${e.message}`);}setSaving(false);}
-  async function doRestore(url,name){if(!confirm(`Ripristinare il backup "${name}"? I dati attuali saranno sovrascritti.`))return;try{const r=await fetch(url);const data=await r.json();window.__restoreBackup&&window.__restoreBackup(data);setMsg("✅ Backup ripristinato. Ricarica la pagina.");onClose();}catch(e){setMsg(`❌ Errore ripristino: ${e.message}`);}}
-  async function doDelete(b){if(!confirm(`Eliminare il backup "${b.name}"?`))return;await fsDeleteBackup(b.fullPath);await load();}
+  async function doBackup(){setSaving(true);setMsg("");try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg("✅ Backup creato con successo.");await load();}catch(e){setMsg(`❌ Errore: ${e.message}`);}setSaving(false);}
+  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}? I dati attuali saranno sovrascritti.`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg("✅ Backup ripristinato.");onClose();}catch(e){setMsg(`❌ Errore ripristino: ${e.message}`);}}
+  async function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+  async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
   return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
     <div style={{position:"absolute",left:pos.x,top:pos.y,width:620,maxWidth:"95vw",maxHeight:"78vh",background:"#fff",borderRadius:14,boxShadow:"0 8px 40px rgba(0,0,0,0.28)",display:"flex",flexDirection:"column",pointerEvents:"all"}}>
       <div onMouseDown={onHD} style={{background:"#1a3a5c",color:"#fff",padding:"12px 20px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"grab",userSelect:"none",flexShrink:0}}>
@@ -596,14 +589,14 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onClose}){
           <thead style={{position:"sticky",top:0,zIndex:2}}>
             <tr><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Data e ora</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Dimensione</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#1a3a5c",borderBottom:"2px solid #dde",background:"#f5f8fc"}}>Azioni</th></tr>
           </thead>
-          <tbody>{backups.map((b,i)=>(<tr key={b.name} style={{background:i%2===0?"#fff":"#f9fbff"}}>
+          <tbody>{backups.map((b,i)=>(<tr key={b.id} style={{background:i%2===0?"#fff":"#f9fbff"}}>
             <td style={{padding:"8px 12px",color:"#555"}}>{fmtTs(b.created)}</td>
             <td style={{padding:"8px 12px",color:"#888"}}>{fmtSize(b.size)}</td>
-            <td style={{padding:"8px 12px",display:"flex",gap:6}}>
-              <a href={b.url} download={b.name} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#e8f0ff",color:"#2980b9",cursor:"pointer",fontWeight:600,fontSize:11,textDecoration:"none"}}>⬇️ Scarica</a>
-              <button onClick={()=>doRestore(b.url,b.name)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#fff8e0",color:"#e07b39",cursor:"pointer",fontWeight:600,fontSize:11}}>↩️ Ripristina</button>
+            <td style={{padding:"8px 12px"}}><div style={{display:"flex",gap:6}}>
+              <button onClick={()=>doDownload(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#e8f0ff",color:"#2980b9",cursor:"pointer",fontWeight:600,fontSize:11}}>⬇️ Scarica</button>
+              <button onClick={()=>doRestore(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#fff8e0",color:"#e07b39",cursor:"pointer",fontWeight:600,fontSize:11}}>↩️ Ripristina</button>
               <button onClick={()=>doDelete(b)} style={{padding:"4px 10px",borderRadius:6,border:"none",background:"#ffeaea",color:"#c0392b",cursor:"pointer",fontWeight:600,fontSize:11}}>🗑️</button>
-            </td>
+            </div></td>
           </tr>))}</tbody>
         </table>}
       </div>
