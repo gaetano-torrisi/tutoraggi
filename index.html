@@ -890,7 +890,16 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
 
+  function buildSelectionSummary(){
+    const parts=[];
+    if(importType==="tutoraggio"&&selTutor){const t=tutors.find(x=>x.id===selTutor);if(t)parts.push({color:t.color||"#4f86c6",text:`👤 ${t.cognome} ${t.nome}${t.azienda?" · "+t.azienda:""}`});}
+    if(selAv){const a=anagraficaAv.find(x=>x.id===selAv);if(a)parts.push({color:a.colore||"#4f86c6",text:`📋 ${a.nome}${a.durataOre?" · "+a.durataOre+"h":""}${a.stato?" · "+a.stato:""}`});}
+    return parts;
+  }
+
   async function processFile(file){
+    const sum=buildSelectionSummary();
+    if(sum.length)addMsg({role:"summary",parts:sum});
     addMsg({role:"user",text:`📎 ${file.name}`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});
     try{const res=await analyzeDoc(file,null);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}
     setLoading(false);
@@ -898,6 +907,8 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   async function processPaste(){
     if(!pasteText.trim()){addMsg({role:"ai",text:"⚠️ Testo vuoto."});return;}
     if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"⚠️ Il testo incollato non sembra contenere date o orari. Questa funzione supporta solo l'importazione di calendari con date e orari."});setPasteText("");setShowPaste(false);return;}
+    const sum=buildSelectionSummary();
+    if(sum.length)addMsg({role:"summary",parts:sum});
     addMsg({role:"user",text:`📋 Testo incollato (${pasteText.length} caratteri)`});setShowPaste(false);setPasteText("");setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});
     try{const res=await analyzeDoc(null,pasteText);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}
     setLoading(false);
@@ -943,7 +954,10 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
     {showPaste&&<div style={{marginTop:4}}><textarea value={pasteText} onChange={e=>setPasteText(e.target.value)} placeholder="Incolla qui il testo con le date (es. da Excel o PDF)..." style={{width:"100%",height:90,padding:"8px",borderRadius:8,border:"1px solid #27ae60",fontSize:12,resize:"vertical",boxSizing:"border-box"}}/><button onClick={processPaste} disabled={loading||!pasteText.trim()} style={{width:"100%",padding:"6px",borderRadius:8,border:"none",background:"#27ae60",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12,marginTop:4}}>Analizza testo</button></div>}
   </div>);
 
-  function renderMsg(msg,idx){const isAi=msg.role==="ai";return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
+  function renderMsg(msg,idx){const isAi=msg.role==="ai";
+    if(msg.role==="summary")return(<div key={idx} style={{display:"flex",flexDirection:"column",gap:4,marginBottom:10}}>
+      {msg.parts.map((p,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 12px",borderRadius:8,background:hexToRgba(p.color,0.12),border:`1px solid ${hexToRgba(p.color,0.35)}`}}><div style={{width:10,height:10,borderRadius:3,background:p.color,flexShrink:0}}/><span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>{p.text}</span></div>)}
+    </div>);return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
     <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"#f0f4f8":"#4f86c6",color:isAi?"#1a3a5c":"#fff",fontSize:13,lineHeight:1.5}}>{msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
     {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label});startImport(b.value);}} style={{padding:"7px 14px",borderRadius:20,border:"2px solid #4f86c6",background:"#fff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>{b.label}</button>)}</div>}
     {msg.showOpenTutor&&<button onClick={onOpenTutorPanel} style={{marginTop:6,padding:"7px 14px",borderRadius:10,border:"2px solid #4f86c6",background:"#f0f6ff",color:"#4f86c6",cursor:"pointer",fontWeight:700,fontSize:12}}>👤 Apri Anagrafica Tutor</button>}
@@ -951,15 +965,12 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
     {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
     {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #27ae60",background:"#fff",color:"#27ae60",cursor:"pointer",fontWeight:700,fontSize:12}}>✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} style={{padding:"7px 14px",borderRadius:12,border:"2px solid #e07b39",background:"#fff",color:"#e07b39",cursor:"pointer",fontWeight:700,fontSize:12}}>➕ No, aggiungi</button></div>}
     {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
-      <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:6}}><option value="">— Seleziona tutor —</option>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
-      {selTutor&&(()=>{const t=tutors.find(x=>x.id===selTutor);return t?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,background:hexToRgba(t.color||"#4f86c6",0.12),border:`1px solid ${hexToRgba(t.color||"#4f86c6",0.3)}`,marginBottom:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6",flexShrink:0}}/><span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>✓ {t.cognome} {t.nome}</span>{t.azienda&&<span style={{fontSize:11,color:"#888"}}>· {t.azienda}</span>}</div>:null;})()}
-      <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:6}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
-      {selAv&&(()=>{const a=anagraficaAv.find(x=>x.id===selAv);return a?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,background:hexToRgba(a.colore||"#4f86c6",0.10),border:`1px solid ${hexToRgba(a.colore||"#4f86c6",0.3)}`,marginBottom:8}}><div style={{width:12,height:12,borderRadius:3,background:a.colore||"#4f86c6",flexShrink:0}}/><span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>✓ {a.nome}</span>{a.durataOre&&<span style={{fontSize:11,color:"#888"}}>· {a.durataOre}h</span>}{a.stato&&<span style={{fontSize:11,color:"#888"}}>· {a.stato}</span>}</div>:null;})()}
+      <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona tutor —</option>{tutors.map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
+      <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
       {(!selTutor||!selAv)?<div style={{fontSize:11,color:"#aaa",fontStyle:"italic",padding:"4px 0"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons(true)}
     </div>}
     {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
-      <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:6}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
-      {selAv&&(()=>{const a=anagraficaAv.find(x=>x.id===selAv);return a?<div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,background:hexToRgba(a.colore||"#4f86c6",0.10),border:`1px solid ${hexToRgba(a.colore||"#4f86c6",0.3)}`,marginBottom:8}}><div style={{width:12,height:12,borderRadius:3,background:a.colore||"#4f86c6",flexShrink:0}}/><span style={{fontSize:12,fontWeight:700,color:"#1a3a5c"}}>✓ {a.nome}</span>{a.durataOre&&<span style={{fontSize:11,color:"#888"}}>· {a.durataOre}h</span>}{a.stato&&<span style={{fontSize:11,color:"#888"}}>· {a.stato}</span>}</div>:null;})()}
+      <select value={selAv} onChange={e=>setSelAv(e.target.value)} style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #4f86c6",fontSize:13,marginBottom:8}}><option value="">— Seleziona avviso/progetto —</option>{anagraficaAv.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
       {!selAv?<div style={{fontSize:11,color:"#aaa",fontStyle:"italic",padding:"4px 0"}}>Seleziona un avviso per procedere.</div>:uploadButtons(true)}
     </div>}
     {msg.showUpload&&uploadButtons(true)}
@@ -1167,10 +1178,10 @@ function App({user}){
       <button onClick={()=>setShowTutPanel2(true)} style={hBtn()}>📌 Riepilogo Tutoraggi</button>
       <button onClick={()=>setShowRiepilogoAv(true)} style={hBtn()}>📋 Riepilogo Avvisi/Progetti</button>
       <button onClick={()=>setShowRiep(true)} style={hBtn()}>📊 Riepilogo Ore</button>
-      {!isViewer&&<button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>}
+      {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} style={hBtn({background:showAi?"rgba(41,128,185,0.6)":"rgba(41,128,185,0.3)",border:"1.5px solid rgba(41,128,185,0.7)"})}>🤖 AI</button>}
       <button onClick={handleVerifica} style={hBtn({background:"rgba(46,204,113,0.25)",border:"1.5px solid rgba(46,204,113,0.6)"})}>✅ Verifica</button>
       {/* Modalità modifica */}
-      {!isViewer&&<button onClick={()=>setEditMode(e=>!e)} style={hBtn({background:editMode?"rgba(231,76,60,0.5)":"rgba(255,255,255,0.12)",border:editMode?"1.5px solid rgba(231,76,60,0.8)":"1.5px solid rgba(255,255,255,0.3)"})}>{editMode?"🔒 Blocca":"✏️ Modifica"}</button>}
+      {!isViewer&&<button onClick={()=>{setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;});}} style={hBtn({background:editMode?"rgba(231,76,60,0.5)":"rgba(255,255,255,0.12)",border:editMode?"1.5px solid rgba(231,76,60,0.8)":"1.5px solid rgba(255,255,255,0.3)"})}>{editMode?"🔒 View Mode":"✏️ Editor Mode"}</button>}
       {/* Undo */}
       {canEdit&&undoCount>0&&<button onClick={handleUndo} style={hBtn({background:"rgba(155,89,182,0.3)",border:"1.5px solid rgba(155,89,182,0.6)"})} title={`Annulla ultima operazione (${undoCount} disponibili)`}>↩ Annulla</button>}
       <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:12,opacity:0.6}}>{user?.email}</span><button onClick={()=>firebase.auth().signOut()} style={hBtn()}>Esci</button></div>
