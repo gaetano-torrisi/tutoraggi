@@ -161,7 +161,8 @@ function snapH(h){return Math.round(h*4)/4;}
 function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
-function pickOpenAiModel(){return"gpt-4o-mini";}
+function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}:${String(m).padStart(2,"0")}`;}
+function sortMK(keys){return[...keys].sort((a,b)=>MONTHS.findIndex(m=>m.key===a)-MONTHS.findIndex(m=>m.key===b));}
 function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i,/\b(lun|mar|mer|gio|ven|sab|dom)\b/i,/\b\d{1,2}\s+(gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/i].some(p=>p.test(text));}
 function layoutEvents(evs){
   const sorted=[...evs].sort((a,b)=>a.start-b.start);const cols=[];
@@ -338,7 +339,14 @@ function MonthPicker({monthIdx,onChange,onClose}){
 // ── COLOR PICKER WITH USED COLORS ─────────────────────────────────────────────
 function ColorPicker({value,onChange,usedColors=[]}){
   return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
-    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box",opacity:used?0.25:1,position:"relative"}} title={used?"Già in uso":""}/>);})}
+    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(
+      <div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c}
+        style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",
+          border:value===c?"3px solid #333":"2px solid transparent",boxSizing:"border-box",
+          opacity:used?0.3:1,position:"relative",overflow:"hidden"}}>
+        {used&&<div style={{position:"absolute",top:0,left:0,right:0,height:4,background:"rgba(0,0,0,0.55)",borderRadius:"2px 2px 0 0"}}/>}
+      </div>
+    );})}
   </div>);
 }
 
@@ -762,7 +770,7 @@ function RiepilogoAvPanel({avvisi,anagraficaAv,onClose}){
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:ana.colore||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{ana.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}>{ana.durataOre&&<span style={{fontSize:11,background:"#e8f0ff",color:"#2980b9",borderRadius:6,padding:"1px 6px",fontWeight:600}}>{ana.durataOre}h da bando</span>}<span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} calendario</span></div></div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><span style={{fontSize:11,color:statoColor[ana.stato]||"#888",fontWeight:600}}>{ana.stato}</span>{ana.codice&&<span style={{fontSize:11,color:"#888"}}>· {ana.codice}</span>}{ana.dataInizio&&<span style={{fontSize:11,color:"#aaa"}}>· {ana.dataInizio}{ana.dataFine?` → ${ana.dataFine}`:""}</span>}</div>
           </div>
-          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return Object.entries(bm).sort(([a],[b])=>a.localeCompare(b)).map(([mk,evs])=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
+          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"#aaa",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return sortMK(Object.keys(bm)).map(mk=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"#555",marginBottom:3}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{bm[mk].map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"#444"}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
         </div>);})}
       </div>
     </ResizablePanel>
@@ -778,13 +786,13 @@ function TutoraggiPanel({tutors,tutEvents,anagraficaAv,onClose}){
       <PanelHeader title="📌 Riepilogo Tutoraggi" onClose={onClose}/>
       <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
         {sorted.length===0&&<p style={{color:"#aaa",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
-        {sorted.map(t=>{const td=tutEvents[t.id]||{};let tot=0;const mes=Object.entries(td).sort(([a],[b])=>a.localeCompare(b));for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);if(mes.length===0)return null;
+        {sorted.map(t=>{const td=tutEvents[t.id]||{};let tot=0;        const mes=sortMK(Object.keys(td));for(const[,evs]of mes)for(const ev of evs)tot+=(ev.ore||0);if(mes.length===0)return null;
           return(<div key={t.id} style={{marginBottom:16,borderRadius:10,border:"1px solid #eee",overflow:"hidden"}}>
             <div style={{background:hexToRgba(t.color||"#4f86c6",0.15),borderBottom:"1px solid #eee",padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:12,height:12,borderRadius:3,background:t.color||"#4f86c6",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13}}>{t.cognome} {t.nome}</span></div>
               <span style={{fontWeight:700,fontSize:12,color:"#1a3a5c",background:"rgba(255,255,255,0.7)",borderRadius:8,padding:"2px 8px"}}>{fo(tot)} calendario</span>
             </div>
-            <div style={{padding:"8px 12px"}}>{mes.map(([mk,evs])=>{const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fo(mo)}</span></div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div></div>);})}</div>
+            <div style={{padding:"8px 12px"}}>{mes.map(mk=>{const evs=td[mk];const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"#555"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"#1a3a5c"}}>{fo(mo)}</span></div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"#4f86c6";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col,0.12),border:`1px solid ${hexToRgba(col,0.35)}`,color:"#444"}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div></div>);})}</div>
           </div>);
         })}
       </div>
@@ -1071,7 +1079,7 @@ function App({user}){
 
     {view==="tutoraggio"&&(<div style={{background:"#fff",borderBottom:"1px solid #dde",flexShrink:0}}>
       <div style={{padding:"5px 20px",borderBottom:"1px solid #f0f0f0",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-        <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {totTOre%1===0?totTOre:totTOre.toFixed(1)}h tutoraggio</span><span style={{color:"#ddd"}}>│</span>
+        <span style={{fontWeight:700,color:"#1a3a5c",fontSize:13}}>🕐 {fmtOreMin(totTOre)} tutoraggio</span><span style={{color:"#ddd"}}>│</span>
         {tutors.length===0?<span style={{fontSize:11,color:"#ccc",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} style={{fontSize:11,padding:"3px 10px",borderRadius:20,cursor:"pointer",fontWeight:700,border:`2px solid ${col}`,background:active?col:"transparent",color:active?"#fff":col,opacity:active?1:0.5}}>{t.cognome||t.nome}</button>;})}
         <span style={{color:"#ddd"}}>│</span>
         <button onClick={()=>setShowOvr(o=>!o)} style={{fontSize:11,padding:"3px 12px",borderRadius:20,cursor:"pointer",fontWeight:700,border:"2px solid #e07b39",background:showOvr?"#e07b39":"transparent",color:showOvr?"#fff":"#e07b39"}}>{showOvr?"👁 Nascondi avvisi":"👁 Mostra avvisi"}</button>
@@ -1095,7 +1103,7 @@ function App({user}){
 
     {calView==="month"
       ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>
-      :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,`${o%1===0?o:o.toFixed(1)}h`])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
+      :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null}       footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
 
     <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek}/>
 
@@ -1108,11 +1116,11 @@ function App({user}){
     {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
 
     {showSettingsHub&&<SettingsHub role={role} onClose={()=>setShowSettingsHub(false)} onOpenPanel={key=>setActivePanel(key)}/>}
-    {activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
-    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
-    {activePanel==="log"&&<LogPanel onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
-    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
-    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onBack={()=>{setActivePanel(null);setShowSettingsHub(true);}} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {  activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="log"&&<LogPanel onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
 
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
   </React.Fragment>);
