@@ -1261,4 +1261,17 @@ function App({user}){
     {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)} onClose={()=>setShowAi(false)}/>}
     {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
 
-    {showSettingsHub&&<SettingsHub role={role} on
+    {showSettingsHub&&<SettingsHub role={role} onClose={()=>setShowSettingsHub(false)} onOpenPanel={key=>setActivePanel(key)}/>}
+    {activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="log"&&<LogPanel onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+
+    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
+  </React.Fragment>);
+}
+window.__mountApp=(user)=>{const root=ReactDOM.createRoot(document.getElementById("root"));root.render(<App user={user}/>);};
+</script>
+</body>
+</html>
