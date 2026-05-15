@@ -614,7 +614,7 @@ function MonthPicker({monthIdx,onChange,onClose}){
   const years=[...new Set(MONTHS.map(m=>m.year))];
   const[selYear,setSelYear]=useState(MONTHS[monthIdx].year);
   const filtered=MONTHS.filter(m=>m.year===selYear);
-  return(<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:var(--radius-md),padding:14,boxShadow:"var(--shadow-lg)",zIndex:700,minWidth:280}}>
+  return(<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:14,boxShadow:"var(--shadow-lg)",zIndex:700,minWidth:280}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>Seleziona mese</span>
       <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm">✕</button>
