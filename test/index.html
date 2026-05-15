@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light" data-density="cozy">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendario Tutoraggi</title>
+  <link rel="icon" type="image/png" href="assets/appmark-color.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tokens.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* ── Layout base ── */
+    #root { height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Login screen ── */
+    #login-screen {
+      height: 100vh; display: flex;
+      background: var(--bg);
+    }
+    #login-panel-left {
+      flex: 0 0 420px;
+      background: linear-gradient(135deg, var(--brand-navy) 0%, #131736 100%);
+      color: #fff;
+      padding: 40px 44px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+    #login-panel-right {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 40px 56px;
+      border-left: 1px solid var(--border);
+    }
+    #login-box { width: 100%; max-width: 420px; }
+    #login-tabs { display: flex; margin-bottom: 20px; }
+    .login-tab {
+      flex: 1; padding: 8px 0;
+      border: none; background: transparent;
+      font-size: var(--font-sm); font-weight: 600;
+      color: var(--fg-muted); cursor: pointer;
+      border-bottom: 2px solid var(--border);
+    }
+    .login-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    #login-error { color: var(--danger); margin-top: 12px; font-size: var(--font-xs); text-align: center; }
+
+    /* ── Saving indicator ── */
+    #saving-indicator {
+      position: fixed; bottom: 80px; right: 16px;
+      background: var(--brand-navy); color: #fff;
+      padding: 8px 16px; border-radius: var(--radius-xl);
+      font-size: var(--font-xs); opacity: 0;
+      transition: opacity 0.3s; pointer-events: none; z-index: 9999;
+      box-shadow: var(--shadow-md);
+    }
+    #saving-indicator.show { opacity: 1; }
+
+    /* ── Zoom bar ── */
+    .zoom-bar {
+      position: fixed; bottom: 16px; right: 16px;
+      display: flex; align-items: center; gap: 4px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+    }
+    .zoom-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: var(--radius); width: 26px; height: 26px;
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--fg-muted);
+    }
+    .zoom-btn:hover { background: var(--bg-hover); color: var(--fg); }
+    .view-btn {
+      background: transparent; color: var(--fg-muted);
+      border: none; border-radius: 100px;
+      padding: 5px 12px; cursor: pointer;
+      font-size: var(--font-xs); font-weight: 600;
+    }
+    .view-btn:hover { background: var(--bg-hover); color: var(--fg); }
+    .view-btn.active { background: var(--brand-navy); color: #fff; }
+
+    /* ── Top bar ── */
+    #topbar {
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; flex-wrap: wrap;
+    }
+    .topbar-divider { width: 1px; height: 20px; background: var(--divider); }
+
+    /* ── Module switcher ── */
+    .module-switch {
+      display: flex; gap: 2px;
+      background: var(--bg-sunken);
+      padding: 3px; border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .module-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border: none; border-radius: 6px;
+      background: transparent; color: var(--fg-muted);
+      font-weight: 600; font-size: var(--font-xs); cursor: pointer;
+      box-shadow: none;
+    }
+    .module-btn.active {
+      background: var(--bg-elev); color: var(--fg);
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* ── Filter bar ── */
+    #filterbar {
+      background: var(--bg-elev);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; flex-wrap: wrap;
+    }
+
+    /* ── Edit mode banner ── */
+    #editmode-banner {
+      background: var(--warning-soft);
+      border-bottom: 1px solid var(--warning);
+      padding: 5px 20px;
+      font-size: var(--font-xs); color: var(--warning);
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Calendar grid ── */
+    .cal-time-col {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; color: var(--fg-subtle);
+    }
+    .cal-day-header {
+      position: sticky; top: 0; z-index: 5;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .cal-day-we { background: rgba(155,89,182,0.06) !important; }
+    .cal-slot-tut {
+      border-radius: var(--radius-sm);
+      overflow: visible; box-sizing: border-box;
+      user-select: none;
+      box-shadow: var(--shadow-sm);
+    }
+    .cal-slot-av {
+      border-radius: var(--radius-sm);
+      overflow: hidden; box-sizing: border-box;
+      user-select: none;
+    }
+    .cal-footer-cell {
+      height: 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; font-weight: 700; color: var(--fg);
+    }
+
+    /* ── Panels / modals ── */
+    .panel-overlay {
+      position: fixed; inset: 0; z-index: 500; display: flex;
+    }
+    .panel-backdrop { flex: 1; background: rgba(10,12,30,0.4); }
+    .panel-body {
+      background: var(--bg-elev);
+      box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column;
+      border-left: 1px solid var(--border);
+    }
+    .panel-header {
+      background: var(--brand-navy); color: #fff;
+      padding: 14px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-shrink: 0;
+    }
+    .panel-header-title { font-weight: 700; font-size: 15px; }
+    .panel-close {
+      background: none; border: none; color: #fff;
+      font-size: 20px; cursor: pointer; line-height: 1;
+      opacity: 0.7;
+    }
+    .panel-close:hover { opacity: 1; }
+    .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+    /* ── Floating modal ── */
+    .floating-modal {
+      position: absolute;
+      background: var(--bg-elev);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .floating-modal-header {
+      background: var(--brand-navy); color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: grab; user-select: none; flex-shrink: 0;
+    }
+
+    /* ── Add/Edit modal ── */
+    .add-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(10,12,30,0.45);
+      z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .add-modal-box {
+      background: var(--bg-elev);
+      border-radius: var(--radius-lg);
+      padding: 24px; width: 400px;
+      box-shadow: var(--shadow-lg);
+      max-height: 92vh; overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Month view ── */
+    .month-cell {
+      min-height: 72px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px;
+      background: var(--bg-elev);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .month-cell:hover { background: var(--bg-hover); }
+    .month-cell.we { background: rgba(155,89,182,0.04); border-color: rgba(155,89,182,0.2); }
+    .month-cell.we:hover { background: rgba(155,89,182,0.08); }
+
+    /* ── HelpBot ── */
+    .helpbot-window {
+      position: fixed; bottom: 60px; right: 16px;
+      width: 300px; max-height: 460px;
+      background: var(--bg-elev);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      z-index: 500; overflow: hidden;
+    }
+    .helpbot-header {
+      background: linear-gradient(135deg, var(--brand-navy) 0%, #131736 100%);
+      color: #fff; padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; border: 2px solid var(--bg-elev); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+    /* ── User avatar ── */
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand-orange-light), var(--brand-orange));
+      color: #fff; font-weight: 700; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-xs); flex-shrink: 0; cursor: pointer;
+    }
+
+    /* ── Tutor chip ── */
+    .tutor-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px 4px 4px;
+      border-radius: 100px; cursor: pointer;
+      font-size: 11.5px; font-weight: 600;
+      border: 1px solid transparent;
+      transition: all .12s;
+    }
+    .tutor-chip-dot {
+      width: 18px; height: 18px; border-radius: 999px;
+      color: #fff; font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0;
+    }
+
+    /* ── Avviso badge in filterbar ── */
+    .avviso-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 11.5px; font-weight: 600; cursor: pointer;
+      border: 1px solid transparent; transition: all .12s;
+    }
+
+    /* ── Duration badge on slot ── */
+    .slot-duration {
+      position: absolute; bottom: 10px; right: 4px;
+      font-size: 9px; font-weight: 700; color: #fff;
+      background: rgba(0,0,0,0.30); border-radius: 4px;
+      padding: 1px 5px; pointer-events: none;
+      font-family: "JetBrains Mono", monospace;
+      line-height: 1.4; z-index: 2;
+    }
+
+    /* ── Tabs ── */
+    .tab-strip { display: flex; gap: 2px; padding: 3px; background: var(--bg-sunken); border-radius: var(--radius); border: 1px solid var(--border); }
+    .tab-strip-btn { padding: 6px 14px; border-radius: 6px; font-size: var(--font-xs); font-weight: 600; color: var(--fg-muted); cursor: pointer; background: transparent; border: none; }
+    .tab-strip-btn.active { background: var(--bg-elev); color: var(--fg); box-shadow: var(--shadow-xs); }
+
+    /* ── Insight panel ── */
+    .insight-dropdown {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      background: var(--bg-elev); border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg); z-index: 600;
+      min-width: 230px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .insight-item {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 10px 16px;
+      border: none; background: none; cursor: pointer;
+      font-size: 13px; color: var(--fg); font-weight: 600; text-align: left;
+    }
+    .insight-item:hover { background: var(--bg-hover); }
+  </style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div id="login-panel-left">
+    <div style="position:absolute;top:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(245,163,90,0.18) 0%,transparent 60%)"></div>
+    <div style="position:absolute;bottom:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(236,122,38,0.12) 0%,transparent 60%)"></div>
+    <div style="position:relative">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px">TutorIA</div>
+      <div style="font-size:11px;opacity:0.5;letter-spacing:0.04em">EHT · A Harmonic Innovation Group Company</div>
+    </div>
+    <div style="position:relative;max-width:340px">
+      <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;background:rgba(245,163,90,0.16);border:1px solid rgba(245,163,90,0.4);font-size:11.5px;font-weight:600;color:#F5A35A;margin-bottom:18px">
+        <span style="width:6px;height:6px;border-radius:999px;background:#F5A35A"></span>
+        Gestionale tutoraggi
+      </div>
+      <h1 style="font-size:36px;font-weight:700;letter-spacing:-0.025em;line-height:1.1;margin-bottom:14px">
+        Tutor, avvisi e ore.<br>
+        <span style="background:linear-gradient(135deg,#F5A35A,#EC7A26);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Tutto al loro posto.</span>
+      </h1>
+      <p style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.6">Pianifica, monitora e certifica le ore di tutoraggio in un unico calendario condiviso.</p>
+    </div>
+    <div style="position:relative;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.04em">© 2026 EHT</div>
+  </div>
+  <div id="login-panel-right">
+    <div id="login-box">
+      <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;color:var(--fg)">Bentornato.</h2>
+      <p style="font-size:13.5px;color:var(--fg-muted);margin-bottom:20px">Accedi per gestire il calendario tutoraggi.</p>
+      <div id="login-tabs">
+        <button class="login-tab active" onclick="showLoginTab('login')">Accedi</button>
+        <button class="login-tab" onclick="showLoginTab('register')">Registrati</button>
+      </div>
+      <div id="tab-login">
+        <div style="margin-bottom:12px">
+          <label class="label">Email</label>
+          <input id="login-email" type="email" class="input" placeholder="nome@ente.it" autocomplete="email"/>
+        </div>
+        <div style="margin-bottom:16px">
+          <label class="label">Password</label>
+          <input id="login-password" type="password" class="input" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="btn" data-variant="primary" id="login-email-btn" style="width:100%;justify-content:center;height:44px;font-weight:700;margin-bottom:12px">Accedi</button>
+        <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--fg-subtle);margin:8px 0">
+          <div style="flex:1;height:1px;background:var(--divider)"></div><span>oppure</span><div style="flex:1;height:1px;background:var(--divider)"></div>
+        </div>
+        <button id="login-google-btn" class="btn" data-variant="outline" style="width:100%;justify-content:center;height:44px;font-weight:600">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="G"/> Continua con Google
+        </button>
+      </div>
+      <div id="tab-register" style="display:none">
+        <p style="font-size:13px;color:var(--fg-muted);margin-bottom:14px">Inserisci l'email autorizzata dal coordinatore.</p>
+        <div style="margin-bottom:12px"><label class="label">Email autorizzata</label><input id="reg-email" type="email" class="input" placeholder="email@ente.it"/></div>
+        <div style="margin-bottom:12px"><label class="label">Password (min. 6 caratteri)</label><input id="reg-password" type="password" class="input" placeholder="••••••••"/></div>
+        <div style="margin-bottom:16px"><label class="label">Conferma password</label><input id="reg-password2" type="password" class="input" placeholder="••••••••"/></div>
+        <button class="btn" data-variant="primary" id="register-btn" style="width:100%;justify-content:center;height:44px;font-weight:700">Crea account</button>
+      </div>
+      <div id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<div id="root" style="display:none;height:100vh;flex-direction:column;"></div>
+<div id="saving-indicator">💾 Salvataggio...</div>
+
+<script>
+  const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
+  firebase.initializeApp(firebaseConfig);
+  const auth=firebase.auth(),db=firebase.firestore();
+  function showLoginTab(t){
+    document.getElementById("tab-login").style.display=t==="login"?"block":"none";
+    document.getElementById("tab-register").style.display=t==="register"?"block":"none";
+    document.querySelectorAll(".login-tab").forEach((b,i)=>b.classList.toggle("active",(t==="login"&&i===0)||(t==="register"&&i===1)));
+    document.getElementById("login-error").textContent="";
+  }
+  function showErr(m){document.getElementById("login-error").textContent=m;}
+  document.getElementById("login-google-btn").onclick=()=>{showErr("");auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>showErr(e.message));};
+  document.getElementById("login-email-btn").onclick=async()=>{showErr("");const email=document.getElementById("login-email").value.trim(),pass=document.getElementById("login-password").value;if(!email||!pass){showErr("Inserisci email e password.");return;}try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/user-not-found"?"Account non trovato.":e.code==="auth/wrong-password"?"Password errata.":e.message);}};
+  document.getElementById("register-btn").onclick=async()=>{showErr("");const email=document.getElementById("reg-email").value.trim().toLowerCase(),pass=document.getElementById("reg-password").value,pass2=document.getElementById("reg-password2").value;if(!email||!pass){showErr("Compila tutti i campi.");return;}if(pass.length<6){showErr("Password min. 6 caratteri.");return;}if(pass!==pass2){showErr("Le password non coincidono.");return;}try{const snap=await db.collection("authorizedEmails").doc(email).get();if(!snap.exists){showErr("Email non autorizzata.");return;}await auth.createUserWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/email-already-in-use"?"Account già esistente.":e.message);}};
+  function showSaving(){const el=document.getElementById("saving-indicator");el.classList.add("show");clearTimeout(window._st);window._st=setTimeout(()=>el.classList.remove("show"),1500);}
+  auth.onAuthStateChanged(user=>{if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}});
+</script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef}=React;
+const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=10;
+const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+const MONTHS=[
+  {key:"gen-26",label:"Gennaio 2026",year:2026,month:0,days:31},
+  {key:"feb-26",label:"Febbraio 2026",year:2026,month:1,days:28},
+  {key:"mar-26",label:"Marzo 2026",year:2026,month:2,days:31},
+  {key:"apr-26",label:"Aprile 2026",year:2026,month:3,days:30},
+  {key:"mag-26",label:"Maggio 2026",year:2026,month:4,days:31},
+  {key:"giu-26",label:"Giugno 2026",year:2026,month:5,days:30},
+  {key:"lug-26",label:"Luglio 2026",year:2026,month:6,days:31},
+  {key:"ago-26",label:"Agosto 2026",year:2026,month:7,days:31},
+  {key:"set-26",label:"Settembre 2026",year:2026,month:8,days:30},
+  {key:"ott-26",label:"Ottobre 2026",year:2026,month:9,days:31},
+  {key:"nov-26",label:"Novembre 2026",year:2026,month:10,days:30},
+  {key:"dic-26",label:"Dicembre 2026",year:2026,month:11,days:31},
+  {key:"gen-27",label:"Gennaio 2027",year:2027,month:0,days:31},
+  {key:"feb-27",label:"Febbraio 2027",year:2027,month:1,days:28},
+  {key:"mar-27",label:"Marzo 2027",year:2027,month:2,days:31},
+  {key:"apr-27",label:"Aprile 2027",year:2027,month:3,days:30},
+  {key:"mag-27",label:"Maggio 2027",year:2027,month:4,days:31},
+  {key:"giu-27",label:"Giugno 2027",year:2027,month:5,days:30},
+  {key:"lug-27",label:"Luglio 2027",year:2027,month:6,days:31},
+  {key:"ago-27",label:"Agosto 2027",year:2027,month:7,days:31},
+  {key:"set-27",label:"Settembre 2027",year:2027,month:8,days:30},
+  {key:"ott-27",label:"Ottobre 2027",year:2027,month:9,days:31},
+  {key:"nov-27",label:"Novembre 2027",year:2027,month:10,days:30},
+  {key:"dic-27",label:"Dicembre 2027",year:2027,month:11,days:31},
+];
+const MONTH_NAMES_SHORT=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+const PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B","#9B59B6","#16A085","#E67E22","#34495E","#D35400","#27AE60","#8E44AD","#2980B9","#e74c3c","#c0392b","#f1c40f","#f39c12","#1abc9c","#2ecc71","#3498db","#9b59b6","#34495e","#e91e63","#673ab7","#3f51b5","#2196f3","#03a9f4","#00bcd4","#009688","#4caf50","#8bc34a","#cddc39","#ffc107","#ff9800","#ff5722","#795548","#9e9e9e","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#fff176","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a"];
+const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
+const AV_STATI=["In corso","Concluso","Sospeso"];
+const FUNNY_PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quante riunioni di oggi potevano essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?"];
+const LOG_TYPE_LABELS={add_tut:"➕ Slot tutoraggio",edit_tut:"✏️ Slot tutoraggio",delete_tut:"🗑️ Slot tutoraggio",add_av:"➕ Slot avviso",edit_av:"✏️ Slot avviso",delete_av:"🗑️ Slot avviso",add_tutor_ana:"➕ Tutor anagrafica",edit_tutor_ana:"✏️ Tutor anagrafica",delete_tutor_ana:"🗑️ Tutor anagrafica",add_av_ana:"➕ Avviso anagrafica",edit_av_ana:"✏️ Avviso anagrafica",delete_av_ana:"🗑️ Avviso anagrafica"};
+const ROLE_LABEL={superadmin:"⭐ Super Admin",admin:"👑 Admin",user:"👤 Utente",viewer:"👁 Viewer"};
+const ROLE_COLOR={superadmin:"var(--danger)",admin:"var(--accent-strong)",user:"var(--info)",viewer:"var(--fg-subtle)"};
+const DRAG_PX=5,DRAG_MS=150;
+let _dragDone=false;
+function markDrag(){_dragDone=true;setTimeout(()=>{_dragDone=false;},50);}
+function wasDrag(){return _dragDone;}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function hexToRgba(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
+function fmt(h){return`${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
+function fmtDurata(ore){if(!ore||ore<=0)return"";const h=Math.floor(ore),m=Math.round((ore-h)*60);return m===0?`${h}h`:`${h}:${String(m).padStart(2,"0")}`;}
+function timeStrToH(s){const[hh,mm]=s.split(":").map(Number);return hh+(mm||0)/60;}
+function hToTimeStr(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return`${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;}
+function snapH(h){return Math.round(h*4)/4;}
+function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
+function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
+function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}:${String(m).padStart(2,"0")}`;}
+function sortMK(keys){return[...keys].sort((a,b)=>MONTHS.findIndex(m=>m.key===a)-MONTHS.findIndex(m=>m.key===b));}
+function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i].some(p=>p.test(text));}
+function layoutEvents(evs){
+  const sorted=[...evs].sort((a,b)=>a.start-b.start);const cols=[];
+  const res=sorted.map(ev=>{for(let c=0;c<cols.length;c++)if(cols[c].end<=ev.start){cols[c]={end:ev.end};return{ev,col:c};}cols.push({end:ev.end});return{ev,col:cols.length-1};});
+  return res.map(({ev,col})=>({ev,col,numCols:cols.length}));
+}
+function cleanObj(obj){
+  if(Array.isArray(obj))return obj.map(cleanObj);
+  if(obj&&typeof obj==="object"){const o={};for(const[k,v]of Object.entries(obj)){if(typeof v!=="function"&&!k.startsWith("_"))o[k]=cleanObj(v);}return o;}
+  return obj;
+}
+function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv){return JSON.stringify({version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents},null,2);}
+function downloadJSON(avvisi,tutors,tutEvents,anagraficaAv){
+  const b64=btoa(unescape(encodeURIComponent(makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv))));
+  const a=document.createElement("a");a.href=`data:application/json;base64,${b64}`;a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ── FIRESTORE ──────────────────────────────────────────────────────────────
+async function fsLoad(){
+  try{const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);
+    const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});
+    return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaAv:an.docs.map(d=>d.data())};
+  }catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{},anagraficaAv:[]};}
+}
+async function fsSaveAvvisi(list){showSaving();const b=db.batch();const s=await db.collection("avvisi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("avvisi").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await db.collection("tutors").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("tutors").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
+async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
+async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
+async function fsLog(userEmail,type,detail){try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error(e);}}
+async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate()||new Date(0)};});}catch(e){return[];}}
+async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv){const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size});return ref.id;}
+async function fsListBackups(){try{const s=await db.collection("backups").orderBy("createdAt","desc").get();return s.docs.map(d=>({id:d.id,size:d.data().size||0,created:d.data().createdAt?.toDate()||new Date(0),data:d.data().data}));}catch(e){return[];}}
+async function fsDeleteBackup(id){await db.collection("backups").doc(id).delete();}
+async function fsApplyBackupPolicy(backups){
+  const now=new Date(),keep=new Set(),byDay={},byWeek={},byMonth={};
+  backups.forEach(b=>{const d=b.created;const dk=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;const wk=`${d.getFullYear()}-W${Math.floor((d.getDate()-1)/7)}`;const mk=`${d.getFullYear()}-${d.getMonth()}`;if(!byDay[dk])byDay[dk]=b;if(!byWeek[wk])byWeek[wk]=b;if(!byMonth[mk])byMonth[mk]=b;});
+  const diffDays=b=>Math.floor((now-b.created)/(1000*60*60*24));
+  backups.forEach(b=>{const dd=diffDays(b);const dk=`${b.created.getFullYear()}-${b.created.getMonth()}-${b.created.getDate()}`;const wk=`${b.created.getFullYear()}-W${Math.floor((b.created.getDate()-1)/7)}`;const mk=`${b.created.getFullYear()}-${b.created.getMonth()}`;if(dd<=7&&byDay[dk]?.id===b.id)keep.add(b.id);else if(dd<=28&&byWeek[wk]?.id===b.id)keep.add(b.id);else if(dd<=365&&byMonth[mk]?.id===b.id)keep.add(b.id);});
+  for(const b of backups)if(!keep.has(b.id))try{await fsDeleteBackup(b.id);}catch(e){}
+}
+
+// ── DEMO DATA ──────────────────────────────────────────────────────────────
+function generateDemoData(){
+  const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];
+  const tutors=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:PALETTE[i]}));
+  const anaDefs=[{nome:"Avviso 1",codice:"DDG 001/2026",colore:PALETTE[1],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},{nome:"Avviso 2",codice:"DDG 002/2026",colore:PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""}];
+  const anagraficaAv=anaDefs.map((d,i)=>({...d,id:`av-demo-${i}`}));
+  const avvisi=anagraficaAv.map((ana,ai)=>({id:ana.id,events:[]}));
+  return{tutors,anagraficaAv,avvisi,tutEvents:{}};
+}
+
+// ── RESIZABLE PANEL ────────────────────────────────────────────────────────
+function ResizablePanel({children,defaultWidth=400,minWidth=320}){
+  const[width,setWidth]=useState(defaultWidth);const dr=useRef(false);const max=Math.round(window.innerWidth*0.70);
+  function onMD(e){e.preventDefault();dr.current=true;const sx=e.clientX,sw=width;function mv(me){if(!dr.current)return;setWidth(Math.max(minWidth,Math.min(max,sw+(sx-me.clientX))));}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
+  return(<div style={{width,background:"var(--bg-elev)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"row",flexShrink:0}}>
+    <div onMouseDown={onMD} style={{width:14,cursor:"ew-resize",flexShrink:0,background:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+      <span style={{fontSize:16,color:"var(--border-strong)",userSelect:"none",pointerEvents:"none"}}>⋮</span>
+    </div>
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>{children}</div>
+  </div>);
+}
+
+// ── PANEL HEADER ───────────────────────────────────────────────────────────
+function PanelHeader({title,onBack,onClose}){
+  return(<div className="panel-header">
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      {onBack&&<button onClick={onBack} className="btn" data-variant="ghost" data-size="sm" style={{color:"#fff",borderColor:"rgba(255,255,255,0.3)"}}>← Indietro</button>}
+      <span className="panel-header-title">{title}</span>
+    </div>
+    <button onClick={onClose} className="panel-close">✕</button>
+  </div>);
+}
+
+// ── FLOATING MODAL ─────────────────────────────────────────────────────────
+function FloatingModal({title,titleBg,width,children,footer,onClose}){
+  const[pos,setPos]=useState({x:Math.max(0,window.innerWidth/2-(width||580)/2),y:Math.max(0,window.innerHeight/2-280)});
+  const dr=useRef(false),off=useRef({x:0,y:0});
+  function onHD(e){dr.current=true;off.current={x:e.clientX-pos.x,y:e.clientY-pos.y};function mv(me){if(!dr.current)return;setPos({x:Math.max(0,me.clientX-off.current.x),y:Math.max(0,me.clientY-off.current.y)});}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
+  return(<div style={{position:"fixed",inset:0,zIndex:600,pointerEvents:"none"}}>
+    <div className="floating-modal" style={{position:"absolute",left:pos.x,top:pos.y,width:width||580,maxWidth:"95vw",maxHeight:"78vh",pointerEvents:"all"}}>
+      <div className="floating-modal-header" onMouseDown={onHD} style={{background:titleBg||"var(--brand-navy)"}}>
+        <span style={{fontWeight:700,fontSize:15}}>{title}</span>
+        <button onClick={onClose} className="panel-close">✕</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto"}}>{children}</div>
+      {footer&&<div style={{padding:"10px 20px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>{footer}</div>}
+    </div>
+  </div>);
+}
+
+// ── UI HELPERS ─────────────────────────────────────────────────────────────
+function MiniCalendar({initialMonthIdx,selected,onSelect}){
+  const[mIdx,setMIdx]=useState(initialMonthIdx);const md=MONTHS[mIdx];const{year,month,days}=md;
+  const firstDow=new Date(year,month,1).getDay();const offset=firstDow===0?6:firstDow-1;
+  const cells=[];for(let i=0;i<offset;i++)cells.push(null);for(let d=1;d<=days;d++)cells.push(d);while(cells.length%7!==0)cells.push(null);
+  return(<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:"var(--shadow-md)",position:"absolute",zIndex:400,top:"100%",left:0,marginTop:4,width:240}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+      <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0} className="btn" data-variant="ghost" data-size="icon-sm">‹</button>
+      <span style={{fontSize:12,fontWeight:700,color:"var(--fg)"}}>{md.label}</span>
+      <button onClick={()=>setMIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={mIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm">›</button>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+      {["L","M","M","G","V","S","D"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:"var(--fg-subtle)",padding:"2px 0"}}>{d}</div>)}
+      {cells.map((d,i)=>{const isSel=d===selected&&mIdx===initialMonthIdx,dow=i%7,isWk=dow===5||dow===6;return(<div key={i} onClick={()=>d&&onSelect(d,mIdx)} style={{textAlign:"center",fontSize:12,padding:"4px 2px",borderRadius:6,cursor:d?"pointer":"default",background:isSel?"var(--accent)":"transparent",color:isSel?"#fff":isWk?"var(--fg-muted)":d?"var(--fg)":"transparent",fontWeight:isSel?700:400}} onMouseEnter={e=>{if(d&&!isSel)e.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={e=>{if(d&&!isSel)e.currentTarget.style.background="transparent";}}>{d||""}</div>);})}
+    </div>
+  </div>);
+}
+
+function DayPicker({initialMonthIdx,value,selectedMonthIdx,onChange}){
+  const[open,setOpen]=useState(false);const mLabel=MONTHS[selectedMonthIdx??initialMonthIdx]?.label||"";
+  return(<div style={{position:"relative",marginBottom:10}}>
+    <label className="label">Giorno</label>
+    <button type="button" onClick={()=>setOpen(o=>!o)} className="input" style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",height:"var(--row-h)"}}>
+      <span>{value?`${value} ${mLabel}`:"Seleziona giorno"}</span><span>📅</span>
+    </button>
+    {open&&<MiniCalendar initialMonthIdx={initialMonthIdx} selected={value} onSelect={(d,mIdx)=>{onChange(d,mIdx);setOpen(false);}}/>}
+  </div>);
+}
+
+function TimePicker({label,value,onChange}){
+  const[hh,mm]=value.split(":").map(Number);
+  return(<div style={{flex:1}}>
+    <label className="label">{label}</label>
+    <div style={{display:"flex",gap:4,alignItems:"center"}}>
+      <select value={hh} onChange={e=>onChange(`${String(+e.target.value).padStart(2,"0")}:${String(mm).padStart(2,"0")}`)} className="select" style={{flex:1}}>
+        {Array.from({length:13},(_,i)=>i+8).map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}</option>)}
+      </select>
+      <span style={{color:"var(--fg-muted)",fontWeight:700}}>:</span>
+      <select value={mm} onChange={e=>onChange(`${String(hh).padStart(2,"0")}:${String(+e.target.value).padStart(2,"0")}`)} className="select" style={{flex:1}}>
+        {[0,15,30,45].map(m=><option key={m} value={m}>{String(m).padStart(2,"0")}</option>)}
+      </select>
+    </div>
+  </div>);
+}
+
+function MonthPicker({monthIdx,onChange,onClose}){
+  const years=[...new Set(MONTHS.map(m=>m.year))];
+  const[selYear,setSelYear]=useState(MONTHS[monthIdx].year);
+  const filtered=MONTHS.filter(m=>m.year===selYear);
+  return(<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:var(--radius-md),padding:14,boxShadow:"var(--shadow-lg)",zIndex:700,minWidth:280}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+      <span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>Seleziona mese</span>
+      <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm">✕</button>
+    </div>
+    <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
+      {years.map(y=><button key={y} onClick={()=>setSelYear(y)} className="btn" data-variant={selYear===y?"primary":"outline"} data-size="sm">{y}</button>)}
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+      {filtered.map(m=>{const idx=MONTHS.indexOf(m);const isSel=idx===monthIdx;return(<button key={m.key} onClick={()=>{onChange(idx);onClose();}} style={{padding:"8px 4px",borderRadius:8,border:`1px solid ${isSel?"var(--accent)":"var(--border)"}`,background:isSel?"var(--accent)":"var(--bg-elev)",color:isSel?"#fff":"var(--fg)",fontSize:12,fontWeight:600,cursor:"pointer"}}>{MONTH_NAMES_SHORT[m.month]}</button>);})}
+    </div>
+  </div>);
+}
+
+function ColorPicker({value,onChange,usedColors=[]}){
+  return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
+    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(
+      <div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c}
+        style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",
+          border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",
+          opacity:used?0.3:1}}>
+      </div>
+    );})}
+  </div>);
+}
+
+// ── DRAG HOOK ──────────────────────────────────────────────────────────────
+function useDrag({onDragEnd,onClick}){
+  const dragRef=useRef(null),resizeRef=useRef(null),dragging=useRef(false),t0=useRef(0),p0=useRef({x:0,y:0});
+  function makeBody(ev,slotH,colW){return function onDown(e){if(resizeRef.current&&e.target===resizeRef.current)return;e.stopPropagation();t0.current=Date.now();p0.current={x:e.clientX,y:e.clientY};dragging.current=false;const os=ev.start,oe=ev.end,od=ev.day;function onMove(me){const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;if(!dragging.current&&(dx>DRAG_PX||dy>DRAG_PX||dt>DRAG_MS))dragging.current=true;if(!dragging.current)return;const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));const dd=Math.round((me.clientX-p0.current.x)/colW);if(dragRef.current){dragRef.current.style.top=`${(ns-8)*slotH}px`;dragRef.current.style.transform=`translateX(${dd*colW}px)`;}}function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);const dx=Math.abs(me.clientX-p0.current.x),dy=Math.abs(me.clientY-p0.current.y),dt=Date.now()-t0.current;if(dt<DRAG_MS&&dx<=DRAG_PX&&dy<=DRAG_PX){if(dragRef.current)dragRef.current.style.transform="";onClick&&onClick();return;}markDrag();const ns=Math.max(8,Math.min(19.75,snapH(os+(me.clientY-p0.current.y)/slotH)));const ne=Math.min(20,ns+(oe-os));const nd=Math.max(1,od+Math.round((me.clientX-p0.current.x)/colW));if(dragRef.current)dragRef.current.style.transform="";if(ns!==os||ne!==oe||nd!==od)onDragEnd({start:ns,end:ne,day:nd});}document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);};}
+  function makeResize(ev,slotH){return function onDown(e){e.stopPropagation();e.preventDefault();const sy=e.clientY,oe=ev.end,os=ev.start;function onMove(me){const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(dragRef.current)dragRef.current.style.height=`${Math.max((ne-os)*slotH,20)}px`;}function onUp(me){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);markDrag();const ne=Math.max(os+0.25,Math.min(20,snapH(oe+(me.clientY-sy)/slotH)));if(ne!==oe)onDragEnd({end:ne,ore:ne-os});}document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);};}
+  return{dragRef,resizeRef,makeBody,makeResize};
+}
+
+// ── SLOTS ──────────────────────────────────────────────────────────────────
+function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride}){
+  const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u}),onClick});
+  const ore=ev.end-ev.start;
+  const dTop=(ev.start-8)*slotH,dH=Math.max((ev.end-ev.start)*slotH,20);
+  const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"};
+  return(<div ref={dragRef} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
+    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,0.14)",borderBottom:"1px solid rgba(255,255,255,0.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0"}}>{onEdit?"✏️ ":""}{ev.name}</div>
+    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,0.9)",cursor:onDragEnd?"grab":"default",height:"calc(100% - 22px - 8px)",fontFamily:'"JetBrains Mono",monospace'}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
+    <div className="slot-duration">{fmtDurata(ore)}</div>
+    {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.18)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,0.6)",borderRadius:1}}/></div>}
+  </div>);
+}
+
+function AvOverlaySlot({ev,col,numCols,color,slotH}){
+  const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
+  return(<div style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",boxSizing:"border-box",zIndex:20,background:hexToRgba(color,0.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
+    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"var(--bg-elev)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none"}}>{(ev.avvisoName||"").substring(0,26)}</div>
+  </div>);
+}
+
+function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd}){
+  const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
+  const ore=ev.end-ev.start;
+  const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
+  return(<div ref={dragRef} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,0.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
+    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,0.06)",borderBottom:"1px dashed rgba(0,0,0,0.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.avvisoName}</div>
+    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:'"JetBrains Mono",monospace'}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
+    <div className="slot-duration" style={{color:"var(--fg)",background:"rgba(0,0,0,0.1)"}}>{fmtDurata(ore)}</div>
+    {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,0.08)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,0.25)",borderRadius:1}}/></div>}
+  </div>);
+}
+
+// ── CALENDAR GRID ──────────────────────────────────────────────────────────
+function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDay,overlayActive,slotH,colW,onGridClick,onTutDragEnd,onAvDragEnd}){
+  const HOURS=Array.from({length:13},(_,i)=>i+8);
+  const isWE=d=>[0,6].includes(new Date(monthData.year,monthData.month,d).getDay());
+  const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
+  return(<div style={{flex:1,overflowX:"auto",overflowY:"auto"}}>
+    <div style={{display:"flex",minWidth:TIME_W+days.length*colW}}>
+      <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:10,background:"var(--bg)"}}>
+        <div style={{height:40,borderBottom:"1px solid var(--border)",borderRight:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
+        <div style={{position:"relative",height:12*slotH}}>{HOURS.map(h=><div key={h} className="cal-time-col" style={{position:"absolute",top:(h-8)*slotH,width:"100%",paddingRight:4,textAlign:"right",borderTop:"1px solid var(--divider)",height:slotH,boxSizing:"border-box"}}>{String(h).padStart(2,"0")}:00</div>)}</div>
+        <div style={{height:20,background:"var(--bg-sunken)",borderTop:"1px solid var(--border)"}}/>
+      </div>
+      {days.map(d=>{
+        const wk=isWE(d),footer=footerByDay?.[d],tEvs=tutByDay?.[d]||[],avOvEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
+        const avEvs=avByDay?.[d]||[],lA=layoutEvents(avEvs),lOv=layoutEvents(avOvEvs);
+        const avPosMap={};lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.avvisoName]={col,numCols};});
+        const tLayout=layoutEvents(tEvs);
+        return(<div key={d} style={{width:colW,flexShrink:0,borderRight:"1px solid var(--border)"}}>
+          <div className="cal-day-header" style={{height:40,background:wk?"rgba(155,89,182,0.08)":"var(--bg-sunken)"}}>
+            <span style={{fontSize:11,color:wk?"var(--fg-muted)":"var(--fg-subtle)"}}>{getDN(d)}</span>
+            <span style={{fontWeight:700,fontSize:14,color:wk?"var(--fg-muted)":"var(--fg)"}}>{d}</span>
+          </div>
+          <div onClick={e=>{if(!wasDrag())onGridClick&&onGridClick(d,e);}} style={{position:"relative",height:12*slotH,background:wk?"rgba(155,89,182,0.03)":"var(--bg-elev)",cursor:onGridClick?"crosshair":"default",overflow:"visible"}}>
+            {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*slotH,left:0,right:0,height:slotH,borderTop:"1px solid var(--divider)"}}/>)}
+            {overlayActive&&tEvs.map((tev,i)=>{const pos=avPosMap[tev.name];if(pos){const colFrac=1/pos.numCols;return(<DraggableSlot key={"to"+i} ev={tev} col={0} numCols={1} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null} posOverride={{top:(tev.start-8)*slotH+OVR_PAD,left:pos.col*colFrac*colW+OVR_PAD+1,width:colFrac*colW-OVR_PAD*2-2,height:Math.max((tev.end-tev.start)*slotH-OVR_PAD*2,20)}}/>);}else{const found=tLayout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"tb"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null}/>);}})}
+            {!overlayActive&&tEvs.map((tev,i)=>{const found=tLayout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"t"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null}/>);})}
+            {overlayActive&&lOv.map(({ev,col,numCols},i)=><AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>)}
+            {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onDragEnd={onAvDragEnd?(u=>onAvDragEnd(ev.avvisoId,ev.id,u)):null}/>)}
+          </div>
+          <div className="cal-footer-cell" style={{background:wk?"rgba(155,89,182,0.04)":"var(--bg-sunken)"}}>
+            {footer?<span>{footer}</span>:<span style={{color:"var(--fg-faint)"}}>—</span>}
+          </div>
+        </div>);
+      })}
+    </div>
+  </div>);
+}
+
+function MonthView({month,tutByDay,avByDay,onDayClick}){
+  const daysArr=Array.from({length:month.days},(_,i)=>i+1);
+  const isWE=d=>[0,6].includes(new Date(month.year,month.month,d).getDay());
+  const firstDow=(new Date(month.year,month.month,1).getDay()||7)-1;
+  return(<div style={{flex:1,overflowY:"auto",padding:16,background:"var(--bg)"}}>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}}>
+      {["Lun","Mar","Mer","Gio","Ven","Sab","Dom"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"var(--fg-subtle)",padding:"4px 0"}}>{d}</div>)}
+      {Array.from({length:firstDow},(_,i)=><div key={`e${i}`}/>)}
+      {daysArr.map(d=>{
+        const wk=isWE(d),tEvs=tutByDay?.[d]||[],aEvs=avByDay?.[d]||[];
+        const all=[...tEvs,...aEvs];
+        return(<div key={d} className={`month-cell${wk?" we":""}`} onClick={()=>onDayClick&&onDayClick(d)}>
+          <div style={{fontSize:12,fontWeight:700,color:wk?"var(--fg-muted)":"var(--fg)",marginBottom:2}}>{d}</div>
+          {all.slice(0,3).map((ev,i)=><div key={i} style={{height:4,borderRadius:3,background:ev.avColor||ev._color||"var(--accent)",opacity:0.85,marginBottom:2}}/>)}
+          {all.length>3&&<div style={{fontSize:9,color:"var(--fg-subtle)"}}>+{all.length-3}</div>}
+        </div>);
+      })}
+    </div>
+  </div>);
+}
+
+// ── ZOOM BAR ───────────────────────────────────────────────────────────────
+function ZoomBar({calView,zoomIdx,onZoomChange,onCalViewChange,onWeekNav,onHelpOpen}){
+  return(<div className="zoom-bar">
+    <button className={`view-btn${calView==="month"?" active":""}`} onClick={()=>onCalViewChange("month")}>Mese</button>
+    <button className={`view-btn${calView==="week"?" active":""}`} onClick={()=>onCalViewChange("week")}>Sett.</button>
+    <button className={`view-btn${calView==="day"?" active":""}`} onClick={()=>onCalViewChange("day")}>Giorno</button>
+    {calView==="week"&&<><button className="zoom-btn" onClick={()=>onWeekNav(-1)}>‹</button><button className="zoom-btn" onClick={()=>onWeekNav(1)}>›</button></>}
+    <div style={{width:1,height:20,background:"var(--divider)",margin:"0 2px"}}/>
+    <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
+    <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center",fontFamily:'"JetBrains Mono",monospace'}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
+    <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))} disabled={zoomIdx===ZOOM_LEVELS.length-1}>+</button>
+    <div style={{width:1,height:20,background:"var(--divider)",margin:"0 2px"}}/>
+    <button onClick={onHelpOpen} title="Guida e FAQ" style={{width:28,height:28,border:"1.5px solid var(--border)",borderRadius:"50%",background:"var(--bg-elev)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-strong)",fontWeight:800}}>?</button>
+  </div>);
+}
+
+// ── HELP BOT ───────────────────────────────────────────────────────────────
+const HELP_FAQ=[
+  {id:"root",q:"Di cosa hai bisogno?",opts:[
+    {label:"📅 Navigazione calendario",next:"nav"},
+    {label:"📌 Tutoraggi",next:"tut"},
+    {label:"📋 Avvisi/Progetti",next:"av"},
+    {label:"👤 Anagrafiche",next:"ana"},
+    {label:"📊 Insight e riepilogo",next:"insight"},
+    {label:"🤖 Importazione AI",next:"ai"},
+    {label:"⚙️ Impostazioni e ruoli",next:"settings"},
+    {label:"💾 Backup ed esportazione",next:"backup"},
+    {label:"✅ Verifica dati",next:"verifica"},
+  ]},
+  {id:"nav",q:"Navigazione del calendario",opts:[
+    {label:"Come cambio mese?",ans:"Usa le frecce ‹ › accanto al nome del mese in alto, oppure clicca direttamente sul nome del mese per aprire il selettore rapido."},
+    {label:"Come cambio vista?",ans:"Usa i pulsanti Mese / Sett. / Giorno nella barra in basso a destra."},
+    {label:"Come regolo lo zoom?",ans:"Usa i pulsanti − e + nella barra in basso a destra."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"tut",q:"Gestione Tutoraggi",opts:[
+    {label:"Come aggiungo uno slot?",ans:"Attiva la Edit Mode, poi clicca su una cella della griglia oppure usa '+ Aggiungi'. Seleziona tutor, avviso, giorno e orario."},
+    {label:"Come modifico uno slot?",ans:"In Edit Mode clicca sull'icona ✏️ nello slot per aprire il form di modifica. Puoi anche trascinarlo o ridimensionarlo."},
+    {label:"Come elimino uno slot?",ans:"Apri il form di modifica cliccando ✏️ nello slot, poi premi il pulsante 🗑️ Elimina."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"av",q:"Gestione Avvisi/Progetti",opts:[
+    {label:"Come aggiungo una sessione?",ans:"Vai nella vista Avvisi/Progetti, attiva Edit Mode, poi clicca sulla griglia o usa '+ Aggiungi'."},
+    {label:"Come filtro gli avvisi?",ans:"Nella barra filtri clicca sui badge degli avvisi per mostrarli o nasconderli."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"ana",q:"Anagrafiche",opts:[
+    {label:"Come aggiungo un tutor?",ans:"Dal menu ☰ scegli Anagrafica Tutor. Clicca '+ Aggiungi tutor', compila i campi e premi Salva."},
+    {label:"Come aggiungo un avviso?",ans:"Dal menu ☰ scegli Anagrafica Avvisi/Progetti. Clicca '+ Aggiungi avviso', compila e premi Salva."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"insight",q:"Insight e Riepilogo",opts:[
+    {label:"Come vedo il riepilogo ore?",ans:"Clicca su '📊 Insight' in alto e scegli Riepilogo Ore. Puoi filtrare per mese o per anno."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"ai",q:"Importazione AI",opts:[
+    {label:"Come funziona?",ans:"In Edit Mode clicca '🤖 AI'. Scegli se importare tutoraggi o sessioni avviso, seleziona tutor/avviso, poi carica un PDF o incolla il testo."},
+    {label:"Come configuro le chiavi AI?",ans:"Vai in Impostazioni → Impostazioni API (solo Super Admin). Puoi scegliere tra Gemini e OpenAI."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"settings",q:"Impostazioni e Ruoli",opts:[
+    {label:"Quali ruoli esistono?",ans:"👁 Viewer: solo lettura. 👤 User: può modificare e accedere a log e backup. 👑 Admin: gestisce utenti e dati. ⭐ Super Admin: accesso completo."},
+    {label:"Come aggiungo un utente?",ans:"Dal menu ☰ → Impostazioni → Utenti. Inserisci email e ruolo, poi clicca Aggiungi."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"backup",q:"Backup ed Esportazione",opts:[
+    {label:"Come creo un backup?",ans:"Vai in Impostazioni → Backup. Clicca 'Crea backup ora'."},
+    {label:"Come esporto in JSON?",ans:"In Impostazioni → Backup, clicca '⬇️ Esporta JSON'."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+  {id:"verifica",q:"Verifica dati",opts:[
+    {label:"Cosa controlla?",ans:"Clicca '✅ Verifica'. Il sistema controlla: slot fuori orario, slot in giorni non pianificati, sovrapposizioni, ore eccedenti la durata da bando, ore giornaliere >8h."},
+    {label:"← Torna al menu",next:"root"},
+  ]},
+];
+
+function HelpBot({onClose}){
+  const[history,setHistory]=useState([{nodeId:"root"}]);
+  const[lastAns,setLastAns]=useState(null);
+  const btmRef=useRef();
+  const current=HELP_FAQ.find(f=>f.id===history[history.length-1].nodeId)||HELP_FAQ[0];
+  useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[history,lastAns]);
+  function handleOpt(opt){if(opt.ans)setLastAns(opt.ans);else if(opt.next){setLastAns(null);setHistory(h=>[...h,{nodeId:opt.next}]);}}
+  return(<div className="helpbot-window">
+    <div className="helpbot-header">
+      <div style={{width:36,height:36,borderRadius:9,background:"rgba(245,163,90,0.18)",border:"1px solid rgba(245,163,90,0.4)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <span style={{fontSize:18}}>🤖</span>
+      </div>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:700,fontSize:13}}>Assistente Guida</div>
+        <div style={{fontSize:10.5,color:"rgba(255,255,255,0.6)",marginTop:1}}>FAQ · Calendario Tutoraggi</div>
+      </div>
+      <button onClick={onClose} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",width:26,height:26,borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>✕</button>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:6}}>
+      {lastAns?(
+        <><div style={{background:"var(--bg-sunken)",borderRadius:10,padding:"10px 12px",fontSize:12,color:"var(--fg)",lineHeight:1.6,border:"1px solid var(--border)"}}>{lastAns}</div>
+        <button onClick={()=>setLastAns(null)} className="btn" data-variant="outline" data-size="sm" style={{alignSelf:"flex-start"}}>← Altre domande</button></>
+      ):(
+        <><div style={{fontWeight:600,fontSize:12,color:"var(--fg)",marginBottom:2}}>{current.q}</div>
+        {current.opts.map((opt,i)=>(
+          <button key={i} onClick={()=>handleOpt(opt)} style={{textAlign:"left",padding:"8px 12px",borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-sunken)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontWeight:500}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"} onMouseLeave={e=>e.currentTarget.style.background="var(--bg-sunken)"}>{opt.label}</button>
+        ))}</>
+      )}
+      <div ref={btmRef}/>
+    </div>
+  </div>);
+}
+
+// ── SETTINGS HUB ──────────────────────────────────────────────────────────
+function SettingsHub({role,onClose,onOpenPanel}){
+  const isSA=role==="superadmin",isAd=role==="admin"||isSA,isUser=role==="user"||isAd;
+  const items=[
+    isAd&&{icon:"🔐",label:"Utenti",key:"users",desc:"Gestisci gli utenti autorizzati"},
+    isAd&&{icon:"🎲",label:"Dati Demo",key:"demo",desc:"Carica dati di esempio"},
+    isUser&&{icon:"📋",label:"Log Attività",key:"log",desc:"Storico delle modifiche"},
+    isSA&&{icon:"⚙️",label:"Impostazioni API",key:"api",desc:"Configura le chiavi AI"},
+    isUser&&{icon:"💾",label:"Backup",key:"backup",desc:"Gestisci i backup del database"},
+  ].filter(Boolean);
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={360}>
+      <PanelHeader title="⚙️ Impostazioni" onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:16,background:"var(--bg)"}}>
+        {items.map(it=>(<button key={it.key} onClick={()=>onOpenPanel(it.key)} style={{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 16px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",cursor:"pointer",marginBottom:10,textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"} onMouseLeave={e=>e.currentTarget.style.background="var(--bg-elev)"}>
+          <span style={{fontSize:24,flexShrink:0}}>{it.icon}</span>
+          <div><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{it.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{it.desc}</div></div>
+          <span style={{marginLeft:"auto",color:"var(--fg-faint)",fontSize:16}}>›</span>
+        </button>))}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+// ── VERIFICA ──────────────────────────────────────────────────────────────
+function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
+  const errors=[],avById={},avByName={};
+  avvisi.forEach(av=>avById[av.id]=av);anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" non in anagrafica (${mk}, giorno ${ev.day}).`});}}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} (${fmt(ev.start)}–${fmt(ev.end)}) fuori orario.`});}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});}}}
+  for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso (${totAv}h).`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`});}
+  return errors;
+}
+
+function VerificaModal({errors,onClose,onNavigate}){
+  const icons={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋",ore_giornaliere:"🕗"};
+  const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente",ore_giornaliere:"Ore giornaliere >8h"};
+  const tones={orfano:"danger",fuori_giorno:"warning",fuori_orario:"warning",sovrapposizione:"danger",eccedenza:"warning",durata:"info",ore_giornaliere:"warning"};
+  return(<FloatingModal title={errors.length===0?"✅ Nessun problema trovato":`⚠️ ${errors.length} problem${errors.length===1?"a":"i"} trovat${errors.length===1?"o":"i"}`} titleBg={errors.length===0?"var(--success)":"var(--danger)"} width={580} onClose={onClose} footer={<><span style={{fontSize:11,color:"var(--fg-subtle)"}}>Trascina per spostare</span><button onClick={onClose} className="btn" data-variant="primary">Chiudi</button></>}>
+    <div style={{padding:16}}>
+      {errors.length===0?<p style={{color:"var(--success)",fontWeight:600,textAlign:"center",marginTop:20}}>Tutti i dati sono coerenti. 🎉</p>
+      :errors.map((e,i)=>(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey)} style={{padding:"10px 14px",marginBottom:8,borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-sunken)",display:"flex",gap:10,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-sunken)"}>
+        <span style={{fontSize:18,flexShrink:0}}>{icons[e.type]||"⚠️"}</span>
+        <div style={{flex:1}}><div style={{fontSize:11,fontWeight:700,color:`var(--${tones[e.type]||"warning"})`,marginBottom:2,display:"flex",justifyContent:"space-between"}}><span>{labels[e.type]||e.type}</span>{e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600}}>📅 Vai al mese →</span>}</div><div style={{fontSize:12,color:"var(--fg-muted)",lineHeight:1.5}}>{e.msg}</div></div>
+      </div>))}
+    </div>
+  </FloatingModal>);
+}
+
+// ── LOG PANEL ──────────────────────────────────────────────────────────────
+function LogPanel({onBack,onClose}){
+  const[rows,setRows]=useState([]);const[loading,setLoading]=useState(true);const[filterUser,setFilterUser]=useState("");const[sortCol,setSortCol]=useState("ts");const[sortDir,setSortDir]=useState("desc");
+  useEffect(()=>{fsLoadLog().then(r=>{setRows(r);setLoading(false);});},[]);
+  const users=[...new Set(rows.map(r=>r.userEmail))].sort();
+  const filtered=rows.filter(r=>!filterUser||r.userEmail===filterUser);
+  const sorted=[...filtered].sort((a,b)=>{let va=sortCol==="ts"?a.ts:sortCol==="type"?(LOG_TYPE_LABELS[a.type]||a.type):a.userEmail;let vb=sortCol==="ts"?b.ts:sortCol==="type"?(LOG_TYPE_LABELS[b.type]||b.type):b.userEmail;if(sortCol==="ts")return sortDir==="desc"?vb-va:va-vb;return sortDir==="desc"?String(vb).localeCompare(String(va)):String(va).localeCompare(String(vb));});
+  function thClick(col){if(sortCol===col)setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("desc");}}
+  const thS=(col)=>({padding:"8px 12px",textAlign:"left",fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap",borderBottom:"2px solid var(--border)",background:sortCol===col?"var(--bg-hover)":"var(--bg-sunken)",textTransform:"uppercase",letterSpacing:"0.06em"});
+  const arrow=col=>sortCol===col?(sortDir==="desc"?" ↓":" ↑"):"";
+  return(<FloatingModal title="📋 Log Attività" width={720} onClose={onClose} footer={<><button onClick={onBack} className="btn" data-variant="outline">← Indietro</button><button onClick={onClose} className="btn" data-variant="primary">Chiudi</button></>}>
+    <div style={{padding:"10px 16px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",background:"var(--bg-sunken)"}}>
+      <label style={{fontSize:12,color:"var(--fg-muted)",flexShrink:0}}>Utente:</label>
+      <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} className="select" style={{minWidth:180}}><option value="">— Tutti —</option>{users.map(u=><option key={u} value={u}>{u}</option>)}</select>
+      <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{sorted.length} record</span>
+    </div>
+    {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
+    :sorted.length===0?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessuna attività registrata.</p>
+    :<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+      <thead style={{position:"sticky",top:0,zIndex:2}}><tr><th onClick={()=>thClick("ts")} style={thS("ts")}>Data{arrow("ts")}</th><th onClick={()=>thClick("user")} style={thS("user")}>Utente{arrow("user")}</th><th onClick={()=>thClick("type")} style={thS("type")}>Tipo{arrow("type")}</th><th style={{...thS("detail"),cursor:"default",width:"40%"}}>Dettaglio</th></tr></thead>
+      <tbody>{sorted.map((r,i)=>(<tr key={r.id} style={{background:i%2===0?"var(--bg-elev)":"var(--bg-sunken)"}}><td style={{padding:"7px 12px",color:"var(--fg-muted)",whiteSpace:"nowrap",fontFamily:'"JetBrains Mono",monospace',fontSize:11}}>{fmtTs(r.ts)}</td><td style={{padding:"7px 12px",color:"var(--fg-muted)",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.userEmail}</td><td style={{padding:"7px 12px",whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td><td style={{padding:"7px 12px",color:"var(--fg-muted)",lineHeight:1.4}}>{r.detail}</td></tr>))}</tbody>
+    </table>}
+  </FloatingModal>);
+}
+
+// ── BACKUP PANEL ───────────────────────────────────────────────────────────
+function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,onBack,onClose}){
+  const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState("");
+  function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
+  async function load(){setLoading(true);setBackups(await fsListBackups());setLoading(false);}
+  useEffect(()=>{load();},[]);
+  async function doBackup(){setSaving(true);setMsg("");try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg("✅ Backup creato.");await load();}catch(e){setMsg(`❌ ${e.message}`);}setSaving(false);}
+  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg("✅ Ripristinato.");onClose();}catch(e){setMsg(`❌ ${e.message}`);}}
+  function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+  async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
+  return(<FloatingModal title="💾 Gestione Backup" width={640} onClose={onClose} footer={<><button onClick={onBack} className="btn" data-variant="outline">← Indietro</button><span style={{fontSize:11,color:"var(--fg-subtle)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili</span><button onClick={onClose} className="btn" data-variant="primary">Chiudi</button></>}>
+    <div style={{padding:"12px 16px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",background:"var(--bg-sunken)",flexWrap:"wrap"}}>
+      <button onClick={doBackup} disabled={saving} className="btn" data-variant="accent">{saving?"⏳ Salvataggio...":"💾 Crea backup ora"}</button>
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} className="btn" data-variant="outline">⬇️ Esporta JSON</button>
+        <label className="btn" data-variant="outline" style={{cursor:"pointer"}}>📂 Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg("✅ Importato.");onClose();}catch(err){setMsg(`❌ ${err.message}`);}};reader.readAsText(file);e.target.value="";}}/></label>
+      </div>
+      {msg&&<span style={{fontSize:12,color:msg.startsWith("✅")?"var(--success)":"var(--danger)",fontWeight:600}}>{msg}</span>}
+    </div>
+    {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
+    :backups.length===0?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessun backup disponibile.</p>
+    :<table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+      <thead><tr><th style={{padding:"8px 12px",textAlign:"left",fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",borderBottom:"2px solid var(--border)",background:"var(--bg-sunken)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Data e ora</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",borderBottom:"2px solid var(--border)",background:"var(--bg-sunken)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Dimensione</th><th style={{padding:"8px 12px",textAlign:"left",fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",borderBottom:"2px solid var(--border)",background:"var(--bg-sunken)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Azioni</th></tr></thead>
+      <tbody>{backups.map((b,i)=>(<tr key={b.id} style={{background:i%2===0?"var(--bg-elev)":"var(--bg-sunken)"}}><td style={{padding:"8px 12px",color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace',fontSize:11}}>{fmtTs(b.created)}</td><td style={{padding:"8px 12px",color:"var(--fg-subtle)"}}>{fmtSize(b.size)}</td><td style={{padding:"8px 12px"}}><div style={{display:"flex",gap:6}}><button onClick={()=>doDownload(b)} className="btn" data-variant="outline" data-size="sm">⬇️</button><button onClick={()=>doRestore(b)} className="btn" data-variant="outline" data-size="sm">↩️</button><button onClick={()=>doDelete(b)} className="btn" data-variant="danger" data-size="sm">🗑️</button></div></td></tr>))}</tbody>
+    </table>}
+  </FloatingModal>);
+}
+
+// ── USERS PANEL ────────────────────────────────────────────────────────────
+function UsersPanel({isSuperAdmin,onBack,onClose}){
+  const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[editingRole,setEditingRole]=useState({});
+  useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);});},[]);
+  async function handleAdd(){if(!newEmail.trim())return;setSaving(true);await db.collection("authorizedEmails").doc(newEmail.trim().toLowerCase()).set({role:newRole});const snap=await db.collection("authorizedEmails").get();setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setNewEmail("");setSaving(false);}
+  async function handleRemove(email){if(!confirm(`Rimuovere ${email}?`))return;await db.collection("authorizedEmails").doc(email).delete();setEmails(p=>p.filter(e=>e.email!==email));}
+  async function handleRoleChange(email,r){await db.collection("authorizedEmails").doc(email).update({role:r});setEmails(p=>p.map(e=>e.email===email?{...e,role:r}:e));setEditingRole(p=>({...p,[email]:false}));}
+  const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={400}>
+      <PanelHeader title="🔐 Utenti" onBack={onBack} onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:16,background:"var(--bg)"}}>
+        <div style={{background:"var(--info-soft)",borderRadius:"var(--radius-md)",padding:14,marginBottom:16,border:"1px solid var(--info)"}}>
+          <label className="label">Email</label><input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="email@azienda.it" className="input" style={{marginBottom:8}}/>
+          <select value={newRole} onChange={e=>setNewRole(e.target.value)} className="select" style={{marginBottom:10}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select>
+          <button onClick={handleAdd} disabled={saving} className="btn" data-variant="accent" style={{width:"100%",justifyContent:"center"}}>{saving?"...":"Aggiungi"}</button>
+        </div>
+        {loading?<p style={{color:"var(--fg-subtle)",fontSize:13}}>Caricamento...</p>:emails.map(e=>(<div key={e.email} style={{padding:"10px 12px",borderRadius:"var(--radius)",border:"1px solid var(--border)",marginBottom:8,background:"var(--bg-elev)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:"var(--fg)"}}>{e.email}</div>
+              {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} className="select" style={{height:28,fontSize:12}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} className="btn" data-variant="accent" data-size="sm">Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} className="btn" data-variant="ghost" data-size="sm">✕</button></div>
+              :<div style={{fontSize:11,color:ROLE_COLOR[e.role]||"var(--fg-subtle)",fontWeight:600}}>{ROLE_LABEL[e.role]||e.role}</div>}
+            </div>
+            <div style={{display:"flex",gap:6}}><button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} className="btn" data-variant="outline" data-size="icon-sm">✏️</button><button onClick={()=>handleRemove(e.email)} className="btn" data-variant="danger" data-size="icon-sm">🗑️</button></div>
+          </div>
+        </div>))}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+function DemoPanel({onLoadDemo,onClearDb,isSuperAdmin,onBack,onClose}){
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={400}>
+      <PanelHeader title="🎲 Dati Demo" onBack={onBack} onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:20,background:"var(--bg)"}}>
+        <div style={{padding:16,background:"var(--accent-soft)",borderRadius:"var(--radius-md)",border:"1px solid var(--accent)",marginBottom:16}}>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--fg)",marginBottom:8}}>🎲 Carica dati demo</div>
+          <p style={{fontSize:12,color:"var(--fg-muted)",marginBottom:14,lineHeight:1.6}}>Crea anagrafica tutor, anagrafica avvisi e sessioni di esempio. I dati esistenti verranno sovrascritti.</p>
+          <button onClick={onLoadDemo} className="btn" data-variant="accent" style={{width:"100%",justifyContent:"center"}}>🎲 Carica dati demo</button>
+        </div>
+        {isSuperAdmin&&<div style={{padding:16,background:"var(--danger-soft)",borderRadius:"var(--radius-md)",border:"1px solid var(--danger)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--danger)",marginBottom:8}}>🗑️ Cancella database</div>
+          <p style={{fontSize:12,color:"var(--fg-muted)",marginBottom:14,lineHeight:1.6}}>Elimina tutti i dati. Operazione irreversibile.</p>
+          <button onClick={onClearDb} className="btn" data-variant="danger" style={{width:"100%",justifyContent:"center",background:"var(--danger)",color:"#fff",border:"none"}}>🗑️ Cancella database</button>
+        </div>}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+function ApiPanel({settings,onSave,onBack,onClose}){
+  const[aiProvider,setAiProvider]=useState(settings.aiProvider||"gemini");const[geminiKey,setGeminiKey]=useState(settings.geminiApiKey||"");const[openaiKey,setOpenaiKey]=useState(settings.openaiApiKey||"");const[saved,setSaved]=useState(false);
+  const[testG,setTestG]=useState(null);const[testO,setTestO]=useState(null);const[tstgG,setTstgG]=useState(false);const[tstgO,setTstgO]=useState(false);const[cdG,setCdG]=useState(0);const[cdO,setCdO]=useState(0);
+  useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
+  useEffect(()=>{if(cdO<=0)return;const t=setInterval(()=>setCdO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdO]);
+  async function handleSave(){await onSave({aiProvider,geminiApiKey:geminiKey,openaiApiKey:openaiKey});setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  async function testGemini(){if(!geminiKey){setTestG("❌ Chiave non inserita");return;}setTstgG(true);setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});setTestG(r.ok?"✅ Connessione riuscita":r.status===429?"❌ Quota esaurita":r.status===401?"❌ Chiave non valida":`❌ Errore ${r.status}`);}catch{setTestG("❌ Errore di rete");}setTstgG(false);setCdG(60);}
+  async function testOpenai(){if(!openaiKey){setTestO("❌ Chiave non inserita");return;}setTstgO(true);setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?"✅ Connessione riuscita":r.status===429?"❌ Quota esaurita":r.status===401?"❌ Chiave non valida":`❌ Errore ${r.status}`);}catch{setTestO("❌ Errore di rete");}setTstgO(false);setCdO(60);}
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={440}>
+      <PanelHeader title="⚙️ Impostazioni API" onBack={onBack} onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:20,background:"var(--bg)"}}>
+        <div style={{padding:16,background:"var(--bg-elev)",borderRadius:"var(--radius-md)",border:"1px solid var(--border)"}}>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--fg)",marginBottom:12}}>🤖 Provider AI</div>
+          <div style={{display:"flex",gap:6,marginBottom:14}}>
+            {[{v:"gemini",l:"✨ Gemini",c:"var(--info)"},{v:"openai",l:"💬 OpenAI",c:"var(--success)"}].map(o=><button key={o.v} onClick={()=>setAiProvider(o.v)} style={{flex:1,padding:"9px 0",border:`1.5px solid ${aiProvider===o.v?o.c:"var(--border)"}`,borderRadius:"var(--radius)",background:aiProvider===o.v?"var(--bg-elev)":"transparent",color:aiProvider===o.v?"var(--fg)":"var(--fg-muted)",fontWeight:700,fontSize:13,cursor:"pointer"}}>{o.l}</button>)}
+          </div>
+          <div style={{marginBottom:12,padding:12,borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-sunken)"}}>
+            <div style={{fontWeight:700,fontSize:13,marginBottom:6,color:"var(--info)"}}>✨ Gemini</div>
+            <input type="password" value={geminiKey} onChange={e=>setGeminiKey(e.target.value)} placeholder="AIza..." className="input mono" style={{marginBottom:8}}/>
+            <div style={{display:"flex",alignItems:"center",gap:8}}><button onClick={testGemini} disabled={tstgG||cdG>0} className="btn" data-variant="outline" data-size="sm">{tstgG?"...":`🔍 Testa${cdG>0?` (${cdG}s)`:""}`}</button>{testG&&<span style={{fontSize:12,color:testG.startsWith("✅")?"var(--success)":"var(--danger)"}}>{testG}</span>}</div>
+          </div>
+          <div style={{padding:12,borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-sunken)"}}>
+            <div style={{fontWeight:700,fontSize:13,marginBottom:6,color:"var(--success)"}}>💬 OpenAI</div>
+            <input type="password" value={openaiKey} onChange={e=>setOpenaiKey(e.target.value)} placeholder="sk-..." className="input mono" style={{marginBottom:8}}/>
+            <div style={{display:"flex",alignItems:"center",gap:8}}><button onClick={testOpenai} disabled={tstgO||cdO>0} className="btn" data-variant="outline" data-size="sm">{tstgO?"...":`🔍 Testa${cdO>0?` (${cdO}s)`:""}`}</button>{testO&&<span style={{fontSize:12,color:testO.startsWith("✅")?"var(--success)":"var(--danger)"}}>{testO}</span>}</div>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:"12px 20px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"flex-end",gap:10,background:"var(--bg-elev)"}}>
+        <button onClick={onBack} className="btn" data-variant="outline">← Indietro</button>
+        <button onClick={handleSave} className="btn" data-variant={saved?"accent":"primary"}>{saved?"✓ Salvato":"Salva"}</button>
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+// ── TUTOR PANEL ────────────────────────────────────────────────────────────
+function TutorPanel({tutors,onSaveTutor,onClose}){
+  const[list,setList]=useState(tutors.map(t=>({...t})));
+  const[editing,setEditing]=useState(null);
+  const[form,setForm]=useState({});
+  const[saving,setSaving]=useState(false);
+  function startEdit(i){setEditing(i);if(i===-1){const used=list.map(t=>t.color);const free=PALETTE.find(c=>!used.includes(c))||PALETTE[0];setForm({id:`tutor-${Date.now()}`,nome:"",cognome:"",cf:"",azienda:"",color:free});}else setForm({...list[i]});}
+  async function saveForm(){if(!form.nome.trim()&&!form.cognome.trim())return;setSaving(true);let newList;if(editing===-1)newList=[...list,form];else newList=list.map((t,i)=>i===editing?form:t);setList(newList);await onSaveTutor(newList,editing===-1?"add":"edit",form);setEditing(null);setSaving(false);}
+  async function handleDelete(i){const t=list[i];if(!confirm(`Eliminare il tutor "${t.cognome} ${t.nome}"?`))return;const newList=list.filter((_,j)=>j!==i);setList(newList);await onSaveTutor(newList,"delete",t);}
+  const fn=t=>`${t.cognome} ${t.nome}`.trim()||"—";
+  const currentUsed=list.filter((_,i)=>i!==editing).map(t=>t.color);
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={420}>
+      <PanelHeader title="👤 Anagrafica Tutor" onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:"14px 16px",background:"var(--bg)"}}>
+        {list.length===0&&editing===null&&<p style={{color:"var(--fg-subtle)",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
+        {[...list].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map((t)=>{const i=list.indexOf(t);return(<div key={t.id} style={{marginBottom:10,borderRadius:"var(--radius)",border:"1px solid var(--border)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:"var(--bg-elev)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:32,height:32,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.cognome[0]||""}{t.nome[0]||""}</div>
+            <div><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{fn(t)}</div>{t.azienda&&<div style={{fontSize:11,color:"var(--fg-subtle)"}}>{t.azienda}</div>}</div>
+          </div>
+          <div style={{display:"flex",gap:6}}><button onClick={()=>startEdit(i)} className="btn" data-variant="outline" data-size="icon-sm">✏️</button><button onClick={()=>handleDelete(i)} className="btn" data-variant="danger" data-size="icon-sm">🗑️</button></div>
+        </div>);})}
+        {editing!==null&&(<div style={{marginTop:12,borderRadius:"var(--radius-md)",border:"1px solid var(--accent)",padding:"14px",background:"var(--accent-soft)"}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--fg)"}}>{editing===-1?"➕ Nuovo":"✏️ Modifica"}</div>
+          <div style={{display:"flex",gap:8,marginBottom:8}}><div style={{flex:1}}><label className="label">Nome</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} className="input"/></div><div style={{flex:1}}><label className="label">Cognome</label><input value={form.cognome} onChange={e=>setForm(f=>({...f,cognome:e.target.value}))} className="input"/></div></div>
+          <label className="label">CF</label><input value={form.cf||""} onChange={e=>setForm(f=>({...f,cf:e.target.value.toUpperCase()}))} className="input mono" style={{marginBottom:8}} maxLength={16}/>
+          <label className="label">Azienda</label><input value={form.azienda||""} onChange={e=>setForm(f=>({...f,azienda:e.target.value}))} className="input" style={{marginBottom:8}}/>
+          <label className="label">Colore</label>
+          <ColorPicker value={form.color} onChange={c=>setForm(f=>({...f,color:c}))} usedColors={currentUsed}/>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button onClick={()=>setEditing(null)} className="btn" data-variant="outline">Annulla</button><button onClick={saveForm} disabled={saving} className="btn" data-variant="accent">{saving?"💾 ...":"Salva"}</button></div>
+        </div>)}
+        {editing===null&&<button onClick={()=>startEdit(-1)} className="btn" data-variant="outline" style={{marginTop:10,width:"100%",justifyContent:"center",border:"2px dashed var(--accent)",color:"var(--accent)"}}>+ Aggiungi tutor</button>}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+// ── ANAGRAFICA AV PANEL ────────────────────────────────────────────────────
+function AnagraficaAvPanel({anagraficaAv,onSaveAna,onClose}){
+  const[list,setList]=useState(anagraficaAv.map(a=>({...a})));
+  const[editing,setEditing]=useState(null);
+  const[saving,setSaving]=useState(false);
+  const emptyForm=()=>{const used=list.map(a=>a.colore);const free=PALETTE.find(c=>!used.includes(c))||PALETTE[0];return{id:`av-${Date.now()}`,nome:"",codice:"",colore:free,durataOre:"",dataInizio:"",dataFine:"",stato:"In corso",note:""};};
+  const[form,setForm]=useState(emptyForm());
+  function startEdit(i){setEditing(i);if(i===-1)setForm(emptyForm());else setForm({...list[i]});}
+  async function saveForm(){if(!form.nome.trim())return;setSaving(true);let newList;if(editing===-1)newList=[...list,form];else newList=list.map((a,i)=>i===editing?form:a);setList(newList);await onSaveAna(newList,editing===-1?"add":"edit",form);setEditing(null);setSaving(false);}
+  async function handleDelete(i){const a=list[i];if(!confirm(`Eliminare l'avviso "${a.nome}"?`))return;const newList=list.filter((_,j)=>j!==i);setList(newList);await onSaveAna(newList,"delete",a);}
+  const statoColor={"In corso":"var(--success)","Concluso":"var(--fg-muted)","Sospeso":"var(--warning)"};
+  const currentUsed=list.filter((_,i)=>i!==editing).map(a=>a.colore);
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={480}>
+      <PanelHeader title="📋 Anagrafica Avvisi/Progetti" onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:"14px 16px",background:"var(--bg)"}}>
+        {list.length===0&&editing===null&&<p style={{color:"var(--fg-subtle)",fontStyle:"italic",fontSize:13}}>Nessun avviso.</p>}
+        {[...list].sort((a,b)=>a.nome.localeCompare(b.nome)).map((a)=>{const i=list.indexOf(a);return(<div key={a.id} style={{marginBottom:10,borderRadius:"var(--radius)",border:"1px solid var(--border)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",background:"var(--bg-elev)"}}>
+          <div style={{display:"flex",alignItems:"flex-start",gap:10,flex:1}}>
+            <div style={{width:12,height:12,borderRadius:3,background:a.colore||"var(--accent)",flexShrink:0,marginTop:3}}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{a.nome}</div>
+              {a.codice&&<div style={{fontSize:11,color:"var(--fg-subtle)",fontFamily:'"JetBrains Mono",monospace'}}>{a.codice}</div>}
+              <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                {a.durataOre&&<span className="badge" data-tone="info">{a.durataOre}h</span>}
+                <span className="badge" style={{color:statoColor[a.stato]||"var(--fg-subtle)"}}>{a.stato}</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,flexShrink:0}}><button onClick={()=>startEdit(i)} className="btn" data-variant="outline" data-size="icon-sm">✏️</button><button onClick={()=>handleDelete(i)} className="btn" data-variant="danger" data-size="icon-sm">🗑️</button></div>
+        </div>);})}
+        {editing!==null&&(<div style={{marginTop:12,borderRadius:"var(--radius-md)",border:"1px solid var(--accent)",padding:"14px",background:"var(--accent-soft)"}}>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--fg)"}}>{editing===-1?"➕ Nuovo Avviso":"✏️ Modifica Avviso"}</div>
+          <label className="label">Nome *</label><input value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} className="input" style={{marginBottom:8}} placeholder="Nome avviso/progetto"/>
+          <label className="label">Codice avviso</label><input value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} className="input mono" style={{marginBottom:8}} placeholder="Es. DDG 1381/2026"/>
+          <label className="label">Colore</label>
+          <ColorPicker value={form.colore} onChange={c=>setForm(f=>({...f,colore:c}))} usedColors={currentUsed}/>
+          <div style={{display:"flex",gap:8,marginBottom:8}}><div style={{flex:1}}><label className="label">Durata (ore)</label><input type="number" min="0" value={form.durataOre||""} onChange={e=>setForm(f=>({...f,durataOre:e.target.value===""?"":Number(e.target.value)}))} className="input mono" placeholder="Es. 400"/></div><div style={{flex:1}}><label className="label">Stato</label><select value={form.stato||"In corso"} onChange={e=>setForm(f=>({...f,stato:e.target.value}))} className="select">{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div></div>
+          <div style={{display:"flex",gap:8,marginBottom:8}}><div style={{flex:1}}><label className="label">Data inizio</label><input value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))} className="input" placeholder="01/01/2026"/></div><div style={{flex:1}}><label className="label">Data fine</label><input value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))} className="input" placeholder="31/12/2026"/></div></div>
+          <label className="label">Note</label><textarea value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} className="textarea" style={{marginBottom:8}} placeholder="Note aggiuntive..."/>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button onClick={()=>setEditing(null)} className="btn" data-variant="outline">Annulla</button><button onClick={saveForm} disabled={saving} className="btn" data-variant="accent">{saving?"💾 ...":"Salva"}</button></div>
+        </div>)}
+        {editing===null&&<button onClick={()=>startEdit(-1)} className="btn" data-variant="outline" style={{marginTop:10,width:"100%",justifyContent:"center",border:"2px dashed var(--accent)",color:"var(--accent)"}}>+ Aggiungi avviso/progetto</button>}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+// ── RIEPILOGO PANELS ───────────────────────────────────────────────────────
+function RiepilogoAvPanel({avvisi,anagraficaAv,onClose}){
+  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
+  const avById={};avvisi.forEach(av=>avById[av.id]=av);
+  const sorted=[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome));
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={420}>
+      <PanelHeader title="📋 Riepilogo Avvisi/Progetti" onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",background:"var(--bg)"}}>
+        {sorted.length===0&&<p style={{color:"var(--fg-subtle)",fontStyle:"italic",fontSize:13}}>Nessun avviso in anagrafica.</p>}
+        {sorted.map(ana=>{const av=avById[ana.id];const tot=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;return(<div key={ana.id} style={{marginBottom:14,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+          <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.12),borderBottom:"1px solid var(--border)",padding:"8px 12px"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:10,height:10,borderRadius:3,background:ana.colore||"var(--accent)",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</span></div>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>{ana.durataOre&&<span className="badge" data-tone="info">{ana.durataOre}h da bando</span>}<span style={{fontWeight:700,fontSize:12,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(tot)} cal.</span></div>
+            </div>
+          </div>
+          <div style={{padding:"8px 12px"}}>{!av||av.events.length===0?<span style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Nessun appuntamento.</span>:(()=>{const bm={};for(const e of av.events){if(!bm[e.month])bm[e.month]=[];bm[e.month].push(e);}return sortMK(Object.keys(bm)).map(mk=>(<div key={mk} style={{marginBottom:6}}><div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.06em"}}>📅 {ml(mk)}</div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{bm[mk].map(e=><span key={e.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(ana.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(ana.colore||"#4f86c6",0.35)}`,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{e.day} — {fmt(e.start)}–{fmt(e.end)}</span>)}</div></div>));})()}</div>
+        </div>);})}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+function TutoraggiPanel({tutors,tutEvents,anagraficaAv,onClose}){
+  const ml=k=>MONTHS.find(m=>m.key===k)?.label||k;
+  const avCol={};for(const a of anagraficaAv)avCol[a.nome]=a.colore||"var(--accent)";
+  const sorted=[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome));
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={420}>
+      <PanelHeader title="📌 Riepilogo Tutoraggi" onClose={onClose}/>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px",background:"var(--bg)"}}>
+        {sorted.length===0&&<p style={{color:"var(--fg-subtle)",fontStyle:"italic",fontSize:13}}>Nessun tutor.</p>}
+        {sorted.map(t=>{const td=tutEvents[t.id]||{};let tot=0;const mes=sortMK(Object.keys(td));for(const mk of mes){const evs=td[mk];for(const ev of evs)tot+=(ev.ore||0);}if(mes.length===0)return null;
+          return(<div key={t.id} style={{marginBottom:16,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+            <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),borderBottom:"1px solid var(--border)",padding:"9px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.cognome[0]||""}{t.nome[0]||""}</div><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{t.cognome} {t.nome}</span></div>
+              <span style={{fontWeight:700,fontSize:12,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(tot)}</span>
+            </div>
+            <div style={{padding:"8px 12px"}}>{mes.map(mk=>{const evs=td[mk];const mo=evs.reduce((s,e)=>s+(e.ore||0),0);return(<div key={mk} style={{marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em"}}>📅 {ml(mk)}</span><span style={{fontSize:11,fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(mo)}</span></div><div style={{display:"flex",flexWrap:"wrap",gap:4}}>{evs.map(ev=>{const col=avCol[ev.name]||t.color||"var(--accent)";return(<span key={ev.id} style={{fontSize:10,padding:"2px 7px",borderRadius:8,background:hexToRgba(col.startsWith("#")?col:"#4f86c6",0.12),border:`1px solid ${hexToRgba(col.startsWith("#")?col:"#4f86c6",0.35)}`,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} — {fmt(ev.start)}–{fmt(ev.end)} · {ev.name?.substring(0,18)}</span>);})}</div></div>);})}</div>
+          </div>);})}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+function RiepilogoPanel({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,onClose}){
+  const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
+  const avById={};avvisi.forEach(av=>avById[av.id]=av);
+  function getTutOreAnnoPerAv(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
+  function getOreFiltered(tId,avName){let t=0;const ana=anagraficaAv.find(a=>a.nome===avName);if(!ana)return 0;const av=avById[ana.id];if(!av)return 0;const td=tutEvents[tId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)t+=en-s;}}}return t;}
+  function getAvOre(anaId){const av=avById[anaId];if(!av)return 0;if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
+  function getTotOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
+  function getAvNamesForTut(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)n.add(ev.name);}return[...n].sort();}
+  function getTutsForAv(avName){return[...tutors].filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;}).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
+  const pctBadge=(oreAnno,durataOre)=>{if(!durataOre)return null;const p=oreAnno/durataOre*100;return(<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{Math.round(p)}% annuo</span>);};
+  const sortedTutors=[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome));
+  const sortedAna=[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome));
+  return(<div className="panel-overlay"><div onClick={onClose} className="panel-backdrop"/>
+    <ResizablePanel defaultWidth={440}>
+      <PanelHeader title="📊 Riepilogo Ore" onClose={onClose}/>
+      <div style={{padding:"10px 16px",borderBottom:"1px solid var(--border)",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",background:"var(--bg-elev)"}}>
+        <div className="tab-strip"><button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")}>👤 Per tutor</button><button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")}>📋 Per avviso</button></div>
+        <div className="tab-strip" style={{marginLeft:"auto"}}><button className={`tab-strip-btn${timeMode==="mese"?" active":""}`} onClick={()=>setTimeMode("mese")}>Mese</button><button className={`tab-strip-btn${timeMode==="anno"?" active":""}`} onClick={()=>setTimeMode("anno")}>Anno</button></div>
+      </div>
+      <div style={{padding:"6px 16px",background:"var(--bg-sunken)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--fg-subtle)"}}>💡 % = quota annua del tutor sulla durata da bando</div>
+      <div style={{flex:1,overflowY:"auto",padding:16,background:"var(--bg)"}}>
+        {viewMode==="tutor"&&sortedTutors.map(t=>{const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+          <div style={{background:hexToRgba(t.color||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}><div style={{width:28,height:28,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>{t.cognome[0]||""}{t.nome[0]||""}</div><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{t.cognome} {t.nome}</span></div>
+            <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(tot)}</span>
+          </div>
+          <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{const ana=anagraficaAv.find(a=>a.nome===nm);const ore=getOreFiltered(t.id,nm);const oreA=getTutOreAnnoPerAv(t.id,nm);return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid var(--divider)",fontSize:12}}><span style={{color:"var(--fg-muted)"}}>{nm}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(ore)}</span>{pctBadge(oreA,ana?.durataOre)}</div></div>);})}</div>
+        </div>);})}
+        {viewMode==="avviso"&&sortedAna.map(ana=>{const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);return(<div key={ana.id} style={{marginBottom:14,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+          <div style={{background:hexToRgba(ana.colore||"#4f86c6",0.12),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><div style={{width:10,height:10,borderRadius:3,background:ana.colore||"var(--accent)",flexShrink:0}}/><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</span>{ana.durataOre&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>{ana.durataOre}h da bando</span>}</div>
+            <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',flexShrink:0}}>{fo(avTot)}</span>
+          </div>
+          <div style={{padding:"8px 14px"}}>{tuts.length===0?<span style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tuts.map(t=>{const ore=getOreFiltered(t.id,ana.nome);const oreA=getTutOreAnnoPerAv(t.id,ana.nome);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid var(--divider)",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:999,background:t.color||"var(--accent)"}}/><span style={{color:"var(--fg-muted)"}}>{t.cognome} {t.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(ore)}</span>{pctBadge(oreA,ana.durataOre)}</div></div>);})}</div>
+        </div>);})}
+      </div>
+    </ResizablePanel>
+  </div>);
+}
+
+// ── AI PANEL ───────────────────────────────────────────────────────────────
+function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenTutorPanel,onOpenAvPanel,onClose}){
+  const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
+  const[messages,setMessages]=useState([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);
+  const[size,setSize]=useState({w:Math.min(window.innerWidth*0.33,520),h:Math.min(window.innerHeight*0.44,400)});
+  const fileRef=useRef(),btmRef=useRef();
+  const uname=user?.email?.split("@")[0]||"utente";
+  const phrase=useRef(FUNNY_PHRASES[Math.floor(Math.random()*FUNNY_PHRASES.length)]).current;
+  useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
+  const addMsg=m=>setMessages(p=>[...p,m]);
+  function makeResizeHandler(dir){return function(e){e.preventDefault();const sx=e.clientX,sy=e.clientY,sw=size.w,sh=size.h;function mv(me){if(dir==="right"||dir==="corner")setSize(s=>({...s,w:Math.max(300,sw+(me.clientX-sx))}));if(dir==="top"||dir==="corner")setSize(s=>({...s,h:Math.max(250,sh-(me.clientY-sy))}));}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);};}
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"⚠️ Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"⚠️ Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
+  function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
+  function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
+  async function processSource(file,text){if(file)addMsg({role:"user",text:`📎 ${file.name}`});else addMsg({role:"user",text:`📋 Testo incollato (${text.length} caratteri)`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function processPaste(){if(!pasteText.trim()){addMsg({role:"ai",text:"⚠️ Testo vuoto."});return;}if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"⚠️ Il testo non sembra contenere date o orari."});setPasteText("");setShowPaste(false);return;}setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);}
+  function handleResult(res){setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}
+  async function analyzeDoc(file,text){const prov=settings.aiProvider||"gemini";const prompt=`Estrai appuntamenti da questo documento/testo. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;
+    if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");let parts;if(text){parts=[{text:`${prompt}\n\n${text}`}];}else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];}const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}
+    else{if(!settings.openaiApiKey)throw new Error("Chiave OpenAI non configurata.");let msgs;if(text){msgs=[{role:"user",content:`${prompt}\n\n${text}`}];}else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isImg=mime.startsWith("image/");msgs=isImg?[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:`data:${mime};base64,${b64}`}}]}]:[{role:"user",content:`${prompt}\n\n${mime==="application/pdf"?"[PDF]":atob(b64)}`}];}const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${settings.openaiApiKey}`},body:JSON.stringify({model:"gpt-4o-mini",messages:msgs,max_tokens:2000})});if(!r.ok)throw new Error(r.status===429?"Quota OpenAI esaurita.":r.status===401?"Chiave OpenAI non valida.":`Errore ${r.status}`);const d=await r.json();return parseR(d.choices?.[0]?.message?.content||"{}");}
+  }
+  function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});}
+  function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
+  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}await processSource(file,null);}
+  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  const uploadButtons=()=>(<div style={{display:"flex",gap:6,flexDirection:"column",width:"100%",marginTop:6}}>
+    <button onClick={()=>fileRef.current.click()} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",border:"2px dashed var(--accent)",color:"var(--accent)"}}>📎 Carica documento</button>
+    <button onClick={()=>setShowPaste(s=>!s)} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",border:"2px dashed var(--success)",color:"var(--success)"}}>📋 Incolla testo</button>
+    {showPaste&&<div style={{marginTop:4}}><textarea value={pasteText} onChange={e=>setPasteText(e.target.value)} placeholder="Incolla qui il testo con le date..." className="textarea" style={{fontSize:12}}/><button onClick={processPaste} disabled={loading||!pasteText.trim()} className="btn" data-variant="accent" style={{width:"100%",justifyContent:"center",marginTop:4}}>Analizza testo</button></div>}
+  </div>);
+  function renderMsg(msg,idx){const isAi=msg.role==="ai";
+    return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
+      <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"var(--bg-sunken)":"var(--accent)",color:isAi?"var(--fg)":"#fff",fontSize:13,lineHeight:1.5,border:isAi?"1px solid var(--border)":"none"}}>{msg.isLoading?<span style={{opacity:0.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
+      {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label});startImport(b.value);}} className="btn" data-variant="outline">{b.label}</button>)}</div>}
+      {msg.showOpenTutor&&<button onClick={onOpenTutorPanel} className="btn" data-variant="outline" style={{marginTop:6}}>👤 Apri Anagrafica Tutor</button>}
+      {msg.showOpenAv&&<button onClick={onOpenAvPanel} className="btn" data-variant="outline" style={{marginTop:6}}>📋 Apri Anagrafica Avvisi</button>}
+      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent">✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} className="btn" data-variant="outline">➕ No, aggiungi</button></div>}
+      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent">✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} className="btn" data-variant="outline">➕ No, aggiungi</button></div>}
+      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
+        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
+        {(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}
+      </div>}
+      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>
+        {!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona un avviso per procedere.</div>:uploadButtons()}
+      </div>}
+      {msg.showUpload&&uploadButtons()}
+      {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center"}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline">✕</button></div>}</div>}
+      {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:"var(--radius)",border:"1px solid var(--warning)",background:"var(--warning-soft)",fontSize:11}}><div style={{fontWeight:700,color:"var(--warning)",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"var(--fg-muted)",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} className="btn" data-variant="accent" data-size="sm">✓ Confermo</button></div>)}</div>}
+    </div>);}
+  const rS={position:"absolute",background:"transparent",zIndex:10};
+  return(<div style={{position:"fixed",bottom:0,left:0,width:size.w,zIndex:500,background:"var(--bg-elev)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:size.h,borderRadius:"0 14px 0 0",border:"2px solid var(--brand-navy)",borderBottom:"none",borderLeft:"none"}}>
+    <div onMouseDown={makeResizeHandler("top")} style={{...rS,top:-4,left:0,right:20,height:8,cursor:"ns-resize"}}/>
+    <div onMouseDown={makeResizeHandler("right")} style={{...rS,top:0,right:-4,bottom:0,width:8,cursor:"ew-resize"}}/>
+    <div onMouseDown={makeResizeHandler("corner")} style={{...rS,top:-4,right:-4,width:12,height:12,cursor:"nwse-resize",background:"var(--accent)",borderRadius:"0 4px 0 0",opacity:0.6}}/>
+    <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",flexDirection:"column",gap:5,flexShrink:0,borderRadius:"0 12px 0 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontWeight:800,fontSize:16}}>🤖 Ciao, {uname}!</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button></div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:600,fontSize:12,opacity:0.85,flex:1,lineHeight:1.35}}>{phrase}</span>{isSuperAdmin&&<button style={{background:"rgba(255,150,50,0.25)",border:"1.5px solid rgba(255,150,50,0.6)",color:"#ffb347",borderRadius:8,padding:"3px 10px",cursor:"not-allowed",fontSize:12,fontWeight:700,flexShrink:0}} title="In arrivo 🚀">💪 God Mode</button>}</div>
+    </div>
+    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",background:"var(--bg)"}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
+    <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.csv,.doc,.docx,.txt" style={{display:"none"}} onChange={onFile}/>
+  </div>);
+}
+
+// ── ADD/EDIT MODAL ─────────────────────────────────────────────────────────
+function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose,onOpenTutorPanel,onOpenAvPanel}){
+  const isEdit=!!editTarget;
+  const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
+  const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
+  const[tutAvId,setTutAvId]=useState(()=>{if(isEdit&&editTarget.type==="tutoraggio"){const a=anagraficaAv.find(x=>x.nome===editTarget.ev.name);return a?.id||"";}return anagraficaAv[0]?.id||"";});
+  const[tutDay,setTutDay]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.day:(prefill?.day||1));
+  const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
+  const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
+  const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
+  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(anagraficaAv[0]?.id||""));
+  const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
+  const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
+  const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
+  const[avEnd,setAvEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.end:(prefill?.end||13)));
+  const selT=tutors.find(t=>t.id===tutTutor);const selAnaT=anagraficaAv.find(a=>a.id===tutAvId);const selAnaAv=anagraficaAv.find(a=>a.id===avId);
+  return(<div className="add-modal-backdrop">
+    <div className="add-modal-box">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <span style={{fontWeight:700,fontSize:15,color:"var(--fg)"}}>{isEdit?"✏️ Modifica":"➕ Aggiungi"}</span>
+        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm">✕</button>
+      </div>
+      {!isEdit&&<div className="tab-strip" style={{marginBottom:16,display:"flex"}}>
+        <button className={`tab-strip-btn${tab==="tutoraggio"?" active":""}`} onClick={()=>setTab("tutoraggio")} style={{flex:1}}>📌 Tutoraggio</button>
+        <button className={`tab-strip-btn${tab==="avviso"?" active":""}`} onClick={()=>setTab("avviso")} style={{flex:1}}>📋 Avviso/Progetto</button>
+      </div>}
+      {tab==="tutoraggio"&&(<>
+        <label className="label">Tutor</label>
+        {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun tutor. <button onClick={()=>{onClose();onOpenTutorPanel();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenTutorPanel();}else setTutTutor(e.target.value);}} className="select" style={{marginBottom:10}}>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
+        {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:"var(--radius)",background:hexToRgba(selT.color||"#4f86c6",0.12),border:`1px solid ${hexToRgba(selT.color||"#4f86c6",0.3)}`}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"var(--accent)"}}/><span style={{fontSize:12,color:"var(--fg-muted)"}}>Colore identificativo tutor</span></div>}
+        <label className="label">Avviso/Progetto</label>
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setTutAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:hexToRgba(selAnaT.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",0.3)}`}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)"}}>{selAnaT.nome}</div><div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>{selAnaT.durataOre&&<span className="badge" data-tone="info">{selAnaT.durataOre}h</span>}{selAnaT.stato&&<span className="badge">{selAnaT.stato}</span>}</div></div>}
+        <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
+        <div style={{display:"flex",gap:10,marginBottom:16}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
+        <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot tutoraggio?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger">🗑️ Elimina</button>}
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent">{isEdit?"Salva":"Aggiungi"}</button></div>
+        </div>
+      </>)}
+      {tab==="avviso"&&(<>
+        <label className="label">Avviso/Progetto</label>
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAvPanel();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAvPanel();}else setAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:"var(--radius)",background:hexToRgba(selAnaAv.colore||"#4f86c6",0.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",0.3)}`}}><div style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{selAnaAv.nome}</div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>{selAnaAv.durataOre&&<span className="badge" data-tone="info">{selAnaAv.durataOre}h da bando</span>}{selAnaAv.stato&&<span className="badge">{selAnaAv.stato}</span>}{selAnaAv.codice&&<span style={{fontSize:11,color:"var(--fg-subtle)",fontFamily:'"JetBrains Mono",monospace'}}>{selAnaAv.codice}</span>}</div></div>}
+        <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
+        <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
+        {!isEdit&&<p style={{fontSize:11,color:"var(--fg-subtle)",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
+        <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot avviso?")){onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger">🗑️ Elimina</button>}
+          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
+          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaAv.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,evData);else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent">{isEdit?"Salva":"Aggiungi"}</button></div>
+        </div>
+      </>)}
+    </div>
+  </div>);
+}
+
+// ── HAMBURGER ──────────────────────────────────────────────────────────────
+function HamburgerMenu({onTutor,onAnagraficaAv,onSettings,isViewer}){
+  const[open,setOpen]=useState(false);const ref=useRef();
+  useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+  return(<div ref={ref} style={{position:"relative",flexShrink:0}}>
+    <button onClick={()=>setOpen(o=>!o)} className="btn" data-variant="ghost" data-size="icon" style={{fontSize:18}}>☰</button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,background:"var(--bg-elev)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-lg)",zIndex:600,minWidth:220,overflow:"hidden",border:"1px solid var(--border)"}}>
+      {!isViewer&&<><button onClick={()=>{onTutor();setOpen(false);}} className="insight-item">👤 Anagrafica Tutor</button><div style={{height:1,background:"var(--divider)"}}/><button onClick={()=>{onAnagraficaAv();setOpen(false);}} className="insight-item">📋 Anagrafica Avvisi/Progetti</button><div style={{height:1,background:"var(--divider)"}}/></>}
+      <button onClick={()=>{onSettings();setOpen(false);}} className="insight-item">⚙️ Impostazioni</button>
+    </div>}
+  </div>);
+}
+
+function InsightMenu({onTutoraggi,onAvvisi,onOre}){
+  const[open,setOpen]=useState(false);const ref=useRef();
+  useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+  return(<div ref={ref} style={{position:"relative",flexShrink:0}}>
+    <button onClick={()=>setOpen(o=>!o)} className="btn" data-variant="outline" data-size="sm" style={{gap:6}}>📊 Insight ▾</button>
+    {open&&<div className="insight-dropdown">
+      <button onClick={()=>{onTutoraggi();setOpen(false);}} className="insight-item">📌 Riepilogo Tutoraggi</button>
+      <button onClick={()=>{onAvvisi();setOpen(false);}} className="insight-item">📋 Riepilogo Avvisi/Progetti</button>
+      <button onClick={()=>{onOre();setOpen(false);}} className="insight-item">📊 Riepilogo Ore</button>
+    </div>}
+  </div>);
+}
+
+// ── MAIN APP ───────────────────────────────────────────────────────────────
+function App({user}){
+  const[view,setView]=useState("tutoraggio");const[editMode,setEditMode]=useState(false);
+  const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(2);
+  const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
+  const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
+  const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
+  const[showTutPanel2,setShowTutPanel2]=useState(false);const[showTutPanel,setShowTutPanel]=useState(false);const[showAnagraficaAv,setShowAnagraficaAv]=useState(false);const[showRiep,setShowRiep]=useState(false);const[showRiepilogoAv,setShowRiepilogoAv]=useState(false);const[showAi,setShowAi]=useState(false);const[showVerifica,setShowVerifica]=useState(false);const[showHelp,setShowHelp]=useState(false);
+  const[showSettingsHub,setShowSettingsHub]=useState(false);const[activePanel,setActivePanel]=useState(null);
+  const[showMonthPicker,setShowMonthPicker]=useState(false);
+  const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
+  const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
+  const monthPickerRef=useRef();
+
+  const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
+  const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
+
+  function pushUndo(snapTE,snapAv){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTE)),avvisi:JSON.parse(JSON.stringify(snapAv))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
+  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
+  async function handleRedo(){if(!redoStack.current.length)return;const snap=redoStack.current[0];redoStack.current=redoStack.current.slice(1);setRedoCount(redoStack.current.length);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);await applySnap(snap);}
+  async function applySnap(snap){tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);await fsSaveAvvisi(snap.avvisi);for(const[tId,ms]of Object.entries(snap.tutEvents))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}
+
+  useEffect(()=>{
+    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
+    db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
+  },[]);
+
+  useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+
+  window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
+
+  useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
+
+  function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
+  function navWeek(dir){setWeekStart(prev=>{const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));if(d<fmon)return fmon;if(d>lmon)return lmon;return d;});}
+  const vdays=getVisibleDays();
+
+  const allTEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
+  const visTEvs=activeTutorIds===null?allTEvs:allTEvs.filter(e=>activeTutorIds.has(e.tutorId));
+  const avNamesInMonth=new Set(allTEvs.map(e=>e.name));
+  const avForBar=anagraficaAv.filter(a=>avNamesInMonth.has(a.nome));
+  const dayTOre={};for(const ev of visTEvs)dayTOre[ev.day]=(dayTOre[ev.day]||0)+ev.ore;
+  const totTOre=visTEvs.reduce((a,e)=>a+e.ore,0);
+  const avById={};avvisi.forEach(av=>avById[av.id]=av);
+  const avEvs=anagraficaAv.flatMap(ana=>{const av=avById[ana.id];if(!av)return[];return av.events.filter(e=>e.month===month.key).map(e=>({...e,avvisoId:ana.id,avvisoName:ana.nome,avColor:ana.colore||"var(--accent)"}));});
+  const avThisMonth=anagraficaAv.filter(a=>{const av=avById[a.id];return av&&av.events.some(e=>e.month===month.key);});
+  const visAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
+  const totAvOre=avEvs.reduce((a,e)=>a+e.ore,0);
+
+  const getTCol=id=>tutors.find(x=>x.id===id)?.color||"var(--accent)";
+  const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
+  function buildTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:canEdit?()=>setModal({type:"edit-tut",ev,monthKey:month.key}):null,_onClick:canEdit?()=>setModal({type:"add",mode:"tutoraggio",prefill:{day:ev.day,start:ev.start,end:ev.end}}):null});}return b;}
+  function buildOvByDay(){const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
+  function buildAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:canEdit?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});}:null});}return b;}
+  function buildMTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;}
+  function buildMAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
+
+  function handleGridClick(d,e){if(!canEdit)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
+  function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
+  function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
+
+  async function addTutoraggio(ev,monthKey){pushUndo(tutEvRef.current,avRef.current);const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot "${ev.name}" il ${ev.day} ${mk}`);}
+  async function editTutoraggio(evId,updated){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];cur[tid][mk][idx]={...old,...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"edit_tut",`Modificato slot "${updated.name||old.name}"`);return;}}}}
+  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot "${ev.name}"`);return;}}}}
+  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,avRef.current);const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Importati ${events.length} slot`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Aggiunto slot "${name||avId}" il ${day} ${mk}`);}
+  async function editAvviso(avId,evId,evData){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot`);}
+  async function deleteAvviso(avId,evId){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot`);}
+
+  async function handleSaveTutor(newList,action,tutor){setTutors(newList);setActiveTutorIds(null);await fsSaveTutors(newList);if(action==="add")fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="edit")fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="delete")fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${tutor.cognome} ${tutor.nome}"`);}
+  async function handleSaveAna(newList,action,item){
+    if(action==="edit"){const old=anaRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
+    anaRef.current=newList;setAnagraficaAv(newList);await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);
+  }
+  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
+  async function handleLoadDemo(){if(!confirm("Caricare i dati demo?"))return;const{tutors:t,anagraficaAv:an,avvisi:a,tutEvents:te}=generateDemoData();setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);setActivePanel(null);alert("Dati demo caricati!");}
+  async function handleClearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);setActivePanel(null);alert("Database svuotato.");}
+  function handleVerifica(){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerifica(true);}
+  function onVerificaNav(mk){const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0)setMonthIdx(idx);}
+
+  if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",background:"var(--bg)"}}>⏳ Caricamento...</div>;
+
+  // ── Top bar ──
+  const userInitials=(user?.email||"").slice(0,2).toUpperCase();
+
+  return(<React.Fragment>
+    {/* TOP BAR */}
+    <div id="topbar">
+      <HamburgerMenu onTutor={()=>setShowTutPanel(true)} onAnagraficaAv={()=>setShowAnagraficaAv(true)} onSettings={()=>setShowSettingsHub(true)} isViewer={isViewer}/>
+      <div style={{display:"flex",alignItems:"center",gap:8,paddingRight:14,borderRight:"1px solid var(--border)",height:32}}>
+        <span style={{fontWeight:700,fontSize:15,color:"var(--fg)",letterSpacing:"-0.01em"}}>TutorIA</span>
+      </div>
+
+      {/* Module switcher */}
+      <div className="module-switch">
+        <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")}>👤 Tutoraggi</button>
+        <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")}>📋 Avvisi/Progetti</button>
+      </div>
+
+      {/* Month nav */}
+      <div style={{display:"flex",alignItems:"center",gap:4,marginLeft:8}}>
+        <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===0?0.35:1}}>‹</button>
+        <div ref={monthPickerRef} style={{position:"relative"}}>
+          <button onClick={()=>setShowMonthPicker(o=>!o)} className="btn" data-variant="outline" style={{minWidth:150,justifyContent:"center",gap:6}}>
+            📅 {month.label} ▾
+          </button>
+          {showMonthPicker&&<MonthPicker monthIdx={monthIdx} onChange={idx=>{setMonthIdx(idx);}} onClose={()=>setShowMonthPicker(false)}/>}
+        </div>
+        <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===MONTHS.length-1?0.35:1}}>›</button>
+      </div>
+
+      <div style={{flex:1}}/>
+
+      {/* Right actions */}
+      <InsightMenu onTutoraggi={()=>setShowTutPanel2(true)} onAvvisi={()=>setShowRiepilogoAv(true)} onOre={()=>setShowRiep(true)}/>
+
+      {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} className="btn" data-variant={showAi?"accent":"outline"} data-size="sm">🤖 AI</button>}
+      <button onClick={handleVerifica} className="btn" data-variant="outline" data-size="sm">✅ Verifica</button>
+
+      {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="sm" title={`Annulla (${undoCount})`}>↩</button>}
+      {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="sm" title={`Ripristina (${redoCount})`}>↪</button>}
+
+      <div className="topbar-divider"/>
+
+      {!isViewer&&<button onClick={()=>{setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;});}} className="btn" data-size="sm" style={{background:editMode?"var(--accent)":"var(--bg-sunken)",color:editMode?"#fff":"var(--fg)",border:`1px solid ${editMode?"var(--accent)":"var(--border)"}`}}>
+        {editMode?"✏️ Edit mode":"👁 View mode"}
+      </button>}
+
+      {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="primary" data-size="sm">+ Aggiungi</button>}
+
+      <div className="topbar-divider"/>
+
+      {/* User */}
+      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
+        <span style={{fontSize:11,color:"var(--fg-muted)"}}>{user?.email}</span>
+        <span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"var(--fg-subtle)"}}>{ROLE_LABEL[role]||role}</span>
+      </div>
+      <div className="user-avatar" title={user?.email} onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
+    </div>
+
+    {/* EDIT MODE BANNER */}
+    {!editMode&&!isViewer&&<div id="editmode-banner">👁 View Mode — clicca <strong>✏️ Edit Mode</strong> per apportare modifiche.</div>}
+
+    {/* FILTER BAR */}
+    {view==="tutoraggio"&&(<div id="filterbar">
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em",marginRight:4}}>🕐</span>
+        <span style={{fontWeight:700,color:"var(--fg)",fontSize:13,fontFamily:'"JetBrains Mono",monospace'}}>{fmtOreMin(totTOre)}</span>
+      </div>
+      <div className="topbar-divider"/>
+      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Tutor</span>
+        {tutors.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"var(--accent)";return<button key={t.id} onClick={()=>toggleTut(t.id)} className="tutor-chip" style={{border:`1px solid ${active?col:"var(--border)"}`,background:active?hexToRgba(col.startsWith("#")?col:"#4f86c6",0.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)",opacity:active?1:0.5}}><span className="tutor-chip-dot" style={{background:active?col:"var(--bg-sunken)"}}>{t.cognome[0]||""}</span>{t.cognome||t.nome}</button>;})}
+      </div>
+      <div className="topbar-divider"/>
+      <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
+        {showOvr?"👁 Nascondi avvisi":"👁 Mostra avvisi"}
+      </button>
+      {avForBar.length>0&&<><div className="topbar-divider"/><div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Avvisi</span>
+        {avForBar.map(a=><span key={a.id} className="avviso-chip" style={{background:hexToRgba(a.colore||"#4f86c6",0.12),border:`1px solid ${hexToRgba(a.colore||"#4f86c6",0.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>)}
+      </div></>}
+    </div>)}
+
+    {view==="avviso"&&(<div id="filterbar">
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em"}}>🕐</span>
+        <span style={{fontWeight:700,color:"var(--fg)",fontSize:13,fontFamily:'"JetBrains Mono",monospace'}}>{totAvOre%1===0?totAvOre:totAvOre.toFixed(1)}h avvisi</span>
+      </div>
+      <div className="topbar-divider"/>
+      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:"0.06em"}}>Avvisi</span>
+        {avThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:avThisMonth.map(a=>{const active=activeAvvisi.has(a.id);return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(a.colore||"#4f86c6",active?0.8:0.3)}`,background:active?hexToRgba(a.colore||"#4f86c6",0.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
+      </div>
+    </div>)}
+
+    {/* CALENDAR */}
+    {calView==="month"
+      ?<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>
+      :<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
+
+    <ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek} onHelpOpen={()=>setShowHelp(o=>!o)}/>
+    {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
+
+    {showTutPanel&&<TutorPanel tutors={tutors} onSaveTutor={handleSaveTutor} onClose={()=>setShowTutPanel(false)}/>}
+    {showAnagraficaAv&&<AnagraficaAvPanel anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} onClose={()=>setShowAnagraficaAv(false)}/>}
+    {showTutPanel2&&<TutoraggiPanel tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onClose={()=>setShowTutPanel2(false)}/>}
+    {showRiepilogoAv&&<RiepilogoAvPanel avvisi={avvisi} anagraficaAv={anagraficaAv} onClose={()=>setShowRiepilogoAv(false)}/>}
+    {showRiep&&<RiepilogoPanel avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowRiep(false)}/>}
+    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)} onClose={()=>setShowAi(false)}/>}
+    {showVerifica&&<VerificaModal errors={verificaErr} onClose={()=>setShowVerifica(false)} onNavigate={onVerificaNav}/>}
+
+    {showSettingsHub&&<SettingsHub role={role} onClose={()=>setShowSettingsHub(false)} onOpenPanel={key=>setActivePanel(key)}/>}
+    {activePanel==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="demo"&&<DemoPanel onLoadDemo={handleLoadDemo} onClearDb={handleClearDb} isSuperAdmin={isSuperAdmin} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="log"&&<LogPanel onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="api"&&<ApiPanel settings={settings} onSave={handleSaveSettings} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+    {activePanel==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onBack={()=>setActivePanel(null)} onClose={()=>{setActivePanel(null);setShowSettingsHub(false);}}/>}
+
+    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenTutorPanel={()=>setShowTutPanel(true)} onOpenAvPanel={()=>setShowAnagraficaAv(true)}/>}
+  </React.Fragment>);
+}
+
+window.__mountApp=(user)=>{const root=ReactDOM.createRoot(document.getElementById("root"));root.render(<App user={user}/>);};
+</script>
+</body>
+</html>
