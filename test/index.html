@@ -108,13 +108,18 @@
     .ore-value { font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--fg); font-family:"JetBrains Mono",monospace; line-height:1; }
     .ore-label { font-size:10px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; line-height:1.2; }
 
-    /* ── Zoom bar ── */
-    .zoom-bar { position:fixed; bottom:16px; right:16px; display:flex; align-items:center; gap:4px; background:var(--bg-elev); border:1px solid var(--border); border-radius:100px; padding:4px; box-shadow:var(--shadow-md); z-index:100; }
+    /* ── Zoom bar (flottante draggabile) ── */
+    .zoom-bar { position:fixed; display:flex; align-items:center; gap:4px; background:var(--bg-elev); border:1px solid var(--border); border-radius:100px; padding:4px 8px 4px 4px; box-shadow:var(--shadow-md); z-index:100; user-select:none; }
+    .zoom-bar-grip { width:22px; height:28px; display:flex; align-items:center; justify-content:center; cursor:grab; flex-shrink:0; color:var(--fg-faint); }
+    .zoom-bar-grip:active { cursor:grabbing; }
     .zoom-btn { background:none; border:1px solid var(--border); border-radius:var(--radius); width:26px; height:26px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:var(--fg-muted); }
     .zoom-btn:hover { background:var(--bg-hover); color:var(--fg); }
-    .view-btn { background:transparent; color:var(--fg-muted); border:none; border-radius:100px; padding:5px 12px; cursor:pointer; font-size:var(--font-xs); font-weight:600; transition:all .1s; }
-    .view-btn:hover { background:var(--bg-hover); color:var(--fg); }
-    .view-btn.active { background:var(--brand-navy); color:#fff; }
+
+    /* ── Scrollbar calendario più visibile ── */
+    .cal-scroll::-webkit-scrollbar { width:10px; height:10px; }
+    .cal-scroll::-webkit-scrollbar-track { background:var(--bg-sunken); border-radius:10px; }
+    .cal-scroll::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:10px; border:2px solid var(--bg-sunken); }
+    .cal-scroll::-webkit-scrollbar-thumb:hover { background:var(--fg-faint); }
 
     /* ── Screen area ── */
     .screen-area { flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0; }
@@ -209,24 +214,54 @@
   <div id="login-panel-left">
     <div style="position:absolute;top:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(245,163,90,.18) 0%,transparent 60%)"></div>
     <div style="position:absolute;bottom:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(236,122,38,.12) 0%,transparent 60%)"></div>
-    <div style="position:relative">
-      <div style="font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px">TutorIA</div>
-      <div style="font-size:11px;opacity:.5;letter-spacing:.04em">EHT · A Harmonic Innovation Group Company</div>
+    <!-- EHT logo esteso SVG -->
+    <div style="position:relative;margin-bottom:40px">
+      <svg width="180" height="52" viewBox="0 0 360 104" fill="none">
+        <!-- symbol -->
+        <path d="M28 22 Q44 32 44 52 Q44 72 60 82" stroke="#1A1F4D" stroke-width="10" stroke-linecap="round" fill="none"/>
+        <circle cx="22" cy="20" r="14" fill="url(#lg1)"/>
+        <circle cx="60" cy="84" r="14" fill="url(#lg2)"/>
+        <!-- eht text -->
+        <text x="88" y="72" font-family="Inter Tight,Inter,sans-serif" font-weight="700" font-size="60" fill="#fff" letter-spacing="-2">eht</text>
+        <defs>
+          <radialGradient id="lg1" cx="30%" cy="30%"><stop offset="0%" stop-color="#F5A35A"/><stop offset="100%" stop-color="#EC7A26"/></radialGradient>
+          <radialGradient id="lg2" cx="30%" cy="30%"><stop offset="0%" stop-color="#F5A35A"/><stop offset="100%" stop-color="#EC7A26"/></radialGradient>
+        </defs>
+      </svg>
+      <div style="font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.06em;margin-top:4px">A Harmonic Innovation Group <span style="color:#EC7A26;font-weight:600">Company</span></div>
     </div>
-    <div style="position:relative;max-width:340px">
-      <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;background:rgba(245,163,90,.16);border:1px solid rgba(245,163,90,.4);font-size:11.5px;font-weight:600;color:#F5A35A;margin-bottom:18px">
-        <span style="width:6px;height:6px;border-radius:999px;background:#F5A35A"></span>Gestionale tutoraggi
+    <div style="position:relative;max-width:380px;flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;background:rgba(245,163,90,.16);border:1px solid rgba(245,163,90,.4);font-size:11.5px;font-weight:600;color:#F5A35A;margin-bottom:20px">
+        <span style="width:6px;height:6px;border-radius:999px;background:#F5A35A"></span>TutorIA · Gestionale tutoraggi
       </div>
-      <h1 style="font-size:36px;font-weight:700;letter-spacing:-0.025em;line-height:1.1;margin-bottom:14px">
+      <h1 style="font-size:40px;font-weight:700;letter-spacing:-0.025em;line-height:1.1;margin-bottom:16px">
         Tutor, avvisi e ore.<br>
         <span style="background:linear-gradient(135deg,#F5A35A,#EC7A26);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Tutto al loro posto.</span>
       </h1>
-      <p style="font-size:14px;color:rgba(255,255,255,.65);line-height:1.6">Pianifica, monitora e certifica le ore di tutoraggio in un unico calendario condiviso.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.65);line-height:1.6;margin-bottom:28px">La piattaforma di coordinamento per progetti formativi finanziati. Pianifica, monitora e certifica le ore di tutoraggio in un unico calendario condiviso.</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:34px;height:34px;border-radius:8px;background:rgba(245,163,90,.14);border:1px solid rgba(245,163,90,.3);display:flex;align-items:center;justify-content:center;font-size:15px">📅</div><span style="font-size:13.5px;color:rgba(255,255,255,.85)">Calendario multi-progetto a scrolling continuo</span></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:34px;height:34px;border-radius:8px;background:rgba(245,163,90,.14);border:1px solid rgba(245,163,90,.3);display:flex;align-items:center;justify-content:center;font-size:15px">✨</div><span style="font-size:13.5px;color:rgba(255,255,255,.85)">Import AI da PDF, immagini e testo libero</span></div>
+        <div style="display:flex;align-items:center;gap:12px"><div style="width:34px;height:34px;border-radius:8px;background:rgba(245,163,90,.14);border:1px solid rgba(245,163,90,.3);display:flex;align-items:center;justify-content:center;font-size:15px">🛡️</div><span style="font-size:13.5px;color:rgba(255,255,255,.85)">Verifica automatica coerenza ore e sovrapposizioni</span></div>
+      </div>
     </div>
-    <div style="position:relative;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.04em">© 2026 EHT</div>
+    <div style="position:relative;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.04em">© 2026 EHT · A Harmonic Innovation Group Company</div>
   </div>
   <div id="login-panel-right">
     <div id="login-box">
+      <!-- TutorIA mark nel form -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+        <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
+          <path d="M26 18 Q36 24 36 32 Q36 40 46 48" stroke="var(--brand-navy)" stroke-width="7" stroke-linecap="round" fill="none"/>
+          <circle cx="22" cy="16" r="9" fill="url(#fs1)"/>
+          <circle cx="42" cy="50" r="9" fill="url(#fs2)"/>
+          <defs>
+            <radialGradient id="fs1" cx="30%" cy="30%"><stop offset="0%" stop-color="#F5A35A"/><stop offset="100%" stop-color="#EC7A26"/></radialGradient>
+            <radialGradient id="fs2" cx="30%" cy="30%"><stop offset="0%" stop-color="#F5A35A"/><stop offset="100%" stop-color="#EC7A26"/></radialGradient>
+          </defs>
+        </svg>
+        <div><div style="font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--fg)">TutorIA</div><div style="font-size:10.5px;color:var(--fg-subtle);letter-spacing:.02em;margin-top:2px">EHT — A Harmonic Innovation Group Company</div></div>
+      </div>
       <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;color:var(--fg)">Bentornato.</h2>
       <p style="font-size:13.5px;color:var(--fg-muted);margin-bottom:20px">Accedi per gestire il calendario tutoraggi.</p>
       <div id="login-tabs">
@@ -295,8 +330,7 @@ function wasDrag(){return _dragDone;}
 // ── SIDEBAR NAV STRUCTURE ─────────────────────────────────────────────────
 const NAV_GROUPS=[
   {group:"Calendario",items:[
-    {id:"calendar-tut",label:"Tutoraggi",icon:"📌"},
-    {id:"calendar-av",label:"Avvisi/Progetti",icon:"📋"},
+    {id:"calendar",label:"Calendari",icon:"📅"},
   ]},
   {group:"Anagrafiche",items:[
     {id:"ana-tutors",label:"Anagrafica Tutor",icon:"👤"},
@@ -467,9 +501,11 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
   const dTop=(ev.start-8)*slotH,dH=Math.max((ev.end-ev.start)*slotH,20);
   const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"};
   return(<div ref={dragRef} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
-    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,.14)",borderBottom:"1px solid rgba(255,255,255,.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0"}}>{onEdit?"✏️ ":""}{ev.name}</div>
-    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,color:"rgba(255,255,255,.9)",cursor:onDragEnd?"grab":"default",fontFamily:'"JetBrains Mono",monospace'}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
-    <div className="slot-duration">{fmtDurata(ore)}</div>
+    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,.14)",borderBottom:"1px solid rgba(255,255,255,.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
+      <span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.name}</span>
+      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+    </div>
+    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"rgba(255,255,255,.9)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.18)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,.6)",borderRadius:1}}/></div>}
   </div>);
 }
@@ -484,9 +520,11 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd}){
   const ore=ev.end-ev.start;
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
   return(<div ref={dragRef} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
-    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.06)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.avvisoName}</div>
-    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:'"JetBrains Mono",monospace'}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
-    <div className="slot-duration" style={{color:"var(--fg)",background:"rgba(0,0,0,.1)"}}>{fmtDurata(ore)}</div>
+    <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
+      <span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.avvisoName}</span>
+      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+    </div>
+    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.08)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,.25)",borderRadius:1}}/></div>}
   </div>);
 }
@@ -496,7 +534,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
   const HOURS=Array.from({length:13},(_,i)=>i+8);
   const isWE=d=>[0,6].includes(new Date(monthData.year,monthData.month,d).getDay());
   const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
-  return(<div style={{flex:1,overflowX:"auto",overflowY:"auto"}}>
+  return(<div style={{flex:1,overflowX:"auto",overflowY:"auto"}} className="cal-scroll">
     <div style={{display:"flex",minWidth:TIME_W+days.length*colW}}>
       <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:10,background:"var(--bg)"}}>
         <div style={{height:60,borderBottom:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
@@ -542,18 +580,20 @@ function MonthView({month,tutByDay,avByDay,onDayClick}){
   </div>);
 }
 
-// ── ZOOM BAR ──────────────────────────────────────────────────────────────
-function ZoomBar({calView,zoomIdx,onZoomChange,onCalViewChange,onWeekNav,onHelpOpen}){
-  return(<div className="zoom-bar">
-    <button className={`view-btn${calView==="month"?" active":""}`} onClick={()=>onCalViewChange("month")}>Mese</button>
-    <button className={`view-btn${calView==="week"?" active":""}`} onClick={()=>onCalViewChange("week")}>Sett.</button>
-    <button className={`view-btn${calView==="day"?" active":""}`} onClick={()=>onCalViewChange("day")}>Giorno</button>
-    {calView==="week"&&<><button className="zoom-btn" onClick={()=>onWeekNav(-1)}>‹</button><button className="zoom-btn" onClick={()=>onWeekNav(1)}>›</button></>}
-    <div style={{width:1,height:20,background:"var(--divider)",margin:"0 2px"}}/>
+// ── ZOOM BAR (flottante draggabile) ──────────────────────────────────────
+function ZoomBar({zoomIdx,onZoomChange,onHelpOpen}){
+  const[pos,setPos]=useState({x:window.innerWidth-120,y:window.innerHeight-60});
+  const dragRef=useRef(null);const dragging=useRef(false);const off=useRef({x:0,y:0});
+  function onGripDown(e){e.preventDefault();dragging.current=true;const r=dragRef.current.getBoundingClientRect();off.current={x:e.clientX-r.left,y:e.clientY-r.top};function mv(me){if(!dragging.current)return;setPos({x:Math.max(0,Math.min(window.innerWidth-200,me.clientX-off.current.x)),y:Math.max(0,Math.min(window.innerHeight-50,me.clientY-off.current.y))});}function up(){dragging.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
+  return(<div ref={dragRef} className="zoom-bar" style={{left:pos.x,top:pos.y}}>
+    <div className="zoom-bar-grip" onMouseDown={onGripDown} title="Trascina">
+      <svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="8" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="7" r="1.2" fill="currentColor"/><circle cx="8" cy="7" r="1.2" fill="currentColor"/><circle cx="2" cy="12" r="1.2" fill="currentColor"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/></svg>
+    </div>
+    <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
     <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center",fontFamily:'"JetBrains Mono",monospace'}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))} disabled={zoomIdx===ZOOM_LEVELS.length-1}>+</button>
-    <div style={{width:1,height:20,background:"var(--divider)",margin:"0 2px"}}/>
+    <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
     <button onClick={onHelpOpen} title="Guida e FAQ" style={{width:28,height:28,border:"1.5px solid var(--border)",borderRadius:"50%",background:"var(--bg-elev)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-strong)",fontWeight:800}}>?</button>
   </div>);
 }
@@ -1128,7 +1168,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
 
 // ── MAIN APP ──────────────────────────────────────────────────────────────
 function App({user}){
-  const[activeScreen,setActiveScreen]=useState("calendar-tut");
+  const[activeScreen,setActiveScreen]=useState("calendar");
   const[sidebarCollapsed,setSidebarCollapsed]=useState(false);
   const[theme,setTheme]=useState("light");
   const[view,setView]=useState("tutoraggio");
@@ -1145,7 +1185,7 @@ function App({user}){
 
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
   const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
-  const isCalendar=activeScreen==="calendar-tut"||activeScreen==="calendar-av";
+  const isCalendar=activeScreen==="calendar";
 
   useEffect(()=>{document.documentElement.setAttribute("data-theme",theme);},[theme]);
 
@@ -1163,7 +1203,7 @@ function App({user}){
   useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
 
   // Sync activeScreen → view
-  useEffect(()=>{if(activeScreen==="calendar-tut")setView("tutoraggio");if(activeScreen==="calendar-av")setView("avviso");},[activeScreen]);
+  useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
 
   window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
   window.__loadDemo=async()=>{const DEMO_PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B"];const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];const t=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:DEMO_PALETTE[i]}));const an=[{id:"av-demo-0",nome:"Avviso 1",codice:"DDG 001/2026",colore:DEMO_PALETTE[1],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},{id:"av-demo-1",nome:"Avviso 2",codice:"DDG 002/2026",colore:DEMO_PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""}];const a=an.map(ana=>({id:ana.id,events:[]}));setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents({});tutEvRef.current={};setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);};
@@ -1183,7 +1223,7 @@ function App({user}){
   const avEvs=anagraficaAv.flatMap(ana=>{const av=avById2[ana.id];if(!av)return[];return av.events.filter(e=>e.month===month.key).map(e=>({...e,avvisoId:ana.id,avvisoName:ana.nome,avColor:ana.colore||"var(--accent)"}));});
   const avThisMonth=anagraficaAv.filter(a=>{const av=avById2[a.id];return av&&av.events.some(e=>e.month===month.key);});
   const visAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
-  const totAvOre=avEvs.reduce((a,e)=>a+e.ore,0);
+  const totAvOre=visAvEvs.reduce((a,e)=>a+e.ore,0);
 
   const getTCol=id=>tutors.find(x=>x.id===id)?.color||"var(--accent)";
   const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
@@ -1217,14 +1257,23 @@ function App({user}){
   function handleNavClick(id){
     setActiveScreen(id);
     if(id==="ai")setShowAi(true);
-    else setShowAi(false);
+    else if(id!=="calendar")setShowAi(false);
   }
 
   return(<div className="app-shell">
     {/* ── SIDEBAR ── */}
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">T</div>
+        {/* EHT symbol SVG */}
+        <svg width="32" height="32" viewBox="0 0 64 64" fill="none" style={{flexShrink:0}}>
+          <path d="M26 18 Q36 24 36 32 Q36 40 46 48" stroke="var(--brand-navy)" strokeWidth="7" strokeLinecap="round" fill="none"/>
+          <circle cx="22" cy="16" r="9" fill="url(#eht-g1)"/>
+          <circle cx="42" cy="50" r="9" fill="url(#eht-g2)"/>
+          <defs>
+            <radialGradient id="eht-g1" cx="30%" cy="30%"><stop offset="0%" stopColor="#F5A35A"/><stop offset="100%" stopColor="#EC7A26"/></radialGradient>
+            <radialGradient id="eht-g2" cx="30%" cy="30%"><stop offset="0%" stopColor="#F5A35A"/><stop offset="100%" stopColor="#EC7A26"/></radialGradient>
+          </defs>
+        </svg>
         {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">EHT — A Harmonic Innovation Group Company</span></div>}
       </div>
       <nav className="sidebar-nav">
@@ -1260,33 +1309,43 @@ function App({user}){
       {isCalendar&&(<div className="topbar">
         {/* Module switcher */}
         <div className="module-switch">
-          <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>{setActiveScreen("calendar-tut");setView("tutoraggio");}}>👤 Tutoraggi</button>
-          <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>{setActiveScreen("calendar-av");setView("avviso");}}>📋 Avvisi/Progetti</button>
+          <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
+          <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
         </div>
         {/* Month nav */}
         <div className="month-nav">
-          <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===0?.35:1}}>‹</button>
+          <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===0?.35:1}}><Icon name="chevLeft" size={14}/></button>
           <div ref={monthPickerRef} style={{position:"relative"}}>
-            <button onClick={()=>setShowMonthPicker(o=>!o)} className="btn month-btn" data-variant="outline">📅 {month.label} ▾</button>
+            <button onClick={()=>setShowMonthPicker(o=>!o)} className="btn month-btn" data-variant="outline"><Icon name="calendar" size={13} color="var(--accent)"/> {month.label} <Icon name="chevDown" size={12} color="var(--fg-subtle)"/></button>
             {showMonthPicker&&<MonthPicker monthIdx={monthIdx} onChange={idx=>{setMonthIdx(idx);}} onClose={()=>setShowMonthPicker(false)}/>}
           </div>
-          <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===MONTHS.length-1?.35:1}}>›</button>
-          <button className="btn" data-variant="ghost" data-size="sm">Oggi</button>
+          <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===MONTHS.length-1?.35:1}}><Icon name="chevRight" size={14}/></button>
         </div>
         <div style={{flex:1}}/>
-        {/* Actions */}
-        {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}>↩</button>}
-        {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}>↪</button>}
+        {/* Search */}
+        <div style={{position:"relative",width:220}}>
+          <Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/>
+          <input className="input" placeholder="Cerca slot, tutor, avviso…" style={{paddingLeft:32,height:32,fontSize:12}}/>
+        </div>
+        {/* Vista Mese/Sett./Giorno */}
+        <div className="tab-strip">
+          <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
+          <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Settimana</button>
+          <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
+        </div>
         <div className="topbar-divider"/>
-        {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} className="btn" data-variant={showAi?"accent":"ghost"} data-size="icon-sm" title="AI Import">🤖</button>}
-        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza">✅</button>
+        {/* Actions */}
+        {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}><Icon name="undo" size={15}/></button>}
+        {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}><Icon name="redo" size={15}/></button>}
+        {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} className="btn" data-variant={showAi?"accent":"ghost"} data-size="icon-sm" title="AI Import"><Icon name="sparkles" size={15} color={showAi?"#fff":"var(--accent)"}/></button>}
+        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
+        <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche" style={{position:"relative"}}><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<button onClick={()=>setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;})} className="btn" data-size="sm" style={{background:editMode?"var(--accent)":"var(--bg-sunken)",color:editMode?"#fff":"var(--fg)",border:`1px solid ${editMode?"var(--accent)":"var(--border)"}`}}>
-          {editMode?"✏️ Edit mode":"👁 View mode"}
+          <Icon name={editMode?"edit":"eye"} size={13}/>{editMode?"Edit mode":"View mode"}
         </button>}
-        {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm">+ Aggiungi</button>}
+        {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm"><Icon name="plus" size={13}/>Aggiungi</button>}
         <div className="topbar-divider"/>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><span style={{fontSize:11,color:"var(--fg-muted)"}}>{user?.email}</span><span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"var(--fg-subtle)"}}>{ROLE_LABEL[role]||role}</span></div>
         <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
       </div>)}
 
@@ -1302,18 +1361,18 @@ function App({user}){
 
       {/* FILTER BAR — solo calendario */}
       {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
-        <div className="ore-display"><span style={{fontSize:14,color:"var(--accent)"}}>🕐</span><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
+        <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
         <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Tutor</span>
         {tutors.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"var(--accent)";const hex=col.startsWith("#")?col:"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} className="tutor-chip" style={{border:`1px solid ${active?col:"var(--border)"}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)",opacity:active?1:.5}}><span className="tutor-chip-dot" style={{background:active?col:"var(--bg-sunken)"}}>{t.cognome[0]||""}</span>{t.cognome||t.nome}</button>;})}
         <div className="filterbar-divider"/>
         <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
-          {showOvr?"👁 Nascondi avvisi":"👁 Mostra avvisi"}
+          <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi avvisi":"Mostra avvisi"}
         </button>
         {avForBar.length>0&&<><div className="filterbar-divider"/><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>{avForBar.map(a=>{const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<span key={a.id} className="avviso-chip" style={{background:hexToRgba(hex,.12),border:`1px solid ${hexToRgba(hex,.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>;})}</>}
       </div>)}
       {isCalendar&&view==="avviso"&&(<div className="filterbar">
-        <div className="ore-display"><span style={{fontSize:14,color:"var(--accent)"}}>🕐</span><div><div className="ore-value">{totAvOre%1===0?totAvOre:totAvOre.toFixed(1)}h</div><div className="ore-label">Ore avvisi</div></div></div>
+        <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totAvOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
         <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>
         {avThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:avThisMonth.map(a=>{const active=activeAvvisi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
@@ -1335,7 +1394,7 @@ function App({user}){
       </div>
 
       {/* Zoom bar (solo calendario) */}
-      {isCalendar&&<ZoomBar calView={calView} zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onCalViewChange={v=>setCalView(v)} onWeekNav={navWeek} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
+      {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
       {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
     </div>
 
