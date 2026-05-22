@@ -35,7 +35,7 @@
     #login-error { color:var(--danger); margin-top:12px; font-size:var(--font-xs); text-align:center; }
 
     /* ── Saving ── */
-    #saving-indicator { position:fixed; bottom:80px; right:16px; background:var(--brand-navy); color:#fff; padding:8px 16px; border-radius:var(--radius-xl); font-size:var(--font-xs); opacity:0; transition:opacity .3s; pointer-events:none; z-index:9999; box-shadow:var(--shadow-md); }
+    #saving-indicator { position:fixed; bottom:80px; right:16px; background:var(--brand-navy); color:#fff; padding:8px 16px; border-radius:var(--radius-xl); font-size:var(--font-xs); opacity:0; transition:opacity .3s; pointer-events:none; z-index:9999; box-shadow:var(--shadow-md); display:flex; align-items:center; gap:6px; }
     #saving-indicator.show { opacity:1; }
 
     /* ── App shell ── */
@@ -168,7 +168,7 @@
     .panel-body { background:var(--bg-elev); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; border-left:1px solid var(--border); }
     .panel-header { background:var(--brand-navy); color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
     .panel-header-title { font-weight:700; font-size:15px; }
-    .panel-close { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1; opacity:.7; }
+    .panel-close { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1; opacity:.7; display:flex; align-items:center; justify-content:center; }
     .panel-close:hover { opacity:1; }
     .panel-content { flex:1; overflow-y:auto; padding:16px; background:var(--bg); }
     .floating-modal { position:absolute; background:var(--bg-elev); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border:1px solid var(--border); display:flex; flex-direction:column; }
@@ -214,7 +214,6 @@
   <div id="login-panel-left">
     <div style="position:absolute;top:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(245,163,90,.18) 0%,transparent 60%)"></div>
     <div style="position:absolute;bottom:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(236,122,38,.12) 0%,transparent 60%)"></div>
-    <!-- EHT logo esteso SVG -->
     <div style="position:relative;margin-bottom:40px">
       <img src="assets/eht-logo-white.png" alt="EHT" style="width:200px;object-fit:contain"/>
     </div>
@@ -237,7 +236,6 @@
   </div>
   <div id="login-panel-right">
     <div id="login-box">
-      <!-- TutorIA mark nel form -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
         <img src="assets/appmark-color.png" width="36" height="36" alt="TutorIA" style="border-radius:6px;flex-shrink:0"/>
         <div><div style="font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--fg)">TutorIA</div><div style="font-size:10.5px;color:var(--fg-subtle);letter-spacing:.02em;margin-top:2px">EHT — A Harmonic Innovation Group Company</div></div>
@@ -270,7 +268,7 @@
 </div>
 
 <div id="root" style="display:none;height:100vh;flex-direction:column;"></div>
-<div id="saving-indicator">💾 Salvataggio...</div>
+<div id="saving-indicator"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg> Salvataggio...</div>
 
 <script>
   const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
@@ -299,8 +297,22 @@ const PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B","#9B59B6","#16A085","#E67
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const AV_STATI=["In corso","Concluso","Sospeso"];
 const STATO_TONES={"In corso":"success","Concluso":"info","Sospeso":"warning"};
-const LOG_TYPE_LABELS={add_tut:"➕ Slot tutoraggio",edit_tut:"✏️ Slot tutoraggio",delete_tut:"🗑️ Slot tutoraggio",add_av:"➕ Slot avviso",edit_av:"✏️ Slot avviso",delete_av:"🗑️ Slot avviso",add_tutor_ana:"➕ Tutor anagrafica",edit_tutor_ana:"✏️ Tutor anagrafica",delete_tutor_ana:"🗑️ Tutor anagrafica",add_av_ana:"➕ Avviso anagrafica",edit_av_ana:"✏️ Avviso anagrafica",delete_av_ana:"🗑️ Avviso anagrafica"};
-const ROLE_LABEL={superadmin:"⭐ Super Admin",admin:"👑 Admin",user:"👤 Utente",viewer:"👁 Viewer"};
+const LOG_TYPE_LABELS={
+  add_tut:       <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Slot tutoraggio</span>,
+  edit_tut:      <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Slot tutoraggio</span>,
+  delete_tut:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Slot tutoraggio</span>,
+  add_av:        <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Slot avviso</span>,
+  edit_av:       <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Slot avviso</span>,
+  delete_av:     <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Slot avviso</span>,
+  add_tutor_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Tutor anagrafica</span>,
+  edit_tutor_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Tutor anagrafica</span>,
+  delete_tutor_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Tutor anagrafica</span>,
+  add_av_ana:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Avviso anagrafica</span>,
+  edit_av_ana:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Avviso anagrafica</span>,
+  delete_av_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Avviso anagrafica</span>,
+};
+const ROLE_LABEL={superadmin:"Super Admin",admin:"Admin",user:"Utente",viewer:"Viewer"};
+const ROLE_ICON={superadmin:"star",admin:"shieldCheck",user:"user",viewer:"eye"};
 const ROLE_COLOR={superadmin:"var(--danger)",admin:"var(--accent-strong)",user:"var(--info)",viewer:"var(--fg-subtle)"};
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
@@ -369,7 +381,7 @@ function ResizablePanel({children,defaultWidth=400,minWidth=320}){
   function onMD(e){e.preventDefault();dr.current=true;const sx=e.clientX,sw=width;function mv(me){if(!dr.current)return;setWidth(Math.max(minWidth,Math.min(max,sw+(sx-me.clientX))));}function up(){dr.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   return(<div style={{width,background:"var(--bg-elev)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"row",flexShrink:0}}>
     <div onMouseDown={onMD} style={{width:14,cursor:"ew-resize",flexShrink:0,background:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-      <span style={{fontSize:16,color:"var(--border-strong)",userSelect:"none",pointerEvents:"none"}}>⋮</span>
+      <Icon name="grip" size={14} color="var(--border-strong)"/>
     </div>
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>{children}</div>
   </div>);
@@ -378,10 +390,10 @@ function ResizablePanel({children,defaultWidth=400,minWidth=320}){
 function PanelHeader({title,onBack,onClose}){
   return(<div className="panel-header">
     <div style={{display:"flex",alignItems:"center",gap:8}}>
-      {onBack&&<button onClick={onBack} className="btn" data-variant="ghost" data-size="sm" style={{color:"#fff",borderColor:"rgba(255,255,255,.3)"}}>← Indietro</button>}
+      {onBack&&<button onClick={onBack} className="btn" data-variant="ghost" data-size="sm" style={{color:"#fff",borderColor:"rgba(255,255,255,.3)",display:"flex",alignItems:"center",gap:5}}><Icon name="arrowLeft" size={13} color="#fff"/>Indietro</button>}
       <span className="panel-header-title">{title}</span>
     </div>
-    <button onClick={onClose} className="panel-close">✕</button>
+    <button onClick={onClose} className="panel-close"><Icon name="x" size={16} color="#fff"/></button>
   </div>);
 }
 
@@ -393,7 +405,7 @@ function FloatingModal({title,titleBg,width,children,footer,onClose}){
     <div className="floating-modal" style={{position:"absolute",left:pos.x,top:pos.y,width:width||580,maxWidth:"95vw",maxHeight:"78vh",pointerEvents:"all"}}>
       <div className="floating-modal-header" onMouseDown={onHD} style={{background:titleBg||"var(--brand-navy)"}}>
         <span style={{fontWeight:700,fontSize:15}}>{title}</span>
-        <button onClick={onClose} className="panel-close">✕</button>
+        <button onClick={onClose} className="panel-close"><Icon name="x" size={16} color="#fff"/></button>
       </div>
       <div style={{flex:1,overflowY:"auto"}}>{children}</div>
       {footer&&<div style={{padding:"10px 20px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>{footer}</div>}
@@ -408,9 +420,9 @@ function MiniCalendar({initialMonthIdx,selected,onSelect}){
   const cells=[];for(let i=0;i<offset;i++)cells.push(null);for(let d=1;d<=days;d++)cells.push(d);while(cells.length%7!==0)cells.push(null);
   return(<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:"var(--shadow-md)",position:"absolute",zIndex:400,top:"100%",left:0,marginTop:4,width:240}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-      <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0} className="btn" data-variant="ghost" data-size="icon-sm">‹</button>
+      <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevLeft" size={14}/></button>
       <span style={{fontSize:12,fontWeight:700,color:"var(--fg)"}}>{md.label}</span>
-      <button onClick={()=>setMIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={mIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm">›</button>
+      <button onClick={()=>setMIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={mIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevRight" size={14}/></button>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
       {["L","M","M","G","V","S","D"].map((d,i)=><div key={i} style={{textAlign:"center",fontSize:10,fontWeight:700,color:"var(--fg-subtle)",padding:"2px 0"}}>{d}</div>)}
@@ -423,7 +435,8 @@ function DayPicker({initialMonthIdx,value,selectedMonthIdx,onChange}){
   return(<div style={{position:"relative",marginBottom:10}}>
     <label className="label">Giorno</label>
     <button type="button" onClick={()=>setOpen(o=>!o)} className="input" style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",height:"var(--row-h)"}}>
-      <span>{value?`${value} ${mLabel}`:"Seleziona giorno"}</span><span>📅</span>
+      <span>{value?`${value} ${mLabel}`:"Seleziona giorno"}</span>
+      <Icon name="calendar" size={14} color="var(--fg-muted)"/>
     </button>
     {open&&<MiniCalendar initialMonthIdx={initialMonthIdx} selected={value} onSelect={(d,mIdx)=>{onChange(d,mIdx);setOpen(false);}}/>}
   </div>);
@@ -450,7 +463,7 @@ function MonthPicker({monthIdx,onChange,onClose}){
   return(<div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:14,boxShadow:"var(--shadow-lg)",zIndex:700,minWidth:280}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>Seleziona mese</span>
-      <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm">✕</button>
+      <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={14}/></button>
     </div>
     <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
       {years.map(y=><button key={y} onClick={()=>setSelYear(y)} className="btn" data-variant={selYear===y?"primary":"outline"} data-size="sm">{y}</button>)}
@@ -482,7 +495,10 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
   const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"};
   return(<div ref={dragRef} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,.14)",borderBottom:"1px solid rgba(255,255,255,.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
-      <span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.name}</span>
+      <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
+        {onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
+        {ev.name}
+      </span>
       <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"rgba(255,255,255,.9)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
@@ -501,7 +517,10 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
   return(<div ref={dragRef} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
-      <span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{onEdit?"✏️ ":""}{ev.avvisoName}</span>
+      <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
+        {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
+        {ev.avvisoName}
+      </span>
       <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
@@ -567,29 +586,31 @@ function ZoomBar({zoomIdx,onZoomChange,onHelpOpen}){
   function onGripDown(e){e.preventDefault();dragging.current=true;const r=dragRef.current.getBoundingClientRect();off.current={x:e.clientX-r.left,y:e.clientY-r.top};function mv(me){if(!dragging.current)return;setPos({x:Math.max(0,Math.min(window.innerWidth-200,me.clientX-off.current.x)),y:Math.max(0,Math.min(window.innerHeight-50,me.clientY-off.current.y))});}function up(){dragging.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
   return(<div ref={dragRef} className="zoom-bar" style={{left:pos.x,top:pos.y}}>
     <div className="zoom-bar-grip" onMouseDown={onGripDown} title="Trascina">
-      <svg width="10" height="14" viewBox="0 0 10 14"><circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="8" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="7" r="1.2" fill="currentColor"/><circle cx="8" cy="7" r="1.2" fill="currentColor"/><circle cx="2" cy="12" r="1.2" fill="currentColor"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/></svg>
+      <Icon name="grip" size={14} color="var(--fg-faint)"/>
     </div>
     <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
     <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center",fontFamily:'"JetBrains Mono",monospace'}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
-    <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))} disabled={zoomIdx===ZOOM_LEVELS.length-1}>+</button>
+    <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))}>+</button>
     <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
-    <button onClick={onHelpOpen} title="Guida e FAQ" style={{width:28,height:28,border:"1.5px solid var(--border)",borderRadius:"50%",background:"var(--bg-elev)",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-strong)",fontWeight:800}}>?</button>
+    <button onClick={onHelpOpen} title="Guida e FAQ" style={{width:28,height:28,border:"1.5px solid var(--border)",borderRadius:"50%",background:"var(--bg-elev)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-strong)",fontWeight:800}}>
+      <Icon name="helpCircle" size={14} color="var(--accent-strong)"/>
+    </button>
   </div>);
 }
 
 // ── HELP BOT ──────────────────────────────────────────────────────────────
 const HELP_FAQ=[
-  {id:"root",q:"Di cosa hai bisogno?",opts:[{label:"📅 Navigazione calendario",next:"nav"},{label:"📌 Tutoraggi",next:"tut"},{label:"📋 Avvisi/Progetti",next:"av"},{label:"👤 Anagrafiche",next:"ana"},{label:"📊 Insights",next:"insight"},{label:"🤖 AI Import",next:"ai"},{label:"⚙️ Impostazioni",next:"settings"},{label:"💾 Backup",next:"backup"},{label:"✅ Verifica",next:"verifica"}]},
-  {id:"nav",q:"Navigazione",opts:[{label:"Come cambio mese?",ans:"Usa le frecce ‹ › nella topbar, oppure clicca sul nome del mese per il selettore rapido."},{label:"Come cambio vista?",ans:"Usa i pulsanti Mese / Sett. / Giorno nella barra in basso a destra."},{label:"Come regolo lo zoom?",ans:"Usa i pulsanti − e + nella barra in basso a destra."},{label:"← Torna al menu",next:"root"}]},
-  {id:"tut",q:"Tutoraggi",opts:[{label:"Come aggiungo uno slot?",ans:"Attiva Edit Mode dalla topbar, poi clicca sulla griglia o usa '+ Aggiungi'. Seleziona tutor, avviso, giorno e orario."},{label:"Come modifico uno slot?",ans:"In Edit Mode clicca ✏️ sullo slot. Puoi anche trascinarlo o ridimensionarlo dal bordo inferiore."},{label:"Come elimino uno slot?",ans:"Apri il form di modifica (✏️) e premi 🗑️ Elimina."},{label:"← Torna al menu",next:"root"}]},
-  {id:"av",q:"Avvisi/Progetti",opts:[{label:"Come aggiungo una sessione?",ans:"Vai nella vista Avvisi dalla sidebar, attiva Edit Mode e clicca sulla griglia."},{label:"Come filtro gli avvisi?",ans:"Nella filter bar clicca sui chip degli avvisi per mostrarli o nasconderli."},{label:"← Torna al menu",next:"root"}]},
-  {id:"ana",q:"Anagrafiche",opts:[{label:"Come aggiungo un tutor?",ans:"Dalla sidebar clicca 'Anagrafica Tutor', poi '+ Nuovo tutor'. Compila nome, CF, azienda e colore."},{label:"Come aggiungo un avviso?",ans:"Dalla sidebar clicca 'Anagrafica Avvisi', poi '+ Nuovo avviso'."},{label:"← Torna al menu",next:"root"}]},
-  {id:"insight",q:"Insights",opts:[{label:"Come vedo il riepilogo?",ans:"Dalla sidebar clicca 'Insights & Riepiloghi'. Puoi filtrare per mese o anno e vedere dati per tutor o per avviso."},{label:"← Torna al menu",next:"root"}]},
-  {id:"ai",q:"AI Import",opts:[{label:"Come funziona?",ans:"Dalla sidebar clicca 'AI Import' (o il pulsante 🤖 in topbar in Edit Mode). Scegli tipo, seleziona tutor/avviso e carica un PDF o incolla testo."},{label:"← Torna al menu",next:"root"}]},
-  {id:"settings",q:"Impostazioni",opts:[{label:"Quali ruoli esistono?",ans:"👁 Viewer: solo lettura. 👤 User: modifica + log + backup. 👑 Admin: gestione utenti. ⭐ Super Admin: accesso completo."},{label:"← Torna al menu",next:"root"}]},
-  {id:"backup",q:"Backup",opts:[{label:"Come creo un backup?",ans:"Dalla sidebar → Impostazioni → Backup. Clicca 'Crea backup ora'."},{label:"Come esporto?",ans:"In Impostazioni → Backup, clicca '⬇️ Esporta JSON'."},{label:"← Torna al menu",next:"root"}]},
-  {id:"verifica",q:"Verifica",opts:[{label:"Cosa controlla?",ans:"Dalla sidebar clicca 'Verifica coerenza'. Controlla: slot fuori orario, sovrapposizioni, ore eccedenti, ore giornaliere >8h."},{label:"← Torna al menu",next:"root"}]},
+  {id:"root",q:"Di cosa hai bisogno?",opts:[{label:"Navigazione calendario",icon:"calendar",next:"nav"},{label:"Tutoraggi",icon:"mapPin",next:"tut"},{label:"Avvisi/Progetti",icon:"briefcase",next:"av"},{label:"Anagrafiche",icon:"users",next:"ana"},{label:"Insights",icon:"barchart",next:"insight"},{label:"AI Import",icon:"sparkles",next:"ai"},{label:"Impostazioni",icon:"settings",next:"settings"},{label:"Backup",icon:"save",next:"backup"},{label:"Verifica",icon:"shieldCheck",next:"verifica"}]},
+  {id:"nav",q:"Navigazione",opts:[{label:"Come cambio mese?",ans:"Usa le frecce nella topbar, oppure clicca sul nome del mese per il selettore rapido."},{label:"Come cambio vista?",ans:"Usa i pulsanti Mese / Sett. / Giorno nella barra in basso a destra."},{label:"Come regolo lo zoom?",ans:"Usa i pulsanti − e + nella barra in basso a destra."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"tut",q:"Tutoraggi",opts:[{label:"Come aggiungo uno slot?",ans:"Attiva Edit Mode dalla topbar, poi clicca sulla griglia o usa '+ Aggiungi'. Seleziona tutor, avviso, giorno e orario."},{label:"Come modifico uno slot?",ans:"In Edit Mode clicca l'icona matita sullo slot. Puoi anche trascinarlo o ridimensionarlo dal bordo inferiore."},{label:"Come elimino uno slot?",ans:"Apri il form di modifica e premi il tasto Elimina in basso a sinistra."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"av",q:"Avvisi/Progetti",opts:[{label:"Come aggiungo una sessione?",ans:"Vai nella vista Avvisi dalla sidebar, attiva Edit Mode e clicca sulla griglia."},{label:"Come filtro gli avvisi?",ans:"Nella filter bar clicca sui chip degli avvisi per mostrarli o nasconderli."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"ana",q:"Anagrafiche",opts:[{label:"Come aggiungo un tutor?",ans:"Dalla sidebar clicca 'Anagrafica Tutor', poi '+ Nuovo tutor'. Compila nome, CF, azienda e colore."},{label:"Come aggiungo un avviso?",ans:"Dalla sidebar clicca 'Anagrafica Avvisi', poi '+ Nuovo avviso'."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"insight",q:"Insights",opts:[{label:"Come vedo il riepilogo?",ans:"Dalla sidebar clicca 'Insights & Riepiloghi'. Puoi filtrare per mese o anno e vedere dati per tutor o per avviso."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"ai",q:"AI Import",opts:[{label:"Come funziona?",ans:"Dalla sidebar clicca 'AI Import' (o il pulsante nella topbar in Edit Mode). Scegli tipo, seleziona tutor/avviso e carica un PDF o incolla testo."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"settings",q:"Impostazioni",opts:[{label:"Quali ruoli esistono?",ans:"Viewer: solo lettura. Utente: modifica + log + backup. Admin: gestione utenti. Super Admin: accesso completo."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"backup",q:"Backup",opts:[{label:"Come creo un backup?",ans:"Dalla sidebar → Impostazioni → Backup. Clicca 'Crea backup ora'."},{label:"Come esporto?",ans:"In Impostazioni → Backup, clicca 'Esporta JSON'."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"verifica",q:"Verifica",opts:[{label:"Cosa controlla?",ans:"Dalla sidebar clicca 'Verifica coerenza'. Controlla: slot fuori orario, sovrapposizioni, ore eccedenti, ore giornaliere >8h."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
 ];
 
 function HelpBot({onClose}){
@@ -605,7 +626,9 @@ function HelpBot({onClose}){
         <Icon name="message" size={18} color="#F5A35A"/>
       </div>
       <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>Assistente Guida</div><div style={{fontSize:10.5,color:"rgba(255,255,255,.6)",marginTop:1}}>FAQ · TutorIA</div></div>
-      <button onClick={onClose} style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:26,height:26,borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={14}/></button>
+      <button onClick={onClose} style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:26,height:26,borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <Icon name="x" size={14} color="#fff"/>
+      </button>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:6,background:"var(--bg)"}}>
       {lastAns?(<><div style={{background:"var(--bg-elev)",borderRadius:10,padding:"10px 12px",fontSize:12,color:"var(--fg)",lineHeight:1.6,border:"1px solid var(--border)"}}>{lastAns}</div><button onClick={()=>setLastAns(null)} className="btn" data-variant="outline" data-size="sm" style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:6}}><Icon name="arrowLeft" size={12}/>Altre domande</button></>)
@@ -631,7 +654,7 @@ function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
 }
 
 function VerificaScreen({errors,onNavigate}){
-  const icons={orfano:"👻",fuori_giorno:"📅",fuori_orario:"⏰",sovrapposizione:"⚡",eccedenza:"📈",durata:"📋"};
+  const icons={orfano:"user",fuori_giorno:"calendar",fuori_orario:"clock",sovrapposizione:"zap",eccedenza:"trending",durata:"clipboard"};
   const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
   const tones={orfano:"danger",fuori_giorno:"warning",fuori_orario:"warning",sovrapposizione:"danger",eccedenza:"warning",durata:"info"};
   const ok=errors.length===0;
@@ -642,13 +665,17 @@ function VerificaScreen({errors,onNavigate}){
     <div style={{flex:1,overflow:"auto",padding:32,background:"var(--bg)"}}>
       <div style={{maxWidth:860,margin:"0 auto"}}>
         <div style={{padding:"20px 22px",borderRadius:14,background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"transparent":"var(--border)"}`,display:"flex",alignItems:"center",gap:20,marginBottom:22}}>
-          <div style={{width:56,height:56,borderRadius:14,background:ok?"var(--success)":"var(--danger)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:26}}>{ok?"✅":"⚠️"}</div>
+          <div style={{width:56,height:56,borderRadius:14,background:ok?"var(--success)":"var(--danger)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name={ok?"checkCircle":"alert"} size={26} color="#fff"/>
+          </div>
           <div style={{flex:1}}><h2 style={{fontSize:20,fontWeight:700,marginBottom:4,color:"var(--fg)"}}>{ok?"Tutto in regola.":`${errors.length} problem${errors.length===1?"a":"i"} trovat${errors.length===1?"o":"i"}`}</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>{ok?"Nessuna anomalia rilevata.":"Esamina i problemi qui sotto e naviga al mese corrispondente."}</p></div>
         </div>
-        {errors.length===0?<p style={{color:"var(--success)",fontWeight:600,textAlign:"center",marginTop:20}}>🎉 Tutti i dati sono coerenti.</p>
+        {errors.length===0?<p style={{color:"var(--success)",fontWeight:600,textAlign:"center",marginTop:20,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="checkCircle" size={16} color="var(--success)"/>Tutti i dati sono coerenti.</p>
         :<div style={{display:"flex",flexDirection:"column",gap:10}}>{errors.map((e,i)=>(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey)} style={{padding:"12px 16px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:12,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
-          <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`var(--${tones[e.type]||"warning"}-soft)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>{icons[e.type]||"⚠️"}</div>
-          <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span className="badge" data-tone={tones[e.type]||"warning"}>{labels[e.type]||e.type}</span>{e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600}}>📅 Vai al mese →</span>}</div><div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div></div>
+          <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`var(--${tones[e.type]||"warning"}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Icon name={icons[e.type]||"alert"} size={18} color={`var(--${tones[e.type]||"warning"})`}/>
+          </div>
+          <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span className="badge" data-tone={tones[e.type]||"warning"}>{labels[e.type]||e.type}</span>{e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3}}><Icon name="calendar" size={11} color="var(--info)"/>Vai al mese</span>}</div><div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div></div>
         </div>))}</div>}
       </div>
     </div>
@@ -679,17 +706,14 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
       <div><div className="page-breadcrumb">Anagrafiche · {tutors.length} tutor registrati</div><h1 className="page-title">Tutor</h1><p className="page-desc">Gestisci l'elenco dei tutor del tuo ente. Ogni tutor ha un colore univoco usato in tutta l'app.</p></div>
-      {canEdit&&<div style={{display:"flex",gap:8}}><button className="btn" data-variant="accent" onClick={()=>setDrawer({mode:"new",form:{id:"",nome:"",cognome:"",cf:"",azienda:"",color:PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0]}})}>+ Nuovo tutor</button></div>}
+      {canEdit&&<div style={{display:"flex",gap:8}}><button className="btn" data-variant="accent" onClick={()=>setDrawer({mode:"new",form:{id:"",nome:"",cognome:"",cf:"",azienda:"",color:PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0]}})} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={14} color="#fff"/>Nuovo tutor</button></div>}
     </div>
-    {/* KPI strip */}
     <div style={{padding:"16px 32px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,borderBottom:"1px solid var(--border)",background:"var(--bg-elev)"}}>
-      {[{label:"Tutor attivi",value:tutors.length,icon:"👤"},{label:"Ore mese",value:fmtOreMin(totalOre),icon:"🕐"},{label:"Slot totali",value:tutors.reduce((s,t)=>s+getTutSlots(t.id),0),icon:"📌"},{label:"Aziende",value:aziende.size,icon:"🏢"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon">{k.icon}</div><div><div className="kpi-label">{k.label}</div><div className="kpi-value">{k.value}</div></div></div>)}
+      {[{label:"Tutor attivi",value:tutors.length,icon:"user"},{label:"Ore totali",value:fmtOreMin(totalOre),icon:"clock"},{label:"Slot totali",value:tutors.reduce((s,t)=>s+getTutSlots(t.id),0),icon:"mapPin"},{label:"Aziende",value:aziende.size,icon:"building"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon"><Icon name={k.icon} size={16} color="var(--accent)"/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value">{k.value}</div></div></div>)}
     </div>
-    {/* Toolbar */}
     <div style={{padding:"12px 32px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--border)",background:"var(--bg-elev)"}}>
-      <div style={{position:"relative",width:320}}><span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"var(--fg-faint)"}}>🔍</span><input className="input" placeholder="Cerca per nome, cognome, CF, azienda…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
+      <div style={{position:"relative",width:320}}><Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/><input className="input" placeholder="Cerca per nome, cognome, CF, azienda…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
     </div>
-    {/* Table */}
     <div style={{flex:1,overflow:"auto",padding:"0 32px 32px",background:"var(--bg)"}}>
       <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",marginTop:18,overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
         <table className="data-table">
@@ -702,20 +726,19 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
             <td style={{textAlign:"right",fontFamily:'"JetBrains Mono",monospace',fontWeight:600}}>{slots}</td>
             <td style={{textAlign:"right",fontFamily:'"JetBrains Mono",monospace',fontWeight:600}}>{fmtOreMin(ore)}</td>
             <td style={{textAlign:"right"}}><span className="badge" data-tone="accent">{avvisiN}</span></td>
-            {canEdit&&<td><button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer({mode:"edit",form:{...t}})}>✏️</button></td>}
+            {canEdit&&<td><button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer({mode:"edit",form:{...t}})}><Icon name="edit" size={14} color="var(--fg-muted)"/></button></td>}
           </tr>);})}
           {filtered.length===0&&<tr><td colSpan={canEdit?8:7} style={{textAlign:"center",padding:40,color:"var(--fg-subtle)"}}>Nessun tutor trovato{q?` per "${q}"`:""}</td></tr>}
           </tbody>
         </table>
       </div>
     </div>
-    {/* Drawer */}
     {drawer&&(<div className="drawer-overlay">
       <div onClick={()=>setDrawer(null)} className="drawer-backdrop"/>
       <div className="drawer">
         <div className="drawer-header">
           <div><div style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:2}}>{drawer.mode==="new"?"Nuovo":"Modifica"}</div><h2 style={{fontSize:18,fontWeight:700,color:"var(--fg)",letterSpacing:"-0.01em"}}>{drawer.mode==="new"?"Aggiungi tutor":`${drawer.form.cognome} ${drawer.form.nome}`}</h2></div>
-          <button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer(null)}>✕</button>
+          <button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer(null)}><Icon name="x" size={14}/></button>
         </div>
         <div className="drawer-body">
           {drawer.mode==="edit"&&<div style={{padding:14,background:"var(--bg-sunken)",borderRadius:10,marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
@@ -731,8 +754,8 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
           <div style={{marginBottom:8}}><label className="label">Colore identificativo</label><ColorPicker value={drawer.form.color||PALETTE[0]} onChange={c=>setDrawer(d=>({...d,form:{...d.form,color:c}}))} usedColors={usedColors}/><p style={{fontSize:11,color:"var(--fg-subtle)",marginTop:4}}>Il colore viene usato per identificare il tutor sul calendario.</p></div>
         </div>
         <div className="drawer-footer">
-          {drawer.mode==="edit"?<button className="btn" data-variant="danger" onClick={deleteFromDrawer}>🗑️ Elimina</button>:<div/>}
-          <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setDrawer(null)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveDrawer} disabled={saving}>{saving?"💾 ...":drawer.mode==="new"?"Crea tutor":"Salva"}</button></div>
+          {drawer.mode==="edit"?<button className="btn" data-variant="danger" onClick={deleteFromDrawer} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>:<div/>}
+          <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setDrawer(null)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveDrawer} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>{drawer.mode==="new"?"Crea tutor":"Salva"}</>}</button></div>
         </div>
       </div>
     </div>)}
@@ -754,20 +777,22 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
   const usedColors=anagraficaAv.filter(a=>a.id!==selected?.id).map(a=>a.colore).filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
-      <div><div className="page-breadcrumb">Anagrafiche · {anagraficaAv.length} progetti</div><h1 className="page-title">Avvisi / Progetti</h1><p className="page-desc">Bandi, avvisi pubblici e progetti formativi. Ogni avviso ha una durata di riferimento e uno stato di avanzamento.</p></div>
-      {canEdit&&<div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline">⬇️ Esporta</button><button className="btn" data-variant="accent" onClick={addNew}>+ Nuovo avviso</button></div>}
+      <div><div className="page-breadcrumb">Anagrafiche · {anagraficaAv.length} progetti</div><h1 className="page-title">Avvisi / Progetti</h1><p className="page-desc">Bandi, avvisi pubblici e progetti formativi.</p></div>
+      {canEdit&&<div style={{display:"flex",gap:8}}>
+        <button className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta</button>
+        <button className="btn" data-variant="accent" onClick={addNew} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={14} color="#fff"/>Nuovo avviso</button>
+      </div>}
     </div>
     <div className="list-detail" style={{flex:1,minHeight:0}}>
-      {/* List pane */}
       <div className="list-pane">
         <div className="list-pane-toolbar">
-          <div style={{position:"relative",marginBottom:10}}><span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"var(--fg-faint)"}}>🔍</span><input className="input" placeholder="Cerca avviso o codice…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
+          <div style={{position:"relative",marginBottom:10}}><Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/><input className="input" placeholder="Cerca avviso o codice…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
           <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
             {[{v:"all",label:"Tutti",count:anagraficaAv.length},{v:"In corso",label:"In corso",count:anagraficaAv.filter(a=>a.stato==="In corso").length},{v:"Sospeso",label:"Sospesi",count:anagraficaAv.filter(a=>a.stato==="Sospeso").length},{v:"Concluso",label:"Conclusi",count:anagraficaAv.filter(a=>a.stato==="Concluso").length}].map(o=><button key={o.v} onClick={()=>setStatoFilter(o.v)} style={{padding:"5px 10px",fontSize:11,fontWeight:600,borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",gap:5,background:statoFilter===o.v?"var(--bg-elev)":"transparent",color:statoFilter===o.v?"var(--fg)":"var(--fg-muted)",border:`1px solid ${statoFilter===o.v?"var(--border)":"transparent"}`}}>{o.label}<span style={{fontSize:10,color:"var(--fg-subtle)",fontFamily:'"JetBrains Mono",monospace'}}>{o.count}</span></button>)}
           </div>
         </div>
         <div className="list-pane-body">
-          {filtered.map(a=>{const isSel=selected?.id===a.id;const p=pct(a);const ore=getOre(a);return(<button key={a.id} className={`list-item${isSel?" active":""}`} style={{"--accent-color":a.colore||"var(--accent)"}} onClick={()=>{setSelected(a);setEditing(false);}}>
+          {filtered.map(a=>{const isSel=selected?.id===a.id;const p=pct(a);const ore=getOre(a);return(<button key={a.id} className={`list-item${isSel?" active":""}`} onClick={()=>{setSelected(a);setEditing(false);}}>
             {isSel&&<span style={{position:"absolute",left:0,top:12,bottom:12,width:3,background:a.colore||"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
             <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:6}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{width:10,height:10,borderRadius:3,background:a.colore||"var(--accent)",flexShrink:0}}/><span style={{fontSize:13.5,fontWeight:600,color:"var(--fg)"}}>{a.nome}</span></div>
@@ -784,7 +809,6 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
           </button>);})}
         </div>
       </div>
-      {/* Detail pane */}
       {selected?(<div className="detail-pane">
         {!editing?(
           <><div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:24,gap:24}}>
@@ -794,15 +818,13 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
               <p style={{fontSize:13,color:"var(--fg-muted)",maxWidth:540,lineHeight:1.55}}>{selected.note||"Nessuna nota."}</p>
             </div>
             {canEdit&&<div style={{display:"flex",gap:8,flexShrink:0}}>
-              <button className="btn" data-variant="outline" onClick={startEdit}>✏️ Modifica</button>
-              <button className="btn" data-variant="danger" onClick={deleteSelected}>🗑️</button>
+              <button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>
+              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>
             </div>}
           </div>
-          {/* KPIs */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
-            {[{label:"Da bando",value:`${selected.durataOre||"?"}h`,icon:"📄"},{label:"Calendario",value:`${getOre(selected)}h`,icon:"📅",warn:getOre(selected)>selected.durataOre},{label:"Tutor",value:"—",icon:"👤"},{label:"Slot",value:(avById[selected.id]?.events?.length||0),icon:"🕐"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon" style={{fontSize:18}}>{k.icon}</div><div><div className="kpi-label">{k.label}</div><div className="kpi-value" style={{color:k.warn?"var(--danger)":"var(--fg)",fontSize:22}}>{k.value}</div></div></div>)}
+            {[{label:"Da bando",value:`${selected.durataOre||"?"}h`,icon:"file"},{label:"Calendario",value:`${getOre(selected)}h`,icon:"calendar",warn:getOre(selected)>selected.durataOre},{label:"Tutor",value:"—",icon:"user"},{label:"Slot",value:(avById[selected.id]?.events?.length||0),icon:"clock"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon"><Icon name={k.icon} size={16} color={k.warn?"var(--danger)":"var(--accent)"}/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value" style={{color:k.warn?"var(--danger)":"var(--fg)",fontSize:22}}>{k.value}</div></div></div>)}
           </div>
-          {/* Progress */}
           <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:20,boxShadow:"var(--shadow-xs)"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avanzamento ore</div>
@@ -813,7 +835,6 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
             </div>
             <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:11,color:"var(--fg-subtle)"}}><span>{selected.dataInizio||"—"}</span><span>{selected.dataFine||"—"}</span></div>
           </div>
-          {/* Details */}
           <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,boxShadow:"var(--shadow-xs)"}}>
             <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Dettagli</div>
             <dl style={{display:"grid",gridTemplateColumns:"180px 1fr",gap:"10px 16px",margin:0,fontSize:13}}>
@@ -833,8 +854,8 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}><div><label className="label">Data inizio</label><input className="input" value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))}/></div><div><label className="label">Data fine</label><input className="input" value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))}/></div></div>
             <div style={{marginBottom:14}}><label className="label">Note</label><textarea className="textarea" value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} rows={3}/></div>
             <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid var(--divider)",paddingTop:14}}>
-              <button className="btn" data-variant="danger" onClick={deleteSelected}>🗑️ Elimina avviso</button>
-              <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setEditing(false)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving}>{saving?"💾 ...":"✓ Salva modifiche"}</button></div>
+              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina avviso</button>
+              <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setEditing(false)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>Salva modifiche</>}</button></div>
             </div>
           </div>
         )}
@@ -863,7 +884,10 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey}){
       </div>
     </div>
     <div style={{padding:"10px 32px",borderBottom:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:8}}>
-      <div className="tab-strip"><button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")}>👤 Per tutor</button><button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")}>📋 Per avviso</button></div>
+      <div className="tab-strip">
+        <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
+        <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="clipboard" size={12}/>Per avviso</button>
+      </div>
     </div>
     <div style={{flex:1,overflow:"auto",padding:32,background:"var(--bg)"}}>
       <div style={{maxWidth:900,margin:"0 auto"}}>
@@ -890,18 +914,20 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey}){
 function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser}){
   const[section,setSection]=useState("users");
   const SUB=[
-    isAdmin&&{id:"users",label:"Utenti & Permessi",icon:"🔐",desc:"Chi può accedere e cosa può fare."},
-    isSuperAdmin&&{id:"api",label:"API & AI",icon:"⚙️",desc:"Chiavi Gemini, OpenAI e provider attivo."},
-    isUser&&{id:"backup",label:"Backup",icon:"💾",desc:"Snapshot del database, import/export."},
-    isUser&&{id:"log",label:"Log attività",icon:"📋",desc:"Storico delle modifiche per utente."},
-    isAdmin&&{id:"demo",label:"Dati demo",icon:"🎲",desc:"Carica dati di esempio o resetta tutto."},
+    isAdmin&&{id:"users",label:"Utenti & Permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
+    isSuperAdmin&&{id:"api",label:"API & AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
+    isUser&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
+    isUser&&{id:"log",label:"Log attività",icon:"clock",desc:"Storico delle modifiche per utente."},
+    isAdmin&&{id:"demo",label:"Dati demo",icon:"dice",desc:"Carica dati di esempio o resetta tutto."},
   ].filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header"><div><div className="page-breadcrumb">Sistema</div><h1 className="page-title">Impostazioni</h1></div></div>
     <div style={{flex:1,display:"flex",minHeight:0}}>
       <aside style={{width:240,flexShrink:0,padding:"18px 14px",borderRight:"1px solid var(--border)",background:"var(--bg)"}}>
         {SUB.map(s=>{const active=section===s.id;return(<button key={s.id} onClick={()=>setSection(s.id)} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 12px",background:active?"var(--bg-elev)":"transparent",border:`1px solid ${active?"var(--border)":"transparent"}`,borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left",marginBottom:4,boxShadow:active?"var(--shadow-xs)":"none"}} onMouseEnter={e=>{if(!active)e.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={e=>{if(!active)e.currentTarget.style.background="transparent";}}>
-          <div style={{width:32,height:32,borderRadius:8,background:active?"var(--accent-soft)":"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:15}}>{s.icon}</div>
+          <div style={{width:32,height:32,borderRadius:8,background:active?"var(--accent-soft)":"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name={s.icon} size={15} color={active?"var(--accent-strong)":"var(--fg-muted)"}/>
+          </div>
           <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:active?700:600,color:"var(--fg)"}}>{s.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.desc}</div></div>
         </button>);})}
       </aside>
@@ -919,7 +945,6 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
 // ── SETTINGS SUB-PANELS ───────────────────────────────────────────────────
 function UsersPanel({isSuperAdmin}){
   const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[editingRole,setEditingRole]=useState({});
-  const ROLE_LABEL2={superadmin:"⭐ Super Admin",admin:"👑 Admin",user:"👤 Utente",viewer:"👁 Viewer"};
   useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);});},[]);
   async function handleAdd(){if(!newEmail.trim())return;setSaving(true);await db.collection("authorizedEmails").doc(newEmail.trim().toLowerCase()).set({role:newRole});const snap=await db.collection("authorizedEmails").get();setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setNewEmail("");setSaving(false);}
   async function handleRemove(email){if(!confirm(`Rimuovere ${email}?`))return;await db.collection("authorizedEmails").doc(email).delete();setEmails(p=>p.filter(e=>e.email!==email));}
@@ -930,19 +955,19 @@ function UsersPanel({isSuperAdmin}){
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Aggiungi gli indirizzi email autorizzati.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:22,boxShadow:"var(--shadow-xs)"}}>
       <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Invita un nuovo utente</div>
-      <div style={{display:"flex",gap:10}}><input className="input" placeholder="email@azienda.it" value={newEmail} onChange={e=>setNewEmail(e.target.value)} style={{flex:2}}/><select className="select" value={newRole} onChange={e=>setNewRole(e.target.value)} style={{flex:1}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL2[r]}</option>)}</select><button className="btn" data-variant="accent" onClick={handleAdd} disabled={saving}>{saving?"...":"+ Aggiungi"}</button></div>
+      <div style={{display:"flex",gap:10}}><input className="input" placeholder="email@azienda.it" value={newEmail} onChange={e=>setNewEmail(e.target.value)} style={{flex:2}}/><select className="select" value={newRole} onChange={e=>setNewRole(e.target.value)} style={{flex:1}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select><button className="btn" data-variant="accent" onClick={handleAdd} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="plus" size={14} color="#fff"/>}Aggiungi</button></div>
     </div>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
       <div style={{padding:"10px 18px",background:"var(--bg-sunken)",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Utenti autorizzati · {emails.length}</span></div>
-      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13}}>Caricamento...</p>:emails.map(e=>{const r={superadmin:"var(--danger)",admin:"var(--accent-strong)",user:"var(--info)",viewer:"var(--fg-subtle)"}[e.role]||"var(--fg-subtle)";return(<div key={e.email} style={{padding:"14px 18px",borderBottom:"1px solid var(--divider)",display:"flex",alignItems:"center",gap:14}}>
-        <div style={{width:36,height:36,borderRadius:999,background:"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:12,color:"var(--fg-muted)"}}>{e.email.slice(0,2).toUpperCase()}</div>
+      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,display:"flex",alignItems:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</p>:emails.map(e=>{const iconName=ROLE_ICON[e.role]||"user";const col=ROLE_COLOR[e.role]||"var(--fg-subtle)";return(<div key={e.email} style={{padding:"14px 18px",borderBottom:"1px solid var(--divider)",display:"flex",alignItems:"center",gap:14}}>
+        <div style={{width:36,height:36,borderRadius:999,background:"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={iconName} size={16} color={col}/></div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:13.5,fontWeight:600,color:"var(--fg)"}}>{e.email}</div>
-          {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} className="select" style={{height:28,fontSize:12}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL2[r]}</option>)}</select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} className="btn" data-variant="accent" data-size="sm">Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} className="btn" data-variant="ghost" data-size="sm">✕</button></div>
-          :<div style={{fontSize:11,color:r,fontWeight:600,marginTop:2}}>{ROLE_LABEL2[e.role]||e.role}</div>}
+          {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} className="select" style={{height:28,fontSize:12}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="check" size={12} color="#fff"/>Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} className="btn" data-variant="ghost" data-size="sm"><Icon name="x" size={12}/></button></div>
+          :<div style={{fontSize:11,color:col,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:4}}><Icon name={iconName} size={11} color={col}/>{ROLE_LABEL[e.role]||e.role}</div>}
         </div>
-        <button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} className="btn" data-variant="outline" data-size="icon-sm">✏️</button>
-        <button onClick={()=>handleRemove(e.email)} className="btn" data-variant="danger" data-size="icon-sm">🗑️</button>
+        <button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} className="btn" data-variant="outline" data-size="icon-sm"><Icon name="edit" size={13} color="var(--fg-muted)"/></button>
+        <button onClick={()=>handleRemove(e.email)} className="btn" data-variant="danger" data-size="icon-sm"><Icon name="trash" size={13} color="var(--danger)"/></button>
       </div>);})}
     </div>
   </div>);
@@ -954,49 +979,52 @@ function ApiPanel({settings,onSave}){
   useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
   useEffect(()=>{if(cdO<=0)return;const t=setInterval(()=>setCdO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdO]);
   async function handleSave(){await onSave({aiProvider,geminiApiKey:geminiKey,openaiApiKey:openaiKey});setSaved(true);setTimeout(()=>setSaved(false),2000);}
-  async function testGemini(){if(!geminiKey){setTestG("❌ Chiave non inserita");return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});setTestG(r.ok?"✅ Connessione riuscita":r.status===429?"❌ Quota esaurita":r.status===401?"❌ Chiave non valida":`❌ Errore ${r.status}`);}catch{setTestG("❌ Errore di rete");}setCdG(60);}
-  async function testOpenai(){if(!openaiKey){setTestO("❌ Chiave non inserita");return;}setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?"✅ Connessione riuscita":r.status===429?"❌ Quota esaurita":r.status===401?"❌ Chiave non valida":`❌ Errore ${r.status}`);}catch{setTestO("❌ Errore di rete");}setCdO(60);}
+  async function testGemini(){if(!geminiKey){setTestG({ok:false,msg:"Chiave non inserita"});return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});setTestG(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestG({ok:false,msg:"Errore di rete"});}setCdG(60);}
+  async function testOpenai(){if(!openaiKey){setTestO({ok:false,msg:"Chiave non inserita"});return;}setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestO({ok:false,msg:"Errore di rete"});}setCdO(60);}
   return(<div style={{maxWidth:720}}>
     <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>API & AI</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Chiavi per l'assistente di import. Salvate cifrate su Firestore.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:14,boxShadow:"var(--shadow-xs)"}}>
       <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Provider attivo</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        {[{v:"gemini",label:"✨ Google Gemini",desc:"gemini-2.0-flash · veloce"},{v:"openai",label:"💬 OpenAI",desc:"gpt-4o-mini · ottima sui PDF"}].map(o=><button key={o.v} onClick={()=>setAiProvider(o.v)} style={{textAlign:"left",padding:14,borderRadius:"var(--radius)",cursor:"pointer",background:aiProvider===o.v?"var(--bg-sunken)":"var(--bg-elev)",border:`1.5px solid ${aiProvider===o.v?"var(--accent)":"var(--border)"}`}}><div style={{fontSize:14,fontWeight:700,color:"var(--fg)",marginBottom:4}}>{o.label}{aiProvider===o.v&&<span className="badge" data-tone="accent" style={{marginLeft:8}}>Attivo</span>}</div><div style={{fontSize:12,color:"var(--fg-muted)"}}>{o.desc}</div></button>)}
+        {[{v:"gemini",label:"Google Gemini",icon:"sparkles",desc:"gemini-2.0-flash · veloce"},{v:"openai",label:"OpenAI",icon:"zap",desc:"gpt-4o-mini · ottima sui PDF"}].map(o=><button key={o.v} onClick={()=>setAiProvider(o.v)} style={{textAlign:"left",padding:14,borderRadius:"var(--radius)",cursor:"pointer",background:aiProvider===o.v?"var(--bg-sunken)":"var(--bg-elev)",border:`1.5px solid ${aiProvider===o.v?"var(--accent)":"var(--border)"}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><Icon name={o.icon} size={15} color={aiProvider===o.v?"var(--accent)":"var(--fg-muted)"}/><div style={{fontSize:14,fontWeight:700,color:"var(--fg)"}}>{o.label}</div>{aiProvider===o.v&&<span className="badge" data-tone="accent" style={{marginLeft:"auto"}}>Attivo</span>}</div>
+          <div style={{fontSize:12,color:"var(--fg-muted)"}}>{o.desc}</div>
+        </button>)}
       </div>
       {[{name:"gemini",label:"Gemini API Key",placeholder:"AIza…",val:geminiKey,setVal:setGeminiKey,test:testGemini,testRes:testG,cd:cdG},{name:"openai",label:"OpenAI API Key",placeholder:"sk-…",val:openaiKey,setVal:setOpenaiKey,test:testOpenai,testRes:testO,cd:cdO}].map(c=><div key={c.name} style={{marginBottom:14,padding:14,borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-sunken)",opacity:aiProvider===c.name?1:.55}}>
         <div style={{fontSize:13,fontWeight:700,color:"var(--fg)",marginBottom:8}}>{c.label}</div>
-        <div style={{display:"flex",gap:8}}><input type="password" className="input mono" value={c.val} onChange={e=>c.setVal(e.target.value)} placeholder={c.placeholder} style={{flex:1}}/><button onClick={c.test} disabled={c.cd>0} className="btn" data-variant="outline">{`🔍 Testa${c.cd>0?` (${c.cd}s)`:""}`}</button></div>
-        {c.testRes&&<div style={{marginTop:8,fontSize:12,color:c.testRes.startsWith("✅")?"var(--success)":"var(--danger)"}}>{c.testRes}</div>}
+        <div style={{display:"flex",gap:8}}><input type="password" className="input mono" value={c.val} onChange={e=>c.setVal(e.target.value)} placeholder={c.placeholder} style={{flex:1}}/><button onClick={c.test} disabled={c.cd>0} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="search" size={13}/>Testa{c.cd>0?` (${c.cd}s)`:""}</button></div>
+        {c.testRes&&<div style={{marginTop:8,fontSize:12,display:"flex",alignItems:"center",gap:6,color:c.testRes.ok?"var(--success)":"var(--danger)"}}><Icon name={c.testRes.ok?"checkCircle":"xCircle"} size={13} color={c.testRes.ok?"var(--success)":"var(--danger)"}/>{c.testRes.msg}</div>}
       </div>)}
-      <button className="btn" data-variant={saved?"accent":"primary"} onClick={handleSave}>{saved?"✓ Salvato":"Salva impostazioni"}</button>
+      <button className="btn" data-variant={saved?"accent":"primary"} onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6}}>{saved?<><Icon name="check" size={14} color="#fff"/>Salvato</>:<><Icon name="save" size={14} color="#fff"/>Salva impostazioni</>}</button>
     </div>
   </div>);
 }
 
 function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv}){
-  const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState("");
+  const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState(null);
   function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
   async function load(){setLoading(true);setBackups(await fsListBackups());setLoading(false);}
   useEffect(()=>{load();},[]);
-  async function doBackup(){setSaving(true);setMsg("");try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg("✅ Backup creato.");await load();}catch(e){setMsg(`❌ ${e.message}`);}setSaving(false);}
-  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg("✅ Ripristinato.");}catch(e){setMsg(`❌ ${e.message}`);}}
+  async function doBackup(){setSaving(true);setMsg(null);try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg({ok:true,text:"Backup creato."});await load();}catch(e){setMsg({ok:false,text:e.message});}setSaving(false);}
+  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg({ok:true,text:"Ripristinato."});}catch(e){setMsg({ok:false,text:e.message});}}
   function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
   async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
   return(<div style={{maxWidth:880}}>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:22}}>
       <div><h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.</p></div>
       <div style={{display:"flex",gap:8}}>
-        <label className="btn" data-variant="outline" style={{cursor:"pointer"}}>📂 Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg("✅ Importato.");}catch(err){setMsg(`❌ ${err.message}`);}};reader.readAsText(file);e.target.value="";}}/></label>
-        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)}>⬇️ Esporta JSON</button>
-        <button className="btn" data-variant="accent" onClick={doBackup} disabled={saving}>{saving?"⏳ Salvataggio...":"💾 Crea backup"}</button>
+        <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
+        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
+        <button className="btn" data-variant="accent" onClick={doBackup} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="save" size={14} color="#fff"/>Crea backup</>}</button>
       </div>
     </div>
-    {msg&&<div style={{padding:"10px 14px",borderRadius:"var(--radius)",background:msg.startsWith("✅")?"var(--success-soft)":"var(--danger-soft)",color:msg.startsWith("✅")?"var(--success)":"var(--danger)",fontSize:13,fontWeight:600,marginBottom:14}}>{msg}</div>}
+    {msg&&<div style={{padding:"10px 14px",borderRadius:"var(--radius)",background:msg.ok?"var(--success-soft)":"var(--danger-soft)",color:msg.ok?"var(--success)":"var(--danger)",fontSize:13,fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:8}}><Icon name={msg.ok?"checkCircle":"xCircle"} size={14} color={msg.ok?"var(--success)":"var(--danger)"}/>{msg.text}</div>}
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
-      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
+      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</p>
       :backups.length===0?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessun backup disponibile.</p>
-      :<table className="data-table"><thead><tr><th>Data e ora</th><th>Dimensione</th><th>Azioni</th></tr></thead><tbody>{backups.map((b,i)=>(<tr key={b.id}><td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12}}>{fmtTs(b.created)}</td><td style={{color:"var(--fg-subtle)"}}>{fmtSize(b.size)}</td><td><div style={{display:"flex",gap:6}}><button onClick={()=>doDownload(b)} className="btn" data-variant="outline" data-size="sm">⬇️</button><button onClick={()=>doRestore(b)} className="btn" data-variant="outline" data-size="sm">↩️</button><button onClick={()=>doDelete(b)} className="btn" data-variant="danger" data-size="sm">🗑️</button></div></td></tr>))}</tbody></table>}
+      :<table className="data-table"><thead><tr><th>Data e ora</th><th>Dimensione</th><th>Azioni</th></tr></thead><tbody>{backups.map((b,i)=>(<tr key={b.id}><td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12}}>{fmtTs(b.created)}</td><td style={{color:"var(--fg-subtle)"}}>{fmtSize(b.size)}</td><td><div style={{display:"flex",gap:6}}><button onClick={()=>doDownload(b)} className="btn" data-variant="outline" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="download" size={13}/></button><button onClick={()=>doRestore(b)} className="btn" data-variant="outline" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="rotateCcw" size={13}/></button><button onClick={()=>doDelete(b)} className="btn" data-variant="danger" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="trash" size={13} color="var(--danger)"/></button></div></td></tr>))}</tbody></table>}
     </div>
   </div>);
 }
@@ -1014,7 +1042,7 @@ function LogPanel(){
       <span style={{fontSize:12,color:"var(--fg-subtle)",alignSelf:"center"}}>{filtered.length} record</span>
     </div>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
-      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center"}}>⏳ Caricamento...</p>
+      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</p>
       :filtered.length===0?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessuna attività registrata.</p>
       :<table className="data-table"><thead><tr><th>Data e ora</th><th>Utente</th><th>Tipo</th><th>Dettaglio</th></tr></thead><tbody>{filtered.map((r,i)=>(<tr key={r.id}><td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td><td style={{maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:"var(--fg-muted)"}}>{r.userEmail}</td><td style={{whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td><td style={{color:"var(--fg-muted)",lineHeight:1.4}}>{r.detail}</td></tr>))}</tbody></table>}
     </div>
@@ -1023,18 +1051,31 @@ function LogPanel(){
 
 function DemoPanel({isSuperAdmin}){
   async function loadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti saranno sovrascritti."))return;window.__loadDemo&&await window.__loadDemo();alert("Dati demo caricati!");}
-  async function clearDb(){if(!confirm("⚠️ Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;window.__clearDb&&await window.__clearDb();alert("Database svuotato.");}
+  async function clearDb(){if(!confirm("Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;window.__clearDb&&await window.__clearDb();alert("Database svuotato.");}
   return(<div style={{maxWidth:720}}>
     <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Dati demo</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Carica dati di esempio o azzera tutto.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--accent)",borderRadius:"var(--radius-md)",padding:22,marginBottom:14,boxShadow:"var(--shadow-xs)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}><div style={{width:48,height:48,borderRadius:12,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🎲</div><div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>4 tutor · 5 avvisi · ~280 slot distribuiti su 12 mesi</p></div></div>
-      <div style={{padding:12,background:"var(--warning-soft)",borderRadius:8,marginBottom:12,fontSize:11.5,color:"var(--fg)",lineHeight:1.6}}><strong>Attenzione:</strong> i dati attuali verranno sovrascritti.</div>
-      <button className="btn" data-variant="accent" onClick={loadDemo} style={{width:"100%",justifyContent:"center"}}>🎲 Carica dati demo</button>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+        <div style={{width:48,height:48,borderRadius:12,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <Icon name="dice" size={22} color="var(--accent)"/>
+        </div>
+        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>4 tutor · 5 avvisi · ~280 slot distribuiti su 12 mesi</p></div>
+      </div>
+      <div style={{padding:12,background:"var(--warning-soft)",borderRadius:8,marginBottom:12,fontSize:11.5,color:"var(--fg)",lineHeight:1.6,display:"flex",alignItems:"flex-start",gap:8}}>
+        <Icon name="alert" size={14} color="var(--warning)" style={{flexShrink:0,marginTop:1}}/>
+        <span><strong>Attenzione:</strong> i dati attuali verranno sovrascritti.</span>
+      </div>
+      <button className="btn" data-variant="accent" onClick={loadDemo} style={{width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:6}}><Icon name="dice" size={14} color="#fff"/>Carica dati demo</button>
     </div>
     {isSuperAdmin&&<div style={{background:"var(--bg-elev)",border:"1px solid var(--danger)",borderRadius:"var(--radius-md)",padding:22,boxShadow:"var(--shadow-xs)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}><div style={{width:48,height:48,borderRadius:12,background:"var(--danger-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🗑️</div><div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--danger)"}}>Cancella database</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>Elimina tutti i dati. Operazione irreversibile.</p></div></div>
-      <button className="btn" onClick={clearDb} style={{width:"100%",justifyContent:"center",background:"transparent",border:"1.5px solid var(--danger)",color:"var(--danger)"}}>🗑️ Cancella database</button>
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+        <div style={{width:48,height:48,borderRadius:12,background:"var(--danger-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <Icon name="trash" size={22} color="var(--danger)"/>
+        </div>
+        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--danger)"}}>Cancella database</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>Elimina tutti i dati. Operazione irreversibile.</p></div>
+      </div>
+      <button className="btn" onClick={clearDb} style={{width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:6,background:"transparent",border:"1.5px solid var(--danger)",color:"var(--danger)"}}><Icon name="trash" size={14} color="var(--danger)"/>Cancella database</button>
     </div>}
   </div>);
 }
@@ -1042,7 +1083,7 @@ function DemoPanel({isSuperAdmin}){
 // ── AI PANEL ──────────────────────────────────────────────────────────────
 function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
-  const[messages,setMessages]=useState([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"📌 Tutoraggi",value:"tutoraggio"},{label:"📋 Avviso/Progetto",value:"avviso"}]}]);
+  const[messages,setMessages]=useState([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
   const[size,setSize]=useState({w:Math.min(window.innerWidth*.33,520),h:Math.min(window.innerHeight*.44,400)});
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
@@ -1050,11 +1091,11 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
   function makeResizeHandler(dir){return function(e){e.preventDefault();const sx=e.clientX,sy=e.clientY,sw=size.w,sh=size.h;function mv(me){if(dir==="right"||dir==="corner")setSize(s=>({...s,w:Math.max(300,sw+(me.clientX-sx))}));if(dir==="top"||dir==="corner")setSize(s=>({...s,h:Math.max(250,sh-(me.clientY-sy))}));}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);};}
-  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"⚠️ Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"⚠️ Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
-  async function processSource(file,text){if(file)addMsg({role:"user",text:`📎 ${file.name}`});else addMsg({role:"user",text:`📋 Testo incollato (${text.length} caratteri)`});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
-  async function processPaste(){if(!pasteText.trim()){addMsg({role:"ai",text:"⚠️ Testo vuoto."});return;}if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"⚠️ Il testo non sembra contenere date o orari."});setPasteText("");setShowPaste(false);return;}setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);}
+  async function processSource(file,text){if(file)addMsg({role:"user",text:file.name,icon:"paperclip"});else addMsg({role:"user",text:`Testo incollato (${text.length} caratteri)`,icon:"clipboard"});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function processPaste(){if(!pasteText.trim()){addMsg({role:"ai",text:"Testo vuoto."});return;}if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"Il testo non sembra contenere date o orari."});setPasteText("");setShowPaste(false);return;}setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);}
   function handleResult(res){setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}
   async function analyzeDoc(file,text){const prov=settings.aiProvider||"gemini";const prompt=`Estrai appuntamenti da questo documento/testo. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;
     if(prov==="gemini"){if(!settings.geminiApiKey)throw new Error("Chiave Gemini non configurata.");let parts;if(text){parts=[{text:`${prompt}\n\n${text}`}];}else{const b64=await toB64(file);const mime=file.type||"application/octet-stream";const isPdf=mime==="application/pdf",isImg=mime.startsWith("image/");parts=isPdf||isImg?[{inline_data:{mime_type:mime,data:b64}},{text:prompt}]:[{text:`${prompt}\n\n${atob(b64)}`}];}const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${settings.geminiApiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts}]})});if(!r.ok){const j=await r.json();throw new Error(r.status===429?"Quota Gemini esaurita.":r.status===401?"Chiave Gemini non valida.":`Errore ${r.status}: ${j.error?.message||""}`);}const d=await r.json();return parseR(d.candidates?.[0]?.content?.parts?.[0]?.text||"{}");}
@@ -1062,26 +1103,29 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   }
   function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});}
   function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
-  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"⚠️ Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"⚠️ Seleziona prima un avviso/progetto."});return;}await processSource(file,null);}
-  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`✅ Importati ${pending.length} appuntamenti!`});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"Seleziona prima un avviso/progetto."});return;}await processSource(file,null);}
+  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`Importati ${pending.length} appuntamenti.`,icon:"checkCircle"});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
   const uploadButtons=()=>(<div style={{display:"flex",gap:6,flexDirection:"column",width:"100%",marginTop:6}}>
-    <button onClick={()=>fileRef.current.click()} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--accent)",color:"var(--accent)"}}>📎 Carica documento</button>
-    <button onClick={()=>setShowPaste(s=>!s)} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--success)",color:"var(--success)"}}>📋 Incolla testo</button>
-    {showPaste&&<div style={{marginTop:4}}><textarea value={pasteText} onChange={e=>setPasteText(e.target.value)} placeholder="Incolla qui il testo con le date..." className="textarea" style={{fontSize:12}}/><button onClick={processPaste} disabled={loading||!pasteText.trim()} className="btn" data-variant="accent" style={{width:"100%",justifyContent:"center",marginTop:4}}>Analizza testo</button></div>}
+    <button onClick={()=>fileRef.current.click()} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--accent)",color:"var(--accent)",display:"flex",alignItems:"center",gap:7}}><Icon name="paperclip" size={13} color="var(--accent)"/>Carica documento</button>
+    <button onClick={()=>setShowPaste(s=>!s)} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--success)",color:"var(--success)",display:"flex",alignItems:"center",gap:7}}><Icon name="clipboard" size={13} color="var(--success)"/>Incolla testo</button>
+    {showPaste&&<div style={{marginTop:4}}><textarea value={pasteText} onChange={e=>setPasteText(e.target.value)} placeholder="Incolla qui il testo con le date..." className="textarea" style={{fontSize:12}}/><button onClick={processPaste} disabled={loading||!pasteText.trim()} className="btn" data-variant="accent" style={{width:"100%",justifyContent:"center",marginTop:4,display:"flex",alignItems:"center",gap:6}}><Icon name="sparkles" size={13} color="#fff"/>Analizza testo</button></div>}
   </div>);
   function renderMsg(msg,idx){const isAi=msg.role==="ai";
     return(<div key={idx} style={{display:"flex",flexDirection:"column",alignItems:isAi?"flex-start":"flex-end",marginBottom:10}}>
-      <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"var(--bg-sunken)":"var(--accent)",color:isAi?"var(--fg)":"#fff",fontSize:13,lineHeight:1.5,border:isAi?"1px solid var(--border)":"none"}}>{msg.isLoading?<span style={{opacity:.6}}>⏳ {msg.text}</span>:<span>{msg.text}</span>}</div>
-      {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label});startImport(b.value);}} className="btn" data-variant="outline">{b.label}</button>)}</div>}
-      {msg.showOpenTutor&&<button onClick={onOpenAnaTutors} className="btn" data-variant="outline" style={{marginTop:6}}>👤 Apri Anagrafica Tutor</button>}
-      {msg.showOpenAv&&<button onClick={onOpenAnaAvvisi} className="btn" data-variant="outline" style={{marginTop:6}}>📋 Apri Anagrafica Avvisi</button>}
-      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent">✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} className="btn" data-variant="outline">➕ No, aggiungi</button></div>}
-      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent">✅ Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} className="btn" data-variant="outline">➕ No, aggiungi</button></div>}
-      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}><select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>{(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}</div>}
-      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select>{!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona un avviso per procedere.</div>:uploadButtons()}</div>}
+      <div style={{maxWidth:"90%",padding:"9px 13px",borderRadius:isAi?"4px 14px 14px 14px":"14px 4px 14px 14px",background:isAi?"var(--bg-sunken)":"var(--accent)",color:isAi?"var(--fg)":"#fff",fontSize:13,lineHeight:1.5,border:isAi?"1px solid var(--border)":"none",display:"flex",alignItems:"center",gap:7}}>
+        {msg.icon&&<Icon name={msg.icon} size={13} color={isAi?"var(--fg-muted)":"rgba(255,255,255,.8)"}/>}
+        {msg.isLoading?<span style={{opacity:.6,display:"flex",alignItems:"center",gap:6}}><Icon name="loader" size={13} color="var(--fg-muted)"/>{msg.text}</span>:<span>{msg.text}</span>}
+      </div>
+      {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label,icon:b.icon});startImport(b.value);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}>{b.icon&&<Icon name={b.icon} size={13} color="var(--accent)"/>}{b.label}</button>)}</div>}
+      {msg.showOpenTutor&&<button onClick={onOpenAnaTutors} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13}/>Apri Anagrafica Tutor</button>}
+      {msg.showOpenAv&&<button onClick={onOpenAnaAvvisi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Avvisi</button>}
+      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}><select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>{(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}</div>}
+      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>{!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona un avviso per procedere.</div>:uploadButtons()}</div>}
       {msg.showUpload&&uploadButtons()}
-      {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center"}}>{loading?"Importazione...":"✓ Conferma tutto"}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline">✕</button></div>}</div>}
-      {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:"var(--radius)",border:"1px solid var(--warning)",background:"var(--warning-soft)",fontSize:11}}><div style={{fontWeight:700,color:"var(--warning)",marginBottom:3}}>⚠️ {a.field}</div><div style={{color:"var(--fg-muted)",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} className="btn" data-variant="accent" data-size="sm">✓ Confermo</button></div>)}</div>}
+      {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center",display:"flex",alignItems:"center",gap:6}}>{loading?<><Icon name="loader" size={13} color="#fff"/>Importazione...</>:<><Icon name="check" size={13} color="#fff"/>Conferma tutto</>}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline"><Icon name="x" size={13}/></button></div>}</div>}
+      {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:"var(--radius)",border:"1px solid var(--warning)",background:"var(--warning-soft)",fontSize:11}}><div style={{fontWeight:700,color:"var(--warning)",marginBottom:3,display:"flex",alignItems:"center",gap:5}}><Icon name="alert" size={12} color="var(--warning)"/>{a.field}</div><div style={{color:"var(--fg-muted)",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="check" size={11} color="#fff"/>Confermo</button></div>)}</div>}
     </div>);}
   const rS={position:"absolute",background:"transparent",zIndex:10};
   return(<div style={{position:"fixed",bottom:0,left:0,width:size.w,zIndex:500,background:"var(--bg-elev)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:size.h,borderRadius:"0 14px 0 0",border:"2px solid var(--brand-navy)",borderBottom:"none",borderLeft:"none"}}>
@@ -1089,7 +1133,10 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
     <div onMouseDown={makeResizeHandler("right")} style={{...rS,top:0,right:-4,bottom:0,width:8,cursor:"ew-resize"}}/>
     <div onMouseDown={makeResizeHandler("corner")} style={{...rS,top:-4,right:-4,width:12,height:12,cursor:"nwse-resize",background:"var(--accent)",borderRadius:"0 4px 0 0",opacity:.6}}/>
     <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",flexDirection:"column",gap:5,flexShrink:0,borderRadius:"0 12px 0 0"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontWeight:800,fontSize:16}}>🤖 {uname}</span><button onClick={onClose} style={{background:"none",border:"none",color:"#fff",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button></div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span style={{fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={15} color="#F5A35A"/>{uname}</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={18} color="#fff"/></button>
+      </div>
       <span style={{fontWeight:600,fontSize:12,opacity:.85,lineHeight:1.35}}>{phrase}</span>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",background:"var(--bg)"}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
@@ -1115,275 +1162,36 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
   const selT=tutors.find(t=>t.id===tutTutor);const selAnaT=anagraficaAv.find(a=>a.id===tutAvId);const selAnaAv=anagraficaAv.find(a=>a.id===avId);
   return(<div className="add-modal-backdrop">
     <div className="add-modal-box">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><span style={{fontWeight:700,fontSize:15,color:"var(--fg)"}}>{isEdit?"✏️ Modifica":"➕ Aggiungi"}</span><button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm">✕</button></div>
-      {!isEdit&&<div className="tab-strip" style={{marginBottom:16,display:"flex"}}><button className={`tab-strip-btn${tab==="tutoraggio"?" active":""}`} onClick={()=>setTab("tutoraggio")} style={{flex:1}}>📌 Tutoraggio</button><button className={`tab-strip-btn${tab==="avviso"?" active":""}`} onClick={()=>setTab("avviso")} style={{flex:1}}>📋 Avviso/Progetto</button></div>}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <span style={{fontWeight:700,fontSize:15,color:"var(--fg)",display:"flex",alignItems:"center",gap:7}}>
+          {isEdit?<Icon name="edit" size={15} color="var(--accent)"/>:<Icon name="plus" size={15} color="var(--accent)"/>}
+          {isEdit?"Modifica slot":"Aggiungi slot"}
+        </span>
+        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={14}/></button>
+      </div>
+      {!isEdit&&<div className="tab-strip" style={{marginBottom:16,display:"flex"}}>
+        <button className={`tab-strip-btn${tab==="tutoraggio"?" active":""}`} onClick={()=>setTab("tutoraggio")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon name="mapPin" size={12}/>Tutoraggio</button>
+        <button className={`tab-strip-btn${tab==="avviso"?" active":""}`} onClick={()=>setTab("avviso")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon name="briefcase" size={12}/>Avviso/Progetto</button>
+      </div>}
       {tab==="tutoraggio"&&(<>
         <label className="label">Tutor</label>
-        {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun tutor. <button onClick={()=>{onClose();onOpenAnaTutors();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun tutor. <button onClick={()=>{onClose();onOpenAnaTutors();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
         :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaTutors();}else setTutTutor(e.target.value);}} className="select" style={{marginBottom:10}}>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
         {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:"var(--radius)",background:hexToRgba(selT.color||"#4f86c6",.1)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"var(--accent)"}}/><span style={{fontSize:12,color:"var(--fg-muted)"}}>Colore identificativo tutor</span></div>}
         <label className="label">Avviso/Progetto</label>
-        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
         :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaAvvisi();}else setTutAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
         {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:hexToRgba(selAnaT.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",.3)}`}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)"}}>{selAnaT.nome}</div><div style={{display:"flex",gap:6,marginTop:4}}>{selAnaT.durataOre&&<span className="badge" data-tone="info">{selAnaT.durataOre}h</span>}{selAnaT.stato&&<span className="badge">{selAnaT.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:16}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
-          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger">🗑️ Elimina</button>}
+          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
-          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent">{isEdit?"Salva":"Aggiungi"}</button></div>
+          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
       {tab==="avviso"&&(<>
         <label className="label">Avviso/Progetto</label>
-        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)"}}>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi →</button></div>
+        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
         :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaAvvisi();}else setAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
-        {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:"var(--radius)",background:hexToRgba(selAnaAv.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",.3)}`}}><div style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{selAnaAv.nome}</div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>{selAnaAv.durataOre&&<span className="badge" data-tone="info">{selAnaAv.durataOre}h da bando</span>}{selAnaAv.stato&&<span className="badge">{selAnaAv.stato}</span>}</div></div>}
-        <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
-        <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
-        {!isEdit&&<p style={{fontSize:11,color:"var(--fg-subtle)",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
-        <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
-          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger">🗑️ Elimina</button>}
-          <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
-          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaAv.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,evData);else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent">{isEdit?"Salva":"Aggiungi"}</button></div>
-        </div>
-      </>)}
-    </div>
-  </div>);
-}
-
-// ── MAIN APP ──────────────────────────────────────────────────────────────
-function App({user}){
-  const[activeScreen,setActiveScreen]=useState("calendar");
-  const[sidebarCollapsed,setSidebarCollapsed]=useState(false);
-  const[theme,setTheme]=useState("light");
-  const[view,setView]=useState("tutoraggio");
-  const[editMode,setEditMode]=useState(false);
-  const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(2);
-  const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
-  const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
-  const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
-  const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
-  const[showMonthPicker,setShowMonthPicker]=useState(false);
-  const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
-  const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
-  const monthPickerRef=useRef();
-
-  const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
-  const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
-  const isCalendar=activeScreen==="calendar";
-
-  useEffect(()=>{document.documentElement.setAttribute("data-theme",theme);},[theme]);
-
-  function pushUndo(snapTE,snapAv){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTE)),avvisi:JSON.parse(JSON.stringify(snapAv))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
-  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
-  async function handleRedo(){if(!redoStack.current.length)return;const snap=redoStack.current[0];redoStack.current=redoStack.current.slice(1);setRedoCount(redoStack.current.length);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);await applySnap(snap);}
-  async function applySnap(snap){tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);await fsSaveAvvisi(snap.avvisi);for(const[tId,ms]of Object.entries(snap.tutEvents))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}
-
-  useEffect(()=>{
-    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
-    db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
-  },[]);
-
-  useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
-  useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
-
-  // Sync activeScreen → view
-  useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
-
-  window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
-  window.__loadDemo=async()=>{const DEMO_PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B"];const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];const t=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:DEMO_PALETTE[i]}));const an=[{id:"av-demo-0",nome:"Avviso 1",codice:"DDG 001/2026",colore:DEMO_PALETTE[1],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},{id:"av-demo-1",nome:"Avviso 2",codice:"DDG 002/2026",colore:DEMO_PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""}];const a=an.map(ana=>({id:ana.id,events:[]}));setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents({});tutEvRef.current={};setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);};
-  window.__clearDb=async()=>{await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);};
-
-  function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
-  function navWeek(dir){setWeekStart(prev=>{const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));if(d<fmon)return fmon;if(d>lmon)return lmon;return d;});}
-  const vdays=getVisibleDays();
-
-  const allTEvs=tutors.flatMap(t=>(tutEvents[t.id]?.[month.key])||[]);
-  const visTEvs=activeTutorIds===null?allTEvs:allTEvs.filter(e=>activeTutorIds.has(e.tutorId));
-  const avNamesInMonth=new Set(allTEvs.map(e=>e.name));
-  const avForBar=anagraficaAv.filter(a=>avNamesInMonth.has(a.nome));
-  const dayTOre={};for(const ev of visTEvs)dayTOre[ev.day]=(dayTOre[ev.day]||0)+ev.ore;
-  const totTOre=visTEvs.reduce((a,e)=>a+e.ore,0);
-  const avById2={};avvisi.forEach(av=>avById2[av.id]=av);
-  const avEvs=anagraficaAv.flatMap(ana=>{const av=avById2[ana.id];if(!av)return[];return av.events.filter(e=>e.month===month.key).map(e=>({...e,avvisoId:ana.id,avvisoName:ana.nome,avColor:ana.colore||"var(--accent)"}));});
-  const avThisMonth=anagraficaAv.filter(a=>{const av=avById2[a.id];return av&&av.events.some(e=>e.month===month.key);});
-  const visAvEvs=avEvs.filter(e=>activeAvvisi.has(e.avvisoId));
-  const totAvOre=visAvEvs.reduce((a,e)=>a+e.ore,0);
-
-  const getTCol=id=>tutors.find(x=>x.id===id)?.color||"var(--accent)";
-  const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
-  function buildTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:canEdit?()=>setModal({type:"edit-tut",ev,monthKey:month.key}):null,_onClick:null});}return b;}
-  function buildOvByDay(){const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
-  function buildAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:canEdit?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});}:null});}return b;}
-  function buildMTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;}
-  function buildMAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
-
-  function handleGridClick(d,e){if(!canEdit)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
-  function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
-  function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
-
-  async function addTutoraggio(ev,monthKey){pushUndo(tutEvRef.current,avRef.current);const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot "${ev.name}" il ${ev.day} ${mk}`);}
-  async function editTutoraggio(evId,updated){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];cur[tid][mk][idx]={...old,...updated};tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"edit_tut",`Modificato slot`);return;}}}}
-  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,avRef.current);const cur=JSON.parse(JSON.stringify(tutEvRef.current));for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot "${ev.name}"`);return;}}}}
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,avRef.current);const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Importati ${events.length} slot`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"add_av",`Aggiunto slot "${name||avId}" il ${day} ${mk}`);}
-  async function editAvviso(avId,evId,evData){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"edit_av",`Modificato slot`);}
-  async function deleteAvviso(avId,evId){pushUndo(tutEvRef.current,avRef.current);const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvvisi(upd);fsLog(user.email,"delete_av",`Eliminato slot`);}
-
-  async function handleSaveTutor(newList,action,tutor){setTutors(newList);setActiveTutorIds(null);await fsSaveTutors(newList);if(action==="add")fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="edit")fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="delete")fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${tutor.cognome} ${tutor.nome}"`);}
-  async function handleSaveAna(newList,action,item){
-    if(action==="edit"){const old=anaRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
-    anaRef.current=newList;setAnagraficaAv(newList);await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);}
-  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
-
-  if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",background:"var(--bg)"}}>⏳ Caricamento...</div>;
-
-  const userInitials=(user?.email||"").slice(0,2).toUpperCase();
-
-  function handleNavClick(id){
-    setActiveScreen(id);
-    if(id==="ai")setShowAi(true);
-    else if(id!=="calendar")setShowAi(false);
-  }
-
-  return(<div className="app-shell">
-    {/* ── SIDEBAR ── */}
-    <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
-      <div className="sidebar-logo">
-        <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
-        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">EHT — A Harmonic Innovation Group Company</span></div>}
-      </div>
-      <nav className="sidebar-nav">
-        {NAV_GROUPS.map(({group,items})=>(
-          <div key={group} className="sidebar-group">
-            {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
-            {items.map(item=>(
-              <button key={item.id} className={`sidebar-item${activeScreen===item.id?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
-                {activeScreen===item.id&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
-                <Icon name={item.icon} size={16} color={activeScreen===item.id?"var(--accent)":"var(--fg-subtle)"}/>
-                {!sidebarCollapsed&&<span style={{color:activeScreen===item.id?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
-              </button>
-            ))}
-          </div>
-        ))}
-      </nav>
-      <div className="sidebar-footer">
-        {!sidebarCollapsed&&(
-          <div className="theme-toggle">
-            <button className={`theme-btn${theme==="light"?" active":""}`} onClick={()=>setTheme("light")}>☀️ Light</button>
-            <button className={`theme-btn${theme==="dark"?" active":""}`} onClick={()=>setTheme("dark")}>🌙 Dark</button>
-          </div>
-        )}
-        <button className="collapse-btn" onClick={()=>setSidebarCollapsed(c=>!c)}>
-          {sidebarCollapsed?"›":"‹ Riduci"}
-        </button>
-      </div>
-    </aside>
-
-    {/* ── MAIN AREA ── */}
-    <div className="main-area">
-      {/* TOPBAR — solo per schermate calendario */}
-      {isCalendar&&(<div className="topbar">
-        {/* Module switcher */}
-        <div className="module-switch">
-          <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
-          <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
-        </div>
-        {/* Month nav */}
-        <div className="month-nav">
-          <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===0?.35:1}}><Icon name="chevLeft" size={14}/></button>
-          <div ref={monthPickerRef} style={{position:"relative"}}>
-            <button onClick={()=>setShowMonthPicker(o=>!o)} className="btn month-btn" data-variant="outline"><Icon name="calendar" size={13} color="var(--accent)"/> {month.label} <Icon name="chevDown" size={12} color="var(--fg-subtle)"/></button>
-            {showMonthPicker&&<MonthPicker monthIdx={monthIdx} onChange={idx=>{setMonthIdx(idx);}} onClose={()=>setShowMonthPicker(false)}/>}
-          </div>
-          <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm" style={{opacity:monthIdx===MONTHS.length-1?.35:1}}><Icon name="chevRight" size={14}/></button>
-        </div>
-        <div style={{flex:1}}/>
-        {/* Search */}
-        <div style={{position:"relative",width:220}}>
-          <Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/>
-          <input className="input" placeholder="Cerca slot, tutor, avviso…" style={{paddingLeft:32,height:32,fontSize:12}}/>
-        </div>
-        {/* Vista Mese/Sett./Giorno */}
-        <div className="tab-strip">
-          <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
-          <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Settimana</button>
-          <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
-        </div>
-        <div className="topbar-divider"/>
-        {/* Actions */}
-        {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}><Icon name="undo" size={15}/></button>}
-        {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}><Icon name="redo" size={15}/></button>}
-        {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} className="btn" data-variant={showAi?"accent":"ghost"} data-size="icon-sm" title="AI Import"><Icon name="sparkles" size={15} color={showAi?"#fff":"var(--accent)"}/></button>}
-        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
-        <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche" style={{position:"relative"}}><Icon name="bell" size={15}/></button>
-        <div className="topbar-divider"/>
-        {!isViewer&&<button onClick={()=>setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;})} className="btn" data-size="sm" style={{background:editMode?"var(--accent)":"var(--bg-sunken)",color:editMode?"#fff":"var(--fg)",border:`1px solid ${editMode?"var(--accent)":"var(--border)"}`}}>
-          <Icon name={editMode?"edit":"eye"} size={13}/>{editMode?"Edit mode":"View mode"}
-        </button>}
-        {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm"><Icon name="plus" size={13}/>Aggiungi</button>}
-        <div className="topbar-divider"/>
-        <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
-      </div>)}
-
-      {/* Non-calendar topbar (minimal) */}
-      {!isCalendar&&(<div className="topbar" style={{justifyContent:"flex-end"}}>
-        <div style={{flex:1}}/>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><span style={{fontSize:11,color:"var(--fg-muted)"}}>{user?.email}</span><span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"var(--fg-subtle)"}}>{ROLE_LABEL[role]||role}</span></div>
-        <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
-      </div>)}
-
-      {/* EDIT MODE BANNER */}
-      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">👁 View Mode — clicca <strong>✏️ Edit Mode</strong> per apportare modifiche.</div>}
-
-      {/* FILTER BAR — solo calendario */}
-      {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
-        <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
-        <div className="filterbar-divider"/>
-        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Tutor</span>
-        {tutors.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"var(--accent)";const hex=col.startsWith("#")?col:"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} className="tutor-chip" style={{border:`1px solid ${active?col:"var(--border)"}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)",opacity:active?1:.5}}><span className="tutor-chip-dot" style={{background:active?col:"var(--bg-sunken)"}}>{t.cognome[0]||""}</span>{t.cognome||t.nome}</button>;})}
-        <div className="filterbar-divider"/>
-        <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
-          <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi avvisi":"Mostra avvisi"}
-        </button>
-        {avForBar.length>0&&<><div className="filterbar-divider"/><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>{avForBar.map(a=>{const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<span key={a.id} className="avviso-chip" style={{background:hexToRgba(hex,.12),border:`1px solid ${hexToRgba(hex,.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>;})}</>}
-      </div>)}
-      {isCalendar&&view==="avviso"&&(<div className="filterbar">
-        <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totAvOre)}</div><div className="ore-label">Ore mese</div></div></div>
-        <div className="filterbar-divider"/>
-        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>
-        {avThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:avThisMonth.map(a=>{const active=activeAvvisi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
-      </div>)}
-
-      {/* SCREEN AREA */}
-      <div className="screen-area">
-        {/* Calendar screens */}
-        {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
-        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
-
-        {/* Other screens */}
-        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
-        {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
-        {activeScreen==="insights"&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key}/>}
-        {activeScreen==="verifica"&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} onNavigate={mk=>{const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar-tut");}}}/>}
-        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser}/>}
-        {activeScreen==="ai"&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",flexDirection:"column",gap:12,background:"var(--bg)"}}><div style={{fontSize:48}}>🤖</div><div style={{fontSize:15,fontWeight:600,color:"var(--fg)"}}>AI Import</div><p style={{fontSize:13,color:"var(--fg-muted)"}}>Attiva Edit Mode dal calendario e usa il pannello AI per importare sessioni.</p><button className="btn" data-variant="accent" onClick={()=>{setActiveScreen("calendar-tut");setEditMode(true);setTimeout(()=>setShowAi(true),100);}}>Vai al calendario →</button></div>}
-      </div>
-
-      {/* Zoom bar (solo calendario) */}
-      {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
-      {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
-    </div>
-
-    {/* AI floating panel */}
-    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
-
-    {/* Add/Edit modal */}
-    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")}/>}
-  </div>);
-}
-
-window.__mountApp=(user)=>{const root=ReactDOM.createRoot(document.getElementById("root"));root.render(<App user={user}/>);};
-</script>
-</body>
-</html>
+        {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:"var(--radius)",background:hexToRgba(selAnaAv.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",.3)}`}}><div style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{selAnaAv.nome}</div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>{selAnaAv.durataOre&&<span className="badge" data-tone="info">{selAnaAv.durataOre}h da bando</span>
