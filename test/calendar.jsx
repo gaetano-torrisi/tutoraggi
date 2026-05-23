@@ -147,12 +147,12 @@ function HelpBot({onClose}){
       <div style={{width:36,height:36,borderRadius:9,background:"rgba(245,163,90,.18)",border:"1px solid rgba(245,163,90,.4)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
         <Icon name="message" size={18} color="#F5A35A"/>
       </div>
-      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>Assistente Guida</div><div style={{fontSize:10.5,color:"rgba(255,255,255,.6)",marginTop:1}}>FAQ · TutorIA</div></div>
+      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13}}>Guida</div><div style={{fontSize:10.5,color:"rgba(255,255,255,.6)",marginTop:1}}>FAQ · TutorIA</div></div>
       <button onClick={onClose} style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:26,height:26,borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
         <Icon name="x" size={14} color="#fff"/>
       </button>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:6,background:"var(--bg)"}}>
+    <div style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:6,background:"var(--bg)",minHeight:0}}>
       {lastAns?(<><div style={{background:"var(--bg-elev)",borderRadius:10,padding:"10px 12px",fontSize:12,color:"var(--fg)",lineHeight:1.6,border:"1px solid var(--border)"}}>{lastAns}</div><button onClick={()=>setLastAns(null)} className="btn" data-variant="outline" data-size="sm" style={{alignSelf:"flex-start",display:"flex",alignItems:"center",gap:6}}><Icon name="arrowLeft" size={12}/>Altre domande</button></>)
       :(<><div style={{fontWeight:600,fontSize:12,color:"var(--fg)",marginBottom:2}}>{current.q}</div>{current.opts.map((opt,i)=>(<button key={i} onClick={()=>handleOpt(opt)} style={{textAlign:"left",padding:"8px 12px",borderRadius:"var(--radius)",border:"1px solid var(--border)",background:"var(--bg-elev)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontWeight:500,display:"flex",alignItems:"center",gap:10}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"} onMouseLeave={e=>e.currentTarget.style.background="var(--bg-elev)"}>
         {opt.icon&&<span style={{width:22,height:22,borderRadius:5,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={opt.icon} size={12} color="var(--accent-strong)"/></span>}
