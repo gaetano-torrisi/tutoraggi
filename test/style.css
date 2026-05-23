@@ -93,7 +93,13 @@
 .module-btn.active { background:var(--bg-elev); color:var(--fg); box-shadow:var(--shadow-xs); }
 .month-nav { display:flex; align-items:center; gap:4px; position:relative; }
 .month-btn { min-width:150px; justify-content:center; gap:6px; }
-.user-avatar { width:32px; height:32px; border-radius:999px; background:linear-gradient(135deg,#F5A35A,#EC7A26); color:#fff; font-weight:700; font-size:11px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-xs); flex-shrink:0; cursor:pointer; }
+.user-avatar { width:32px; height:32px; border-radius:999px; background:linear-gradient(135deg,#F5A35A,#EC7A26); color:#fff; font-weight:700; font-size:11px; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-xs); flex-shrink:0; cursor:pointer; position:relative; }
+.avatar-dropdown { position:absolute; top:calc(100% + 6px); right:0; background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); min-width:180px; z-index:600; overflow:hidden; }
+.avatar-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:10px 14px; border:none; background:transparent; color:var(--fg); font-size:13px; font-weight:500; cursor:pointer; text-align:left; }
+.avatar-dropdown-item:hover { background:var(--bg-hover); }
+.avatar-dropdown-sep { height:1px; background:var(--divider); margin:2px 0; }
+.profile-modal-backdrop { position:fixed; inset:0; background:rgba(10,12,30,.45); z-index:700; display:flex; align-items:center; justify-content:center; }
+.profile-modal-box { background:var(--bg-elev); border-radius:var(--radius-lg); padding:24px; width:420px; box-shadow:var(--shadow-lg); max-height:90vh; overflow-y:auto; border:1px solid var(--border); }
 
 /* ── Filter bar ── */
 .filterbar { background:var(--bg-elev); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:14px; flex-shrink:0; flex-wrap:wrap; }

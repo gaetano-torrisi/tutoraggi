@@ -1,4 +1,35 @@
 /* eslint-disable */
+// ── PROFILE MODAL ─────────────────────────────────────────────────────────
+function ProfileModal({user,onClose}){
+  const[form,setForm]=useState({nome:"",cognome:"",telefono:"",ente:""});
+  const[saving,setSaving]=useState(false);const[saved,setSaved]=useState(false);const[loading,setLoading]=useState(true);
+  useEffect(()=>{db.collection("userProfiles").doc(user.uid).get().then(snap=>{if(snap.exists)setForm({nome:"",cognome:"",telefono:"",ente:"",...snap.data()});setLoading(false);}).catch(()=>setLoading(false));},[]);
+  async function handleSave(){if(!form.nome||!form.cognome)return;setSaving(true);await db.collection("userProfiles").doc(user.uid).set({nome:form.nome,cognome:form.cognome,telefono:form.telefono||"",ente:form.ente||"",email:user.email},{merge:true});setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  return(<div className="profile-modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+    <div className="profile-modal-box">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <span style={{fontWeight:700,fontSize:15,color:"var(--fg)",display:"flex",alignItems:"center",gap:7}}><Icon name="user" size={15} color="var(--accent)"/>Profilo utente</span>
+        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={14}/></button>
+      </div>
+      {loading?<div style={{textAlign:"center",padding:20,color:"var(--fg-subtle)"}}><Icon name="loader" size={16} color="var(--fg-subtle)"/></div>:<>
+        <div style={{marginBottom:6,padding:"8px 12px",borderRadius:"var(--radius)",background:"var(--bg-sunken)",fontSize:12,color:"var(--fg-muted)"}}>{user.email}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12,marginTop:14}}>
+          <div><label className="label">Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div>
+          <div><label className="label">Cognome *</label><input className="input" value={form.cognome} onChange={e=>setForm(f=>({...f,cognome:e.target.value}))}/></div>
+        </div>
+        <div style={{marginBottom:12}}><label className="label">Telefono</label><input className="input" value={form.telefono} onChange={e=>setForm(f=>({...f,telefono:e.target.value}))}/></div>
+        <div style={{marginBottom:18}}><label className="label">Ente / Azienda</label><input className="input" value={form.ente} onChange={e=>setForm(f=>({...f,ente:e.target.value}))}/></div>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
+          <button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
+          <button onClick={handleSave} disabled={saving||!form.nome||!form.cognome} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}>
+            {saving?<><Icon name="loader" size={13} color="#fff"/>Salvataggio...</>:saved?<><Icon name="check" size={13} color="#fff"/>Salvato</>:<><Icon name="check" size={13} color="#fff"/>Salva</>}
+          </button>
+        </div>
+      </>}
+    </div>
+  </div>);
+}
+
 // ── AI PANEL ──────────────────────────────────────────────────────────────
 function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
@@ -139,6 +170,9 @@ function App({user}){
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
+  const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);
+  const avatarRef=useRef();
+  useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
   const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
@@ -290,13 +324,27 @@ function App({user}){
         <div className="topbar-divider"/>
         {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
         <div className="topbar-divider"/>
-        <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
+        <div ref={avatarRef} style={{position:"relative"}}>
+          <div className="user-avatar" title="Account" onClick={()=>setShowAvatarMenu(o=>!o)}>{userInitials}</div>
+          {showAvatarMenu&&<div className="avatar-dropdown">
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
+            <div className="avatar-dropdown-sep"/>
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
+          </div>}
+        </div>
       </div>)}
 
       {!isCalendar&&(<div className="topbar" style={{justifyContent:"flex-end"}}>
         <div style={{flex:1}}/>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><span style={{fontSize:11,color:"var(--fg-muted)"}}>{user?.email}</span><span style={{fontSize:10,fontWeight:700,color:ROLE_COLOR[role]||"var(--fg-subtle)",display:"flex",alignItems:"center",gap:3}}><Icon name={ROLE_ICON[role]||"user"} size={10} color={ROLE_COLOR[role]||"var(--fg-subtle)"}/>{ROLE_LABEL[role]||role}</span></div>
-        <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
+        <div ref={avatarRef} style={{position:"relative"}}>
+          <div className="user-avatar" title="Account" onClick={()=>setShowAvatarMenu(o=>!o)}>{userInitials}</div>
+          {showAvatarMenu&&<div className="avatar-dropdown">
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
+            <div className="avatar-dropdown-sep"/>
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
+          </div>}
+        </div>
       </div>)}
 
       {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner"><Icon name="eye" size={13} color="var(--warning)"/>View Mode — clicca <strong>Edit Mode</strong> per apportare modifiche.</div>}
@@ -335,6 +383,7 @@ function App({user}){
     </div>
 
     {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")}/>}
   </div>);
 }
