@@ -17,8 +17,19 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+<!-- SPLASH -->
+<div id="splash-screen" style="position:fixed;inset:0;background:#1E2248;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;">
+  <img src="assets/eht-logo-white.png" alt="EHT" style="width:160px;object-fit:contain;margin-bottom:8px;"/>
+  <div style="font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.06em;text-transform:uppercase;font-weight:500;text-align:center;margin-bottom:24px;">A HARMONIC INNOVATION GROUP COMPANY</div>
+  <div style="font-size:32px;font-weight:600;color:#fff;letter-spacing:-0.02em;margin-bottom:6px;">TutorIA</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.35);margin-bottom:24px;">Gestionale tutoraggi</div>
+  <div style="width:100px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;position:relative;">
+    <div class="splash-bar-fill"></div>
+  </div>
+</div>
+
 <!-- LOGIN -->
-<div id="login-screen">
+<div id="login-screen" style="display:none;">
   <div id="login-panel-left">
     <div style="position:absolute;top:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(245,163,90,.18) 0%,transparent 60%)"></div>
     <div style="position:absolute;bottom:-100px;left:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(236,122,38,.12) 0%,transparent 60%)"></div>
@@ -88,7 +99,10 @@
   document.getElementById("login-email-btn").onclick=async()=>{showErr("");const email=document.getElementById("login-email").value.trim(),pass=document.getElementById("login-password").value;if(!email||!pass){showErr("Inserisci email e password.");return;}try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/user-not-found"?"Account non trovato.":e.code==="auth/wrong-password"?"Password errata.":e.message);}};
   document.getElementById("register-btn").onclick=async()=>{showErr("");const email=document.getElementById("reg-email").value.trim().toLowerCase(),pass=document.getElementById("reg-password").value,pass2=document.getElementById("reg-password2").value;if(!email||!pass){showErr("Compila tutti i campi.");return;}if(pass.length<6){showErr("Password min. 6 caratteri.");return;}if(pass!==pass2){showErr("Le password non coincidono.");return;}try{const snap=await db.collection("authorizedEmails").doc(email).get();if(!snap.exists){showErr("Email non autorizzata.");return;}await auth.createUserWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/email-already-in-use"?"Account già esistente.":e.message);}};
   function showSaving(){const el=document.getElementById("saving-indicator");el.classList.add("show");clearTimeout(window._st);window._st=setTimeout(()=>el.classList.remove("show"),1500);}
-  auth.onAuthStateChanged(user=>{if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}});
+  let _splashDone=false,_pendingAuth=undefined;
+  function _applyAuth(user){if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}}
+  setTimeout(()=>{const s=document.getElementById("splash-screen");s.style.opacity="0";setTimeout(()=>{s.style.display="none";_splashDone=true;if(_pendingAuth!==undefined)_applyAuth(_pendingAuth);},400);},1500);
+  auth.onAuthStateChanged(user=>{_pendingAuth=user;if(_splashDone)_applyAuth(user);});
 </script>
 
 <script type="text/babel" src="icons.jsx"></script>

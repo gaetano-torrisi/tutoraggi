@@ -1,5 +1,19 @@
 #root { height:100vh; display:flex; flex-direction:column; }
 
+/* ── Splash screen ── */
+@keyframes splashBarMove {
+  0%   { left: -40px; }
+  100% { left: 140px; }
+}
+.splash-bar-fill {
+  position: absolute;
+  top: 0; left: -40px;
+  width: 40px; height: 100%;
+  background: #EC7A26;
+  border-radius: 1px;
+  animation: splashBarMove 1.4s linear infinite;
+}
+
 /* ── Login ── */
 #login-screen { height:100vh; display:flex; background:var(--bg); }
 #login-panel-left {
