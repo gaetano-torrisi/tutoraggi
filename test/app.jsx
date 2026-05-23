@@ -255,6 +255,10 @@ function App({user}){
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
+        {!isViewer&&<div className="tab-strip" style={{marginLeft:0,marginRight:4}}>
+          <button className={`tab-strip-btn${!editMode?" active":""}`} onClick={()=>{setEditMode(false);setShowAi(false);}}>Visualizza</button>
+          <button className={`tab-strip-btn${editMode?" active":""}`} onClick={()=>setEditMode(true)}>Modifica</button>
+        </div>}
         <div className="module-switch">
           <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
           <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
@@ -284,9 +288,6 @@ function App({user}){
         <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
-        {!isViewer&&<button onClick={()=>setEditMode(e=>{const next=!e;if(!next)setShowAi(false);return next;})} className="btn" data-size="sm" style={{background:editMode?"var(--accent)":"var(--bg-sunken)",color:editMode?"#fff":"var(--fg)",border:`1px solid ${editMode?"var(--accent)":"var(--border)"}`,display:"flex",alignItems:"center",gap:6}}>
-          <Icon name={editMode?"edit":"eye"} size={13} color={editMode?"#fff":"var(--fg)"}/>{editMode?"Edit mode":"View mode"}
-        </button>}
         {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
         <div className="topbar-divider"/>
         <div className="user-avatar" title="Esci" onClick={()=>firebase.auth().signOut()}>{userInitials}</div>
