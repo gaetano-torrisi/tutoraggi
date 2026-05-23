@@ -1,3 +1,4 @@
+// Tutoria — icons.jsx aggiornato v2 · restyling UI
 /* eslint-disable */
 /* Lucide-style line icons. Single component, 24×24 viewBox, 1.75 stroke. */
 const ICON_PATHS = {
