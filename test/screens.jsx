@@ -269,10 +269,74 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey}){
   </div>);
 }
 
+// ── CUSTOMIZE PANEL ───────────────────────────────────────────────────────
+const ACCENT_PRESETS=["#EC7A26","#3E6FB8","#2F8F5B","#9B59B6","#C0392B","#16A085","#E67E22","#2980B9"];
+function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
+  const[accentColor,setAccentColorState]=useState(settings.accentColor||"#EC7A26");
+  const[accentInput,setAccentInput]=useState(settings.accentColor||"#EC7A26");
+  const[density,setDensityState]=useState(settings.density||"cozy");
+  const[defaultCalView,setDefaultCalView]=useState(settings.defaultCalView||"day");
+  const[startHour,setStartHour]=useState(settings.startHour||8);
+  const[defaultZoom,setDefaultZoom]=useState(settings.defaultZoom??2);
+  const[saved,setSaved]=useState(false);
+  function applyAccent(color){if(!/^#[0-9A-Fa-f]{6}$/.test(color))return;document.documentElement.style.setProperty("--accent",color);document.documentElement.style.setProperty("--accent-strong",darkenHex(color,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(color,.85));}
+  function setAccent(color){setAccentColorState(color);setAccentInput(color);applyAccent(color);}
+  function setDensity(val){setDensityState(val);document.documentElement.setAttribute("data-density",val);}
+  async function handleSave(){const prefs={accentColor,density,defaultCalView,startHour,defaultZoom,theme};await onSaveSettings(prefs);applyAccent(accentColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  return(<div style={{maxWidth:680}}>
+    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Personalizza</h2>
+    <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:24}}>Aspetto, densità e preferenze calendario.</p>
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Tema</div>
+        <div style={{display:"flex",gap:6,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)",width:"fit-content"}}>
+          <button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
+          <button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
+        </div>
+      </div>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Densità interfaccia</div>
+        <div style={{display:"flex",gap:8}}>
+          {[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"8px 18px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"var(--bg-elev)",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:13,cursor:"pointer"}}>{o.label}</button>)}
+        </div>
+      </div>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Colore accento</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+          {ACCENT_PRESETS.map(c=><button key={c} onClick={()=>setAccent(c)} style={{width:28,height:28,borderRadius:6,background:c,border:accentColor===c?"3px solid var(--fg)":"2px solid transparent",cursor:"pointer",boxSizing:"border-box"}}/>)}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <input type="text" value={accentInput} onChange={e=>{setAccentInput(e.target.value);if(/^#[0-9A-Fa-f]{6}$/.test(e.target.value))setAccent(e.target.value);}} placeholder="#EC7A26" maxLength={7} className="input mono" style={{width:120}}/>
+          <div style={{width:28,height:28,borderRadius:6,background:/^#[0-9A-Fa-f]{6}$/.test(accentInput)?accentInput:"var(--bg-sunken)",border:"1px solid var(--border)"}}/>
+          <span style={{fontSize:11,color:"var(--fg-subtle)"}}>Anteprima live</span>
+        </div>
+      </div>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Vista default calendario</div>
+        <div style={{display:"flex",gap:8}}>
+          {[{v:"month",label:"Mese"},{v:"week",label:"Settimana"},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"8px 16px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"var(--bg-elev)",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:13,cursor:"pointer"}}>{o.label}</button>)}
+        </div>
+      </div>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
+        <div>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Orario inizio calendario</div>
+          <select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>
+        </div>
+        <div>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Zoom default</div>
+          <select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>
+        </div>
+      </div>
+      <button className="btn" data-variant={saved?"accent":"primary"} onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6,width:"fit-content"}}>{saved?<><Icon name="check" size={14} color="#fff"/>Salvato</>:<><Icon name="save" size={14} color="#fff"/>Salva preferenze</>}</button>
+    </div>
+  </div>);
+}
+
 // ── SETTINGS SCREEN ───────────────────────────────────────────────────────
-function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser}){
-  const[section,setSection]=useState("users");
+function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser,theme,setTheme}){
+  const[section,setSection]=useState("personalizza");
   const SUB=[
+    {id:"personalizza",label:"Personalizza",icon:"palette",desc:"Tema, colori, densità e preferenze."},
     isAdmin&&{id:"users",label:"Utenti & Permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
     isSuperAdmin&&{id:"api",label:"API & AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
     isUser&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
@@ -291,6 +355,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
         </button>);})}
       </aside>
       <div style={{flex:1,overflowY:"auto",padding:32,background:"var(--bg)"}}>
+        {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
         {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
         {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv}/>}

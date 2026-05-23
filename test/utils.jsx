@@ -52,6 +52,8 @@ const NAV_GROUPS=[
 ];
 
 // ── UTILS ─────────────────────────────────────────────────────────────────
+function darkenHex(hex,pct){if(!hex||!hex.startsWith("#"))return hex;const r=Math.max(0,Math.round(parseInt(hex.slice(1,3),16)*(1-pct)));const g=Math.max(0,Math.round(parseInt(hex.slice(3,5),16)*(1-pct)));const b=Math.max(0,Math.round(parseInt(hex.slice(5,7),16)*(1-pct)));return`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;}
+function lightenHex(hex,pct){if(!hex||!hex.startsWith("#"))return hex;const r=Math.min(255,Math.round(parseInt(hex.slice(1,3),16)+(255-parseInt(hex.slice(1,3),16))*pct));const g=Math.min(255,Math.round(parseInt(hex.slice(3,5),16)+(255-parseInt(hex.slice(3,5),16))*pct));const b=Math.min(255,Math.round(parseInt(hex.slice(5,7),16)+(255-parseInt(hex.slice(5,7),16))*pct));return`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;}
 function hexToRgba(hex,a){if(!hex||!hex.startsWith("#"))return`rgba(79,134,198,${a})`;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function fmt(h){return`${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
 function fmtDurata(ore){if(!ore||ore<=0)return"";const h=Math.floor(ore),m=Math.round((ore-h)*60);return m===0?`${h}h`:`${h}:${String(m).padStart(2,"0")}`;}

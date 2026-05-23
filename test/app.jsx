@@ -182,7 +182,13 @@ function App({user}){
   async function applySnap(snap){tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);await fsSaveAvvisi(snap.avvisi);for(const[tId,ms]of Object.entries(snap.tutEvents))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);}
 
   useEffect(()=>{
-    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));setLoading(false);});
+    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));
+      if(s.theme)setTheme(s.theme);
+      if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(s.accentColor,.85));}
+      if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
+      if(s.defaultCalView)setCalView(s.defaultCalView);
+      if(s.density)document.documentElement.setAttribute("data-density",s.density);
+      setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
   },[]);
 
@@ -369,7 +375,7 @@ function App({user}){
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
         {activeScreen==="insights"&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key}/>}
         {activeScreen==="verifica"&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} onNavigate={mk=>{const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
-        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser}/>}
+        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
         {activeScreen==="ai"&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",flexDirection:"column",gap:12,background:"var(--bg)"}}><Icon name="sparkles" size={40} color="var(--accent)"/><div style={{fontSize:15,fontWeight:600,color:"var(--fg)"}}>AI Import</div><p style={{fontSize:13,color:"var(--fg-muted)"}}>Attiva Edit Mode dal calendario e usa il pannello AI.</p><button className="btn" data-variant="accent" onClick={()=>{setActiveScreen("calendar");setEditMode(true);setTimeout(()=>setShowAi(true),100);}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="arrowRight" size={13} color="#fff"/>Vai al calendario</button></div>}
       </div>
 
