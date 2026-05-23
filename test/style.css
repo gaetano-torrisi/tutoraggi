@@ -17,7 +17,7 @@
 /* ── Login ── */
 #login-screen { height:100vh; display:flex; background:var(--bg); }
 #login-panel-left {
-  flex:0 0 420px; background:linear-gradient(135deg,var(--brand-navy) 0%,#131736 100%);
+  flex:0 0 40%; background:linear-gradient(135deg,var(--brand-navy) 0%,#131736 100%);
   color:#fff; padding:40px 44px; display:flex; flex-direction:column;
   justify-content:space-between; position:relative; overflow:hidden;
 }
