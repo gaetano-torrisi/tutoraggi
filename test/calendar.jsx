@@ -67,8 +67,8 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
         const avEvs=avByDay?.[d]||[],lA=layoutEvents(avEvs),lOv=layoutEvents(avOvEvs);
         const avPosMap={};lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.avvisoName]={col,numCols};});
         const tLayout=layoutEvents(tEvs);
-        return(<div key={d} style={{width:colW,flexShrink:0,borderRight:"1px solid var(--border)"}}>
-          <div style={{height:60,background:wk?"rgba(155,89,182,.08)":"var(--bg-elev)",borderBottom:"1px solid var(--border)",padding:"6px 10px",display:"flex",flexDirection:"column",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
+        return(<div key={d} style={{width:colW,flexShrink:0,borderRight:"1px solid var(--border-strong)"}}>
+          <div style={{height:60,background:wk?"rgba(155,89,182,.08)":"var(--bg-elev)",borderBottom:"2px solid var(--border-strong)",padding:"6px 10px",display:"flex",flexDirection:"column",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
             <span style={{fontSize:10,color:wk?"var(--fg-muted)":"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",fontWeight:600}}>{getDN(d)}</span>
             <span style={{fontWeight:700,fontSize:17,color:wk?"var(--fg-muted)":"var(--fg)",letterSpacing:"-0.01em"}}>{d}</span>
           </div>
