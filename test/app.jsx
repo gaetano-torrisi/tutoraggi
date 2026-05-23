@@ -33,14 +33,13 @@ function ProfileModal({user,onClose}){
 // ── AI PANEL ──────────────────────────────────────────────────────────────
 function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
-  const[messages,setMessages]=useState([{role:"ai",text:"Cosa vuoi importare?",buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
-  const[size,setSize]=useState({w:Math.min(window.innerWidth*.33,520),h:Math.min(window.innerHeight*.44,400)});
+  const PHRASES=["Cosa importiamo oggi? 🚀","Quale documento analizziamo?","Pronti per l'import!","Carica il file, penso a tutto io."];
+  const phrase=useRef(PHRASES[Math.floor(Math.random()*PHRASES.length)]).current;
+  const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
-  const phrase=useRef(["Cosa importiamo oggi?","Quale documento analizziamo?","Pronti per l'import?","Carica il file e penso a tutto io."][Math.floor(Math.random()*4)]).current;
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-  function makeResizeHandler(dir){return function(e){e.preventDefault();const sx=e.clientX,sy=e.clientY,sw=size.w,sh=size.h;function mv(me){if(dir==="right"||dir==="corner")setSize(s=>({...s,w:Math.max(300,sw+(me.clientX-sx))}));if(dir==="top"||dir==="corner")setSize(s=>({...s,h:Math.max(250,sh-(me.clientY-sy))}));}function up(){document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);};}
   function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
@@ -77,19 +76,12 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
       {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center",display:"flex",alignItems:"center",gap:6}}>{loading?<><Icon name="loader" size={13} color="#fff"/>Importazione...</>:<><Icon name="check" size={13} color="#fff"/>Conferma tutto</>}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline"><Icon name="x" size={13}/></button></div>}</div>}
       {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:"var(--radius)",border:"1px solid var(--warning)",background:"var(--warning-soft)",fontSize:11}}><div style={{fontWeight:700,color:"var(--warning)",marginBottom:3,display:"flex",alignItems:"center",gap:5}}><Icon name="alert" size={12} color="var(--warning)"/>{a.field}</div><div style={{color:"var(--fg-muted)",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="check" size={11} color="#fff"/>Confermo</button></div>)}</div>}
     </div>);}
-  const rS={position:"absolute",background:"transparent",zIndex:10};
-  return(<div style={{position:"fixed",bottom:0,left:0,width:size.w,zIndex:500,background:"var(--bg-elev)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:size.h,borderRadius:"0 14px 0 0",border:"2px solid var(--brand-navy)",borderBottom:"none",borderLeft:"none"}}>
-    <div onMouseDown={makeResizeHandler("top")} style={{...rS,top:-4,left:0,right:20,height:8,cursor:"ns-resize"}}/>
-    <div onMouseDown={makeResizeHandler("right")} style={{...rS,top:0,right:-4,bottom:0,width:8,cursor:"ew-resize"}}/>
-    <div onMouseDown={makeResizeHandler("corner")} style={{...rS,top:-4,right:-4,width:12,height:12,cursor:"nwse-resize",background:"var(--accent)",borderRadius:"0 4px 0 0",opacity:.6}}/>
-    <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",flexDirection:"column",gap:5,flexShrink:0,borderRadius:"0 12px 0 0"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <span style={{fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={15} color="#F5A35A"/>{uname}</span>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={18} color="#fff"/></button>
-      </div>
-      <span style={{fontWeight:600,fontSize:12,opacity:.85,lineHeight:1.35}}>{phrase}</span>
+  return(<div className="sidebar-ai-panel">
+    <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+      <span style={{fontWeight:800,fontSize:15,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={14} color="#F5A35A"/>AI Import</span>
+      <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={16} color="#fff"/></button>
     </div>
-    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",background:"var(--bg)"}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
+    <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",background:"var(--bg)",paddingBottom:16}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
     <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.csv,.doc,.docx,.txt" style={{display:"none"}} onChange={onFile}/>
   </div>);
 }
@@ -254,6 +246,7 @@ function App({user}){
   }
 
   return(<div className="app-shell">
+    <div className="sidebar-container">
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
@@ -286,6 +279,8 @@ function App({user}){
         </button>
       </div>
     </aside>
+    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    </div>
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
@@ -382,7 +377,6 @@ function App({user}){
       {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
     </div>
 
-    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")}/>}
   </div>);

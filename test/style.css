@@ -39,12 +39,14 @@
 .app-shell { display:flex; height:100vh; background:var(--bg); overflow:hidden; }
 
 /* ── Sidebar ── */
+.sidebar-container { display:flex; flex-direction:row; flex-shrink:0; transition:width .2s ease; overflow:hidden; }
 .sidebar {
   width:248px; flex-shrink:0; background:var(--bg-elev);
   border-right:1px solid var(--border); display:flex; flex-direction:column;
   transition:width .2s ease; overflow:hidden;
 }
 .sidebar.collapsed { width:64px; }
+.sidebar-ai-panel { width:320px; flex-shrink:0; background:var(--bg-elev); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; overflow:hidden; }
 .sidebar-logo {
   height:64px; padding:0 16px; display:flex; align-items:center; gap:10px;
   border-bottom:1px solid var(--border); flex-shrink:0;
