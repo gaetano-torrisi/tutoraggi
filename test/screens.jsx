@@ -41,81 +41,83 @@ function VerificaScreen({errors,onNavigate}){
 
 // ── ANAGRAFICA TUTOR SCREEN ───────────────────────────────────────────────
 function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
-  const[q,setQ]=useState("");const[drawer,setDrawer]=useState(null);const[saving,setSaving]=useState(false);
-  const filtered=[...tutors].filter(t=>`${t.nome} ${t.cognome} ${t.cf||""} ${t.azienda||""}`.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.cognome.localeCompare(b.cognome));
+  const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
   function getTutOre(tId){let o=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)o+=(ev.ore||0);return o;}
   function getTutSlots(tId){let s=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))s+=evs.length;return s;}
-  function getTutAvvisi(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)n.add(ev.name);return n.size;}
-  async function saveDrawer(){
-    if(!drawer?.form)return;setSaving(true);
-    let newList;if(drawer.mode==="new")newList=[...tutors,{...drawer.form,id:`tutor-${Date.now()}`}];else newList=tutors.map(t=>t.id===drawer.form.id?drawer.form:t);
-    await onSaveTutor(newList,drawer.mode==="new"?"add":"edit",drawer.form);
-    setDrawer(null);setSaving(false);
-  }
-  async function deleteFromDrawer(){
-    if(!drawer?.form||!confirm(`Eliminare "${drawer.form.cognome} ${drawer.form.nome}"?`))return;
-    const newList=tutors.filter(t=>t.id!==drawer.form.id);
-    await onSaveTutor(newList,"delete",drawer.form);setDrawer(null);
-  }
-  const usedColors=tutors.filter(t=>!drawer||t.id!==drawer.form?.id).map(t=>t.color).filter(Boolean);
-  const totalOre=tutors.reduce((s,t)=>s+getTutOre(t.id),0);
-  const aziende=new Set(tutors.map(t=>t.azienda).filter(Boolean));
+  function getTutAvvisiSet(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)n.add(ev.name);return n;}
+  const avOreByName={};anagraficaAv.forEach(a=>{let t=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===a.nome)t+=ev.ore||0;avOreByName[a.nome]=t;});
+  const filtered=[...tutors].filter(t=>`${t.nome} ${t.cognome} ${t.cf||""} ${t.azienda||""}`.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.cognome.localeCompare(b.cognome));
+  useEffect(()=>{if(tutors.length>0&&!selected)setSelected(tutors[0]);},[tutors]);
+  function startEdit(){setForm({...selected});setEditing(true);}
+  async function saveEdit(){if(!form.nome||!form.cognome)return;setSaving(true);const newList=tutors.map(t=>t.id===form.id?form:t);await onSaveTutor(newList,"edit",form);setEditing(false);setSelected(form);setSaving(false);}
+  async function addNew(){const usedColors=tutors.map(t=>t.color).filter(Boolean);const freeColor=PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0];const newItem={id:`tutor-${Date.now()}`,nome:"Nuovo",cognome:"Tutor",cf:"",azienda:"",color:freeColor};const newList=[...tutors,newItem];await onSaveTutor(newList,"add",newItem);setSelected(newItem);setForm({...newItem});setEditing(true);}
+  async function deleteSelected(){if(!selected||!confirm(`Eliminare "${selected.cognome} ${selected.nome}"?`))return;const newList=tutors.filter(t=>t.id!==selected.id);await onSaveTutor(newList,"delete",selected);setSelected(newList[0]||null);}
+  const usedColors=tutors.filter(t=>t.id!==selected?.id).map(t=>t.color).filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
       <div><div className="page-breadcrumb">Anagrafiche · {tutors.length} tutor registrati</div><h1 className="page-title">Tutor</h1><p className="page-desc">Gestisci l'elenco dei tutor del tuo ente. Ogni tutor ha un colore univoco usato in tutta l'app.</p></div>
-      {canEdit&&<div style={{display:"flex",gap:8}}><button className="btn" data-variant="accent" onClick={()=>setDrawer({mode:"new",form:{id:"",nome:"",cognome:"",cf:"",azienda:"",color:PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0]}})} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={14} color="#fff"/>Nuovo tutor</button></div>}
+      {canEdit&&<button className="btn" data-variant="accent" onClick={addNew} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={14} color="#fff"/>Nuovo tutor</button>}
     </div>
-    <div style={{padding:"16px 32px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,borderBottom:"1px solid var(--border)",background:"var(--bg-elev)"}}>
-      {[{label:"Tutor attivi",value:tutors.length,icon:"user"},{label:"Ore totali",value:fmtOreMin(totalOre),icon:"clock"},{label:"Slot totali",value:tutors.reduce((s,t)=>s+getTutSlots(t.id),0),icon:"mapPin"},{label:"Aziende",value:aziende.size,icon:"building"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon"><Icon name={k.icon} size={16} color="var(--accent)"/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value">{k.value}</div></div></div>)}
-    </div>
-    <div style={{padding:"12px 32px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--border)",background:"var(--bg-elev)"}}>
-      <div style={{position:"relative",width:320}}><Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/><input className="input" placeholder="Cerca per nome, cognome, CF, azienda…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
-    </div>
-    <div style={{flex:1,overflow:"auto",padding:"0 32px 32px",background:"var(--bg)"}}>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",marginTop:18,overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
-        <table className="data-table">
-          <thead><tr><th style={{width:40}}></th><th>Tutor</th><th>Codice Fiscale</th><th>Azienda</th><th style={{textAlign:"right"}}>Slot</th><th style={{textAlign:"right"}}>Ore</th><th style={{textAlign:"right"}}>Avvisi</th>{canEdit&&<th style={{width:40}}></th>}</tr></thead>
-          <tbody>{filtered.map(t=>{const ore=getTutOre(t.id),slots=getTutSlots(t.id),avvisiN=getTutAvvisi(t.id);return(<tr key={t.id}>
-            <td><div style={{width:32,height:32,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div></td>
-            <td><div style={{fontWeight:600,color:"var(--fg)"}}>{t.cognome} {t.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)",display:"flex",alignItems:"center",gap:5,marginTop:2}}><span style={{width:8,height:8,borderRadius:2,background:t.color||"var(--accent)"}}/><span style={{fontFamily:'"JetBrains Mono",monospace'}}>{(t.color||"").toLowerCase()}</span></div></td>
-            <td><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,color:"var(--fg-muted)"}}>{t.cf||"—"}</span></td>
-            <td>{t.azienda||"—"}</td>
-            <td style={{textAlign:"right",fontFamily:'"JetBrains Mono",monospace',fontWeight:600}}>{slots}</td>
-            <td style={{textAlign:"right",fontFamily:'"JetBrains Mono",monospace',fontWeight:600}}>{fmtOreMin(ore)}</td>
-            <td style={{textAlign:"right"}}><span className="badge" data-tone="accent">{avvisiN}</span></td>
-            {canEdit&&<td><button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer({mode:"edit",form:{...t}})}><Icon name="edit" size={14} color="var(--fg-muted)"/></button></td>}
-          </tr>);})}
-          {filtered.length===0&&<tr><td colSpan={canEdit?8:7} style={{textAlign:"center",padding:40,color:"var(--fg-subtle)"}}>Nessun tutor trovato{q?` per "${q}"`:""}</td></tr>}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {drawer&&(<div className="drawer-overlay">
-      <div onClick={()=>setDrawer(null)} className="drawer-backdrop"/>
-      <div className="drawer">
-        <div className="drawer-header">
-          <div><div style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:2}}>{drawer.mode==="new"?"Nuovo":"Modifica"}</div><h2 style={{fontSize:18,fontWeight:700,color:"var(--fg)",letterSpacing:"-0.01em"}}>{drawer.mode==="new"?"Aggiungi tutor":`${drawer.form.cognome} ${drawer.form.nome}`}</h2></div>
-          <button className="btn" data-variant="ghost" data-size="icon-sm" onClick={()=>setDrawer(null)}><Icon name="x" size={14}/></button>
+    <div className="list-detail" style={{flex:1,minHeight:0}}>
+      <div className="list-pane">
+        <div className="list-pane-toolbar">
+          <div style={{position:"relative"}}><Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/><input className="input" placeholder="Cerca per nome, cognome, azienda…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:32}}/></div>
         </div>
-        <div className="drawer-body">
-          {drawer.mode==="edit"&&<div style={{padding:14,background:"var(--bg-sunken)",borderRadius:10,marginBottom:20,display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:48,height:48,borderRadius:999,background:drawer.form.color||"var(--accent)",color:"#fff",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{(drawer.form.cognome[0]||"")+(drawer.form.nome[0]||"")}</div>
-            <div><div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:18,fontWeight:700,color:"var(--fg)"}}>{fmtOreMin(getTutOre(drawer.form.id))}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{getTutSlots(drawer.form.id)} slot · {getTutAvvisi(drawer.form.id)} avvisi</div></div>
-          </div>}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-            <div><label className="label">Nome</label><input className="input" value={drawer.form.nome} onChange={e=>setDrawer(d=>({...d,form:{...d.form,nome:e.target.value}}))}/></div>
-            <div><label className="label">Cognome</label><input className="input" value={drawer.form.cognome} onChange={e=>setDrawer(d=>({...d,form:{...d.form,cognome:e.target.value}}))}/></div>
+        <div className="list-pane-body">
+          {filtered.map(t=>{const isSel=selected?.id===t.id;const ore=getTutOre(t.id);const avvN=getTutAvvisiSet(t.id).size;const durataMax=anagraficaAv.filter(a=>[...getTutAvvisiSet(t.id)].includes(a.nome)).reduce((s,a)=>s+(a.durataOre||0),0);const pct=durataMax?Math.round(ore/durataMax*100):0;return(<button key={t.id} className={`list-item${isSel?" active":""}`} onClick={()=>{setSelected(t);setEditing(false);}}>
+            {isSel&&<span style={{position:"absolute",left:0,top:12,bottom:12,width:3,background:t.color||"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+              <div style={{width:36,height:36,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:600,fontSize:13.5,color:"var(--fg)"}}>{t.cognome} {t.nome}</div>
+                <div style={{fontSize:11,color:"var(--fg-subtle)"}}>{t.azienda||"—"}</div>
+              </div>
+              <span style={{fontFamily:'"JetBrains Mono",monospace',fontWeight:700,fontSize:12,color:"var(--fg)"}}>{fmtOreMin(ore)}</span>
+            </div>
+            {durataMax>0&&<div className="progress-bar-track" style={{height:3}}><div className="progress-bar-fill" style={{width:`${Math.min(100,pct)}%`,background:pct>100?"var(--danger)":t.color||"var(--accent)"}}/></div>}
+          </button>);})}
+          {filtered.length===0&&<div style={{textAlign:"center",padding:40,color:"var(--fg-subtle)",fontSize:13}}>Nessun tutor trovato</div>}
+        </div>
+      </div>
+      {selected?(<div className="detail-pane">
+        {!editing?(<>
+          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:24,gap:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:56,height:56,borderRadius:999,background:selected.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(selected.cognome[0]||"")+(selected.nome[0]||"")}</div>
+              <div><h2 style={{fontSize:24,fontWeight:700,letterSpacing:"-0.02em",color:"var(--fg)",marginBottom:2}}>{selected.cognome} {selected.nome}</h2><div style={{fontSize:12,color:"var(--fg-muted)"}}>{selected.azienda||"Nessuna azienda"}</div></div>
+            </div>
+            {canEdit&&<div style={{display:"flex",gap:8,flexShrink:0}}>
+              <button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>
+              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>
+            </div>}
           </div>
-          <div style={{marginBottom:14}}><label className="label">Codice Fiscale</label><input className="input mono" value={drawer.form.cf||""} onChange={e=>setDrawer(d=>({...d,form:{...d.form,cf:e.target.value.toUpperCase()}}))} maxLength={16}/></div>
-          <div style={{marginBottom:18}}><label className="label">Azienda / Ente</label><input className="input" value={drawer.form.azienda||""} onChange={e=>setDrawer(d=>({...d,form:{...d.form,azienda:e.target.value}}))}/></div>
-          <div style={{marginBottom:8}}><label className="label">Colore identificativo</label><ColorPicker value={drawer.form.color||PALETTE[0]} onChange={c=>setDrawer(d=>({...d,form:{...d.form,color:c}}))} usedColors={usedColors}/><p style={{fontSize:11,color:"var(--fg-subtle)",marginTop:4}}>Il colore viene usato per identificare il tutor sul calendario.</p></div>
-        </div>
-        <div className="drawer-footer">
-          {drawer.mode==="edit"?<button className="btn" data-variant="danger" onClick={deleteFromDrawer} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>:<div/>}
-          <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setDrawer(null)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveDrawer} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>{drawer.mode==="new"?"Crea tutor":"Salva"}</>}</button></div>
-        </div>
-      </div>
-    </div>)}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
+            {[{label:"Slot totali",value:getTutSlots(selected.id),icon:"mapPin"},{label:"Ore totali",value:fmtOreMin(getTutOre(selected.id)),icon:"clock"},{label:"Avvisi",value:getTutAvvisiSet(selected.id).size,icon:"briefcase"},{label:"Azienda",value:selected.azienda||"—",icon:"building"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon"><Icon name={k.icon} size={16} color="var(--accent)"/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value" style={{fontSize:k.label==="Azienda"?13:20,color:"var(--fg)"}}>{k.value}</div></div></div>)}
+          </div>
+          <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,boxShadow:"var(--shadow-xs)"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Dettagli</div>
+            <dl style={{display:"grid",gridTemplateColumns:"160px 1fr",gap:"10px 16px",margin:0,fontSize:13}}>
+              <dt style={{color:"var(--fg-subtle)"}}>Codice Fiscale</dt><dd style={{margin:0,fontFamily:'"JetBrains Mono",monospace',color:"var(--fg)"}}>{selected.cf||"—"}</dd>
+              <dt style={{color:"var(--fg-subtle)"}}>Colore</dt><dd style={{margin:0,display:"flex",alignItems:"center",gap:8}}><span style={{width:16,height:16,borderRadius:4,background:selected.color||"var(--accent)"}}/><span style={{fontFamily:'"JetBrains Mono",monospace',color:"var(--fg-muted)",fontSize:12}}>{(selected.color||"").toLowerCase()}</span></dd>
+              <dt style={{color:"var(--fg-subtle)"}}>Avvisi seguiti</dt><dd style={{margin:0,color:"var(--fg)"}}>{[...getTutAvvisiSet(selected.id)].join(", ")||"—"}</dd>
+            </dl>
+          </div>
+        </>):(<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:24,boxShadow:"var(--shadow-xs)"}}>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:16}}>Modifica tutor</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <div><label className="label">Nome *</label><input className="input" value={form.nome||""} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div>
+            <div><label className="label">Cognome *</label><input className="input" value={form.cognome||""} onChange={e=>setForm(f=>({...f,cognome:e.target.value}))}/></div>
+          </div>
+          <div style={{marginBottom:14}}><label className="label">Codice Fiscale</label><input className="input mono" value={form.cf||""} onChange={e=>setForm(f=>({...f,cf:e.target.value.toUpperCase()}))} maxLength={16}/></div>
+          <div style={{marginBottom:18}}><label className="label">Azienda / Ente</label><input className="input" value={form.azienda||""} onChange={e=>setForm(f=>({...f,azienda:e.target.value}))}/></div>
+          <div style={{marginBottom:18}}><label className="label">Colore identificativo</label><ColorPicker value={form.color||PALETTE[0]} onChange={c=>setForm(f=>({...f,color:c}))} usedColors={usedColors}/></div>
+          <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid var(--divider)",paddingTop:14}}>
+            <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina tutor</button>
+            <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setEditing(false)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>Salva modifiche</>}</button></div>
+          </div>
+        </div>)}
+      </div>):(<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-subtle)"}}>Seleziona un tutor a sinistra</div>)}
+    </div>
   </div>);
 }
 
