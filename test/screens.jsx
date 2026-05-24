@@ -397,18 +397,21 @@ function getTutOreAnnoPerAv(tId,avName,tutEvents){let t=0;const td=tutEvents[tId
 // ── CUSTOMIZE PANEL ───────────────────────────────────────────────────────
 function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   const[logoB64,setLogoB64]=useState(settings.logoBase64||"");
+  const[logoWhiteB64,setLogoWhiteB64]=useState(settings.logoWhiteBase64||"");
   const[appSubtitle,setAppSubtitle]=useState(settings.appSubtitle||"");
   const[primaryColor,setPrimaryState]=useState(settings.brandNavy||"#1E2248");
   const[primaryInput,setPrimaryInput]=useState(settings.brandNavy||"#1E2248");
   const[accentColor,setAccentState]=useState(settings.accentColor||"#EC7A26");
   const[accentInput,setAccentInput]=useState(settings.accentColor||"#EC7A26");
-  const[bgColor,setBgState]=useState(settings.bgColor||"");
-  const[bgInput,setBgInput]=useState(settings.bgColor||"");
+  const[bgColor,setBgState]=useState(settings.bgColor||"#F8F7F4");
+  const[bgInput,setBgInput]=useState(settings.bgColor||"#F8F7F4");
   const[density,setDensityState]=useState(settings.density||"cozy");
   const[defaultCalView,setDefaultCalView]=useState(settings.defaultCalView||"day");
   const[startHour,setStartHour]=useState(settings.startHour||8);
   const[defaultZoom,setDefaultZoom]=useState(settings.defaultZoom??2);
   const[saved,setSaved]=useState(false);
+  const logoFileRef=useRef();const logoWhiteFileRef=useRef();
+  const primaryColorRef=useRef();const accentColorRef=useRef();const bgColorRef=useRef();
   function applyAccent(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--accent",c);document.documentElement.style.setProperty("--accent-strong",darkenHex(c,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(c,.85));}
   function applyPrimary(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--brand-navy",c);}
   function applyBg(c){if(c&&/^#[0-9A-Fa-f]{6}$/.test(c))document.documentElement.style.setProperty("--bg",c);}
@@ -417,83 +420,86 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   function setBg(c){setBgState(c);setBgInput(c);applyBg(c);}
   function setDensity(v){setDensityState(v);document.documentElement.setAttribute("data-density",v);}
   function handleLogoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setLogoB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
+  function handleLogoWhiteFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setLogoWhiteB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
   async function handleSave(){
-    const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,startHour,defaultZoom,theme,logoBase64:logoB64,appSubtitle};
+    const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,startHour,defaultZoom,theme,logoBase64:logoB64,logoWhiteBase64:logoWhiteB64,appSubtitle};
     await onSaveSettings(prefs);applyAccent(accentColor);applyPrimary(primaryColor);if(bgColor)applyBg(bgColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);
   }
-  const colorRows=[
-    {label:"Primario (Navy)",val:primaryColor,input:primaryInput,setInput:setPrimaryInput,set:setPrimary,default:"#1E2248"},
-    {label:"Secondario / Accento",val:accentColor,input:accentInput,setInput:setAccentInput,set:setAccent,default:"#EC7A26"},
-    {label:"Sfondo",val:bgColor,input:bgInput,setInput:setBgInput,set:setBg,default:""},
+  const isHex=v=>/^#[0-9A-Fa-f]{6}$/.test(v);
+  const cardStyle={background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:24,boxShadow:"var(--shadow-xs)",marginBottom:20};
+  const hdrStyle={display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16};
+  const lblStyle={fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"};
+  const hintStyle={fontSize:11,color:"var(--fg-subtle)"};
+  const colorCols=[
+    {label:"PRIMARIO",val:primaryColor,input:primaryInput,setInput:setPrimaryInput,set:setPrimary,ref:primaryColorRef,default:"#1E2248"},
+    {label:"ACCENTO",val:accentColor,input:accentInput,setInput:setAccentInput,set:setAccent,ref:accentColorRef,default:"#EC7A26"},
+    {label:"SFONDO",val:bgColor,input:bgInput,setInput:setBgInput,set:setBg,ref:bgColorRef,default:"#F8F7F4"},
   ];
-  return(<div style={{maxWidth:680}}>
-    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Personalizza</h2>
-    <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:24}}>Logo, colori, densità e preferenze calendario.</p>
-    <div style={{display:"flex",flexDirection:"column",gap:20}}>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Logo</div>
-        <div style={{display:"flex",gap:12,marginBottom:14}}>
-          {[{bg:"#F5F4EF",label:"Chiaro"},{bg:"#1A1F4D",label:"Scuro"}].map(({bg,label})=>(
-            <div key={bg} style={{flex:1,background:bg,borderRadius:"var(--radius)",padding:16,display:"flex",flexDirection:"column",alignItems:"center",gap:8,border:"1px solid var(--border)"}}>
-              {logoB64?<img src={logoB64} alt="Logo" style={{width:80,height:40,objectFit:"contain"}}/>:<img src={bg==="#F5F4EF"?"assets/appmark-color.png":"assets/appmark-white.png"} alt="Logo" style={{width:40,height:40,objectFit:"contain"}}/>}
-              <span style={{fontSize:10,color:bg==="#F5F4EF"?"#888":"rgba(255,255,255,.5)"}}>{label}</span>
-            </div>
-          ))}
+  const prefRows=[
+    {label:"Tema",desc:"Chiaro o scuro in tutta l'app",content:<div style={{display:"flex",gap:4,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)"}}><button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Chiaro</button><button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Scuro</button></div>},
+    {label:"Densità",desc:"Quantità di contenuto visibile",content:<div style={{display:"flex",gap:6}}>{[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"5px 12px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"transparent",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}</div>},
+    {label:"Vista default",desc:"Vista all'apertura dell'app",content:<div style={{display:"flex",gap:6}}>{[{v:"month",label:"Mese"},{v:"week",label:"Sett."},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"5px 10px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"transparent",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.v==="month"?"Mese":o.v==="week"?"Sett.":"Giorno"}</button>)}</div>},
+    {label:"Orario inizio",desc:"Prima ora visibile nel calendario",content:<select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))} style={{width:100}}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>},
+    {label:"Zoom default",desc:"Livello di zoom all'apertura",content:<select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))} style={{width:100}}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>},
+  ];
+  return(<div style={{maxWidth:720}}>
+    {/* Card 1: LOGO */}
+    <div style={cardStyle}>
+      <div style={hdrStyle}><span style={lblStyle}>LOGO</span><span style={hintStyle}>PNG, SVG · max 2 MB · sfondo trasparente</span></div>
+      <div style={{display:"flex",gap:16,marginBottom:16}}>
+        <div style={{flex:1,background:"#F1EFE8",borderRadius:"var(--radius)",padding:24,display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid var(--border)"}}>
+          <img src={logoB64||"assets/appmark-color.png"} alt="Logo chiaro" style={{height:48,objectFit:"contain"}}/>
         </div>
-        <div style={{display:"flex",gap:8,marginBottom:14}}>
-          <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13}/>Carica logo<input type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoFile}/></label>
-          {logoB64&&<button className="btn" data-variant="ghost" onClick={()=>setLogoB64("")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="x" size={13}/>Reset</button>}
+        <div style={{flex:1,background:"var(--brand-navy)",borderRadius:"var(--radius)",padding:24,display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid var(--border)"}}>
+          <img src={logoWhiteB64||"assets/appmark-white.png"} alt="Logo scuro" style={{height:48,objectFit:"contain"}}/>
         </div>
-        <div><label className="label">Sottotitolo app (login)</label><input className="input" value={appSubtitle} onChange={e=>setAppSubtitle(e.target.value)} placeholder="EHT — A Harmonic Innovation Group Company"/></div>
+        <div style={{flex:1,paddingLeft:4,display:"flex",flexDirection:"column",justifyContent:"center",gap:8}}>
+          <p style={{fontSize:12,color:"var(--fg-muted)",marginBottom:4,lineHeight:1.5}}>Carica il logo per sfondo chiaro e scuro.</p>
+          <button className="btn" data-variant="accent" onClick={()=>logoFileRef.current.click()} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13} color="#fff"/>Logo chiaro</button>
+          <button className="btn" data-variant="outline" onClick={()=>logoWhiteFileRef.current.click()} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13}/>Logo scuro</button>
+          {(logoB64||logoWhiteB64)&&<button className="btn" data-variant="ghost" onClick={()=>{setLogoB64("");setLogoWhiteB64("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="rotateCcw" size={13}/>Reset</button>}
+          <input ref={logoFileRef} type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoFile}/>
+          <input ref={logoWhiteFileRef} type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoWhiteFile}/>
+        </div>
       </div>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Colori</div>
-        {colorRows.map(c=>(
-          <div key={c.label} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-            <input type="color" value={/^#[0-9A-Fa-f]{6}$/.test(c.val)?c.val:"#cccccc"} onChange={e=>c.set(e.target.value)} style={{width:40,height:40,borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",padding:2}}/>
-            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:4}}>{c.label}</div>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <input className="input mono" value={c.input} onChange={e=>{c.setInput(e.target.value);if(/^#[0-9A-Fa-f]{6}$/.test(e.target.value))c.set(e.target.value);}} placeholder={c.default||"#ffffff"} maxLength={7} style={{width:120,fontSize:12}}/>
-                {c.input&&!/^#[0-9A-Fa-f]{6}$/.test(c.input)&&<span style={{fontSize:10,color:"var(--danger)"}}>Formato non valido</span>}
-              </div>
+      <div><label className="label">Sottotitolo app</label><input className="input" value={appSubtitle} onChange={e=>setAppSubtitle(e.target.value)} placeholder="EHT · Harmonic Innovation Group"/><p style={{fontSize:11,color:"var(--fg-subtle)",marginTop:4}}>Appare nella pagina di login sotto il nome dell'app.</p></div>
+    </div>
+    {/* Card 2: COLORI */}
+    <div style={cardStyle}>
+      <div style={hdrStyle}><span style={lblStyle}>COLORI</span><span style={hintStyle}>I tre colori brand applicati in tutta l'interfaccia</span></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:16}}>
+        {colorCols.map(c=>(
+          <div key={c.label}>
+            <div onClick={()=>c.ref.current&&c.ref.current.click()} style={{height:80,borderRadius:"var(--radius-md)",background:isHex(c.val)?c.val:"var(--bg-sunken)",border:"1px solid var(--border)",cursor:"pointer",marginBottom:8}}/>
+            <input ref={c.ref} type="color" value={isHex(c.val)?c.val:"#cccccc"} onChange={e=>c.set(e.target.value)} style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:10,fontWeight:600,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".04em"}}>{c.label}</span>
+              <span style={{fontSize:10,color:"var(--fg-subtle)"}}>HEX</span>
             </div>
+            <input className="input mono" value={c.input} onChange={e=>{c.setInput(e.target.value);if(isHex(e.target.value))c.set(e.target.value);}} maxLength={7} style={{fontSize:12,textAlign:"center"}}/>
           </div>
         ))}
-        <div style={{display:"flex",gap:8,marginTop:8,padding:"8px 12px",borderRadius:"var(--radius)",background:"var(--bg-sunken)",border:"1px solid var(--border)",flexWrap:"wrap",alignItems:"center"}}>
-          <button className="btn" data-variant="primary" style={{fontSize:11}}>Pulsante primario</button>
-          <button className="btn" data-variant="accent" style={{fontSize:11}}>Pulsante secondario</button>
-          <span className="badge" data-tone="accent" style={{alignSelf:"center"}}>Badge</span>
-          <span className="badge" style={{alignSelf:"center",background:"var(--brand-navy)",color:"#fff",border:"none"}}>Navy</span>
-        </div>
       </div>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Preferenze</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Tema</div>
-            <div style={{display:"flex",gap:6,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)",width:"fit-content"}}>
-              <button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
-              <button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
-            </div>
-          </div>
-          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Densità</div>
-            <div style={{display:"flex",gap:6}}>
-              {[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"6px 14px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"var(--bg-elev)",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}
-            </div>
-          </div>
-          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Vista default</div>
-            <div style={{display:"flex",gap:6}}>
-              {[{v:"month",label:"Mese"},{v:"week",label:"Sett."},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"6px 12px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"var(--bg-elev)",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}
-            </div>
-          </div>
-          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Orario inizio</div>
-            <select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>
-          </div>
-          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Zoom default</div>
-            <select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>
-          </div>
-        </div>
+      <div style={{background:"var(--bg-sunken)",borderRadius:"var(--radius)",padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        <span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginRight:4}}>ANTEPRIMA</span>
+        <button className="btn" style={{background:isHex(primaryColor)?primaryColor:"var(--brand-navy)",color:"#fff",border:"none",fontSize:12,padding:"4px 12px",cursor:"default"}}>Pulsante primario</button>
+        <button className="btn" style={{background:isHex(accentColor)?accentColor:"var(--accent)",color:"#fff",border:"none",fontSize:12,padding:"4px 12px",cursor:"default"}}>Pulsante secondario</button>
+        <span style={{display:"inline-flex",alignItems:"center",padding:"2px 8px",borderRadius:100,border:`1px solid ${isHex(accentColor)?accentColor:"var(--accent)"}`,color:isHex(accentColor)?accentColor:"var(--accent)",fontSize:11,fontWeight:600}}>Badge</span>
+        <span style={{display:"inline-flex",alignItems:"center",padding:"2px 8px",borderRadius:100,background:isHex(primaryColor)?primaryColor:"var(--brand-navy)",color:"#fff",fontSize:11,fontWeight:600}}>Badge Navy</span>
       </div>
-      <button className="btn" data-variant={saved?"accent":"primary"} onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6,width:"fit-content"}}>{saved?<><Icon name="check" size={14} color="#fff"/>Salvato</>:<><Icon name="save" size={14} color="#fff"/>Salva preferenze</>}</button>
+    </div>
+    {/* Card 3: PREFERENZE */}
+    <div style={cardStyle}>
+      <div style={hdrStyle}><span style={lblStyle}>PREFERENZE</span></div>
+      {prefRows.map((row,i,arr)=>(
+        <div key={row.label} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:i<arr.length-1?"1px solid var(--divider)":"none"}}>
+          <div><div style={{fontSize:13,fontWeight:600,color:"var(--fg)"}}>{row.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{row.desc}</div></div>
+          {row.content}
+        </div>
+      ))}
+      <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
+        <button className="btn" data-variant="accent" onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6}}>{saved?<><Icon name="check" size={14} color="#fff"/>Salvato</>:<><Icon name="save" size={14} color="#fff"/>Salva preferenze</>}</button>
+      </div>
     </div>
   </div>);
 }
@@ -517,7 +523,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
           <div style={{width:32,height:32,borderRadius:8,background:active?"var(--accent-soft)":"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <Icon name={s.icon} size={15} color={active?"var(--accent-strong)":"var(--fg-muted)"}/>
           </div>
-          <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:active?700:600,color:"var(--fg)"}}>{s.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.desc}</div></div>
+          <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:"var(--fg)"}}>{s.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.desc}</div></div>
         </button>);})}
       </aside>
       <div style={{flex:1,overflowY:"auto",padding:32,background:"var(--bg)"}}>
