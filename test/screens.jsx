@@ -270,61 +270,102 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey}){
 }
 
 // ── CUSTOMIZE PANEL ───────────────────────────────────────────────────────
-const ACCENT_PRESETS=["#EC7A26","#3E6FB8","#2F8F5B","#9B59B6","#C0392B","#16A085","#E67E22","#2980B9"];
 function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
-  const[accentColor,setAccentColorState]=useState(settings.accentColor||"#EC7A26");
+  const[logoB64,setLogoB64]=useState(settings.logoBase64||"");
+  const[appSubtitle,setAppSubtitle]=useState(settings.appSubtitle||"");
+  const[primaryColor,setPrimaryState]=useState(settings.brandNavy||"#1E2248");
+  const[primaryInput,setPrimaryInput]=useState(settings.brandNavy||"#1E2248");
+  const[accentColor,setAccentState]=useState(settings.accentColor||"#EC7A26");
   const[accentInput,setAccentInput]=useState(settings.accentColor||"#EC7A26");
+  const[bgColor,setBgState]=useState(settings.bgColor||"");
+  const[bgInput,setBgInput]=useState(settings.bgColor||"");
   const[density,setDensityState]=useState(settings.density||"cozy");
   const[defaultCalView,setDefaultCalView]=useState(settings.defaultCalView||"day");
   const[startHour,setStartHour]=useState(settings.startHour||8);
   const[defaultZoom,setDefaultZoom]=useState(settings.defaultZoom??2);
   const[saved,setSaved]=useState(false);
-  function applyAccent(color){if(!/^#[0-9A-Fa-f]{6}$/.test(color))return;document.documentElement.style.setProperty("--accent",color);document.documentElement.style.setProperty("--accent-strong",darkenHex(color,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(color,.85));}
-  function setAccent(color){setAccentColorState(color);setAccentInput(color);applyAccent(color);}
-  function setDensity(val){setDensityState(val);document.documentElement.setAttribute("data-density",val);}
-  async function handleSave(){const prefs={accentColor,density,defaultCalView,startHour,defaultZoom,theme};await onSaveSettings(prefs);applyAccent(accentColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);}
+  function applyAccent(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--accent",c);document.documentElement.style.setProperty("--accent-strong",darkenHex(c,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(c,.85));}
+  function applyPrimary(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--brand-navy",c);}
+  function applyBg(c){if(c&&/^#[0-9A-Fa-f]{6}$/.test(c))document.documentElement.style.setProperty("--bg",c);}
+  function setAccent(c){setAccentState(c);setAccentInput(c);applyAccent(c);}
+  function setPrimary(c){setPrimaryState(c);setPrimaryInput(c);applyPrimary(c);}
+  function setBg(c){setBgState(c);setBgInput(c);applyBg(c);}
+  function setDensity(v){setDensityState(v);document.documentElement.setAttribute("data-density",v);}
+  function handleLogoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setLogoB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
+  async function handleSave(){
+    const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,startHour,defaultZoom,theme,logoBase64:logoB64,appSubtitle};
+    await onSaveSettings(prefs);applyAccent(accentColor);applyPrimary(primaryColor);if(bgColor)applyBg(bgColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  }
+  const colorRows=[
+    {label:"Primario (Navy)",val:primaryColor,input:primaryInput,setInput:setPrimaryInput,set:setPrimary,default:"#1E2248"},
+    {label:"Secondario / Accento",val:accentColor,input:accentInput,setInput:setAccentInput,set:setAccent,default:"#EC7A26"},
+    {label:"Sfondo",val:bgColor,input:bgInput,setInput:setBgInput,set:setBg,default:""},
+  ];
   return(<div style={{maxWidth:680}}>
     <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Personalizza</h2>
-    <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:24}}>Aspetto, densità e preferenze calendario.</p>
+    <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:24}}>Logo, colori, densità e preferenze calendario.</p>
     <div style={{display:"flex",flexDirection:"column",gap:20}}>
       <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Tema</div>
-        <div style={{display:"flex",gap:6,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)",width:"fit-content"}}>
-          <button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
-          <button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Logo</div>
+        <div style={{display:"flex",gap:12,marginBottom:14}}>
+          {[{bg:"#F5F4EF",label:"Chiaro"},{bg:"#1A1F4D",label:"Scuro"}].map(({bg,label})=>(
+            <div key={bg} style={{flex:1,background:bg,borderRadius:"var(--radius)",padding:16,display:"flex",flexDirection:"column",alignItems:"center",gap:8,border:"1px solid var(--border)"}}>
+              {logoB64?<img src={logoB64} alt="Logo" style={{width:80,height:40,objectFit:"contain"}}/>:<img src={bg==="#F5F4EF"?"assets/appmark-color.png":"assets/appmark-white.png"} alt="Logo" style={{width:40,height:40,objectFit:"contain"}}/>}
+              <span style={{fontSize:10,color:bg==="#F5F4EF"?"#888":"rgba(255,255,255,.5)"}}>{label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13}/>Carica logo<input type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoFile}/></label>
+          {logoB64&&<button className="btn" data-variant="ghost" onClick={()=>setLogoB64("")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="x" size={13}/>Reset</button>}
+        </div>
+        <div><label className="label">Sottotitolo app (login)</label><input className="input" value={appSubtitle} onChange={e=>setAppSubtitle(e.target.value)} placeholder="EHT — A Harmonic Innovation Group Company"/></div>
+      </div>
+      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Colori</div>
+        {colorRows.map(c=>(
+          <div key={c.label} style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+            <input type="color" value={/^#[0-9A-Fa-f]{6}$/.test(c.val)?c.val:"#cccccc"} onChange={e=>c.set(e.target.value)} style={{width:40,height:40,borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",padding:2}}/>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:4}}>{c.label}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input className="input mono" value={c.input} onChange={e=>{c.setInput(e.target.value);if(/^#[0-9A-Fa-f]{6}$/.test(e.target.value))c.set(e.target.value);}} placeholder={c.default||"#ffffff"} maxLength={7} style={{width:120,fontSize:12}}/>
+                {c.input&&!/^#[0-9A-Fa-f]{6}$/.test(c.input)&&<span style={{fontSize:10,color:"var(--danger)"}}>Formato non valido</span>}
+              </div>
+            </div>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:8,marginTop:8,padding:"8px 12px",borderRadius:"var(--radius)",background:"var(--bg-sunken)",border:"1px solid var(--border)",flexWrap:"wrap",alignItems:"center"}}>
+          <button className="btn" data-variant="primary" style={{fontSize:11}}>Pulsante primario</button>
+          <button className="btn" data-variant="accent" style={{fontSize:11}}>Pulsante secondario</button>
+          <span className="badge" data-tone="accent" style={{alignSelf:"center"}}>Badge</span>
+          <span className="badge" style={{alignSelf:"center",background:"var(--brand-navy)",color:"#fff",border:"none"}}>Navy</span>
         </div>
       </div>
       <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Densità interfaccia</div>
-        <div style={{display:"flex",gap:8}}>
-          {[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"8px 18px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"var(--bg-elev)",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:13,cursor:"pointer"}}>{o.label}</button>)}
-        </div>
-      </div>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Colore accento</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
-          {ACCENT_PRESETS.map(c=><button key={c} onClick={()=>setAccent(c)} style={{width:28,height:28,borderRadius:6,background:c,border:accentColor===c?"3px solid var(--fg)":"2px solid transparent",cursor:"pointer",boxSizing:"border-box"}}/>)}
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <input type="text" value={accentInput} onChange={e=>{setAccentInput(e.target.value);if(/^#[0-9A-Fa-f]{6}$/.test(e.target.value))setAccent(e.target.value);}} placeholder="#EC7A26" maxLength={7} className="input mono" style={{width:120}}/>
-          <div style={{width:28,height:28,borderRadius:6,background:/^#[0-9A-Fa-f]{6}$/.test(accentInput)?accentInput:"var(--bg-sunken)",border:"1px solid var(--border)"}}/>
-          <span style={{fontSize:11,color:"var(--fg-subtle)"}}>Anteprima live</span>
-        </div>
-      </div>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)"}}>
-        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Vista default calendario</div>
-        <div style={{display:"flex",gap:8}}>
-          {[{v:"month",label:"Mese"},{v:"week",label:"Settimana"},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"8px 16px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"var(--bg-elev)",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:13,cursor:"pointer"}}>{o.label}</button>)}
-        </div>
-      </div>
-      <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:20,boxShadow:"var(--shadow-xs)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Orario inizio calendario</div>
-          <select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>
-        </div>
-        <div>
-          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>Zoom default</div>
-          <select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Preferenze</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Tema</div>
+            <div style={{display:"flex",gap:6,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)",width:"fit-content"}}>
+              <button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
+              <button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
+            </div>
+          </div>
+          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Densità</div>
+            <div style={{display:"flex",gap:6}}>
+              {[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"6px 14px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"var(--bg-elev)",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}
+            </div>
+          </div>
+          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Vista default</div>
+            <div style={{display:"flex",gap:6}}>
+              {[{v:"month",label:"Mese"},{v:"week",label:"Sett."},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"6px 12px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"var(--bg-elev)",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}
+            </div>
+          </div>
+          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Orario inizio</div>
+            <select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>
+          </div>
+          <div><div style={{fontSize:12,fontWeight:600,color:"var(--fg)",marginBottom:8}}>Zoom default</div>
+            <select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>
+          </div>
         </div>
       </div>
       <button className="btn" data-variant={saved?"accent":"primary"} onClick={handleSave} style={{display:"flex",alignItems:"center",gap:6,width:"fit-content"}}>{saved?<><Icon name="check" size={14} color="#fff"/>Salvato</>:<><Icon name="save" size={14} color="#fff"/>Salva preferenze</>}</button>
