@@ -27,12 +27,14 @@ const VERIFICA_CATS=[
   {type:"giornata8h",label:"Giornata >8h",icon:"alert",tone:"warning"},
 ];
 
-function VerificaScreen({errors,onClose,onNavigate}){
+function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
   const[activeCats,setActiveCats]=useState(new Set(VERIFICA_CATS.map(c=>c.type)));
   const[catExpanded,setCatExpanded]=useState(false);
+  const[selAv,setSelAv]=useState("");
+  const[selTutor,setSelTutor]=useState("");
   const[lastRun]=useState(new Date());
   const ok=errors.length===0;
-  const filtered=errors.filter(e=>activeCats.has(e.type));
+  const filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
   function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
   return(<div className="drawer-overlay">
     <div className="drawer-backdrop" onClick={onClose}/>
@@ -65,6 +67,17 @@ function VerificaScreen({errors,onClose,onNavigate}){
             <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Seleziona tutto</button>
             <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica filtri</button>
           </div>
+        </div>}
+        {(anagraficaAv.length>0||tutors.length>0)&&<div style={{display:"flex",gap:8,marginTop:8}}>
+          {anagraficaAv.length>0&&<select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+            <option value="">Tutti gli avvisi</option>
+            {anagraficaAv.map(a=><option key={a.id||a.nome} value={a.nome}>{a.nome}</option>)}
+          </select>}
+          {tutors.length>0&&<select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+            <option value="">Tutti i tutor</option>
+            {[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
+          </select>}
+          {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{flexShrink:0}}>Reset</button>}
         </div>}
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
