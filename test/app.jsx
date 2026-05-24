@@ -290,10 +290,9 @@ function App({user}){
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
-        {!isViewer&&<div className="tab-strip" style={{marginLeft:0,marginRight:4}}>
-          <button className={`tab-strip-btn${!editMode?" active":""}`} onClick={()=>{setEditMode(false);setShowAi(false);}}>Visualizza</button>
-          <button className={`tab-strip-btn${editMode?" active":""}`} onClick={()=>setEditMode(true)}>Modifica</button>
-        </div>}
+        <img src="assets/appmark-color.png" width="26" height="26" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
+        <span style={{fontWeight:700,fontSize:14,letterSpacing:"-0.01em",color:"var(--fg)",whiteSpace:"nowrap"}}>TutorIA</span>
+        <div className="topbar-divider"/>
         <div className="module-switch">
           <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
           <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
@@ -306,28 +305,31 @@ function App({user}){
           </div>
           <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevRight" size={14}/></button>
         </div>
-        <div style={{flex:1}}/>
-        <div style={{position:"relative",width:220}}>
-          <Icon name="search" size={14} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/>
-          <input className="input" placeholder="Cerca slot, tutor, avviso…" style={{paddingLeft:32,height:32,fontSize:12}}/>
-        </div>
         <div className="tab-strip">
-          <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
-          <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Settimana</button>
           <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
+          <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Sett.</button>
+          <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
         </div>
-        <div className="topbar-divider"/>
-        {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}><Icon name="undo" size={15}/></button>}
-        {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}><Icon name="redo" size={15}/></button>}
-        {!isViewer&&canEdit&&<button onClick={()=>setShowAi(o=>!o)} className="btn" data-variant={showAi?"accent":"ghost"} data-size="icon-sm" title="AI Import"><Icon name="sparkles" size={15} color={showAi?"#fff":"var(--accent)"}/></button>}
+        <div style={{flex:1}}/>
         <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
+        {!isViewer&&<div className="tab-strip">
+          <button className={`tab-strip-btn${!editMode?" active":""}`} onClick={()=>{setEditMode(false);setShowAi(false);}}>Visualizza</button>
+          <button className={`tab-strip-btn${editMode?" active":""}`} onClick={()=>setEditMode(true)}>Modifica</button>
+        </div>}
+        {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}><Icon name="undo" size={15}/></button>}
+        {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}><Icon name="redo" size={15}/></button>}
         {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
         <div className="topbar-divider"/>
         <div ref={avatarRef} style={{position:"relative"}}>
           <div className="user-avatar" title="Account" onClick={()=>setShowAvatarMenu(o=>!o)}>{userInitials}</div>
           {showAvatarMenu&&<div className="avatar-dropdown">
+            <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--divider)"}}>
+              <div className="user-avatar" style={{cursor:"default",flexShrink:0}}>{userInitials}</div>
+              <div style={{minWidth:0}}><div style={{fontWeight:600,fontSize:13,color:"var(--fg)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.displayName||userInitials}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.email}</div></div>
+            </div>
+            <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
             <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
@@ -341,6 +343,11 @@ function App({user}){
         <div ref={avatarRef} style={{position:"relative"}}>
           <div className="user-avatar" title="Account" onClick={()=>setShowAvatarMenu(o=>!o)}>{userInitials}</div>
           {showAvatarMenu&&<div className="avatar-dropdown">
+            <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--divider)"}}>
+              <div className="user-avatar" style={{cursor:"default",flexShrink:0}}>{userInitials}</div>
+              <div style={{minWidth:0}}><div style={{fontWeight:600,fontSize:13,color:"var(--fg)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.displayName||userInitials}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.email}</div></div>
+            </div>
+            <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
             <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
@@ -348,7 +355,7 @@ function App({user}){
         </div>
       </div>)}
 
-      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner"><Icon name="eye" size={13} color="var(--warning)"/>View Mode — clicca <strong>Edit Mode</strong> per apportare modifiche.</div>}
+      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">Sei in modalità <Icon name="eye" size={13} color="var(--warning)"/> <strong>Visualizza</strong> — passa a <Icon name="edit" size={13} color="var(--warning)"/> <strong>Modifica</strong> per apportare modifiche al calendario.</div>}
 
       {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
