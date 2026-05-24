@@ -113,10 +113,8 @@
 .ore-value { font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--fg); font-family:"JetBrains Mono",monospace; line-height:1; }
 .ore-label { font-size:10px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; line-height:1.2; }
 
-/* ── Zoom bar (flottante draggabile) ── */
-.zoom-bar { position:fixed; display:flex; align-items:center; gap:4px; background:var(--bg-elev); border:1px solid var(--border); border-radius:100px; padding:4px 8px 4px 4px; box-shadow:var(--shadow-md); z-index:50; user-select:none; }
-.zoom-bar-grip { width:22px; height:28px; display:flex; align-items:center; justify-content:center; cursor:grab; flex-shrink:0; color:var(--fg-faint); }
-.zoom-bar-grip:active { cursor:grabbing; }
+/* ── Zoom bar (fissa in basso a destra) ── */
+.zoom-bar { position:fixed; bottom:16px; right:16px; z-index:50; display:flex; align-items:center; gap:4px; background:var(--bg-elev); border:1px solid var(--border); border-radius:100px; padding:4px 8px; box-shadow:var(--shadow-md); user-select:none; }
 .zoom-btn { background:none; border:1px solid var(--border); border-radius:var(--radius); width:26px; height:26px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; color:var(--fg-muted); }
 .zoom-btn:hover { background:var(--bg-hover); color:var(--fg); }
 

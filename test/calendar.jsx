@@ -103,14 +103,7 @@ function MonthView({month,tutByDay,avByDay,onDayClick}){
 
 // ── ZOOM BAR ──────────────────────────────────────────────────────────────
 function ZoomBar({zoomIdx,onZoomChange,onHelpOpen}){
-  const[pos,setPos]=useState({bottom:16,right:16});
-  const dragRef=useRef(null);const dragging=useRef(false);const startRef=useRef({});
-  function onGripDown(e){e.preventDefault();dragging.current=true;const r=dragRef.current.getBoundingClientRect();startRef.current={clientX:e.clientX,clientY:e.clientY,right:window.innerWidth-r.right,bottom:window.innerHeight-r.bottom};function mv(me){if(!dragging.current)return;const dx=me.clientX-startRef.current.clientX,dy=me.clientY-startRef.current.clientY;setPos({right:Math.max(16,startRef.current.right-dx),bottom:Math.max(16,startRef.current.bottom-dy)});}function up(){dragging.current=false;document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);}document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);}
-  return(<div ref={dragRef} className="zoom-bar" style={{bottom:pos.bottom,right:pos.right}}>
-    <div className="zoom-bar-grip" onMouseDown={onGripDown} title="Trascina">
-      <Icon name="grip" size={14} color="var(--fg-faint)"/>
-    </div>
-    <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
+  return(<div className="zoom-bar">
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
     <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center",fontFamily:'"JetBrains Mono",monospace'}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))}>+</button>
