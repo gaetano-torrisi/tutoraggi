@@ -360,7 +360,7 @@ function App({user}){
         </div>
       </div>)}
 
-      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">Sei in modalità <Icon name="eye" size={13} color="var(--warning)"/> <strong>Visualizza</strong> — passa a <Icon name="edit" size={13} color="var(--warning)"/> <strong>Modifica</strong> per apportare modifiche al calendario.</div>}
+      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">Sei in modalità{" "}<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--bg-sunken)",border:"1px solid var(--border)",color:"var(--fg-muted)",fontSize:11,fontWeight:500}}><Icon name="eye" size={11}/>Visualizza</span>{" "}— passa a{" "}<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--accent)",border:"1px solid var(--accent)",color:"#fff",fontSize:11,fontWeight:500}}><Icon name="edit" size={11} color="#fff"/>Modifica</span>{" "}per apportare modifiche.</div>}
 
       {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
