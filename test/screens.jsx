@@ -547,7 +547,7 @@ function UsersPanel({isSuperAdmin}){
   async function handleRoleChange(email,r){await db.collection("authorizedEmails").doc(email).update({role:r});setEmails(p=>p.map(e=>e.email===email?{...e,role:r}:e));setEditingRole(p=>({...p,[email]:false}));}
   const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
   return(<div style={{maxWidth:880}}>
-    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Utenti & permessi</h2>
+    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Utenti & permessi</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Aggiungi gli indirizzi email autorizzati.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:22,boxShadow:"var(--shadow-xs)"}}>
       <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Invita un nuovo utente</div>
@@ -578,7 +578,7 @@ function ApiPanel({settings,onSave}){
   async function testGemini(){if(!geminiKey){setTestG({ok:false,msg:"Chiave non inserita"});return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});setTestG(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestG({ok:false,msg:"Errore di rete"});}setCdG(60);}
   async function testOpenai(){if(!openaiKey){setTestO({ok:false,msg:"Chiave non inserita"});return;}setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestO({ok:false,msg:"Errore di rete"});}setCdO(60);}
   return(<div style={{maxWidth:720}}>
-    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>API & AI</h2>
+    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>API & AI</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Chiavi per l'assistente di import. Salvate cifrate su Firestore.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:14,boxShadow:"var(--shadow-xs)"}}>
       <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Provider attivo</div>
@@ -609,7 +609,7 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv}){
   async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
   return(<div style={{maxWidth:880}}>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:22}}>
-      <div><h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.</p></div>
+      <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.</p></div>
       <div style={{display:"flex",gap:8}}>
         <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
         <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
@@ -631,7 +631,7 @@ function LogPanel(){
   const users=[...new Set(rows.map(r=>r.userEmail))].sort();
   const filtered=rows.filter(r=>!filterUser||r.userEmail===filterUser);
   return(<div style={{maxWidth:980}}>
-    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Log attività</h2>
+    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Log attività</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Storico delle modifiche ai dati.</p>
     <div style={{display:"flex",gap:10,marginBottom:14}}>
       <select className="select" value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{width:240}}><option value="">— Tutti gli utenti —</option>{users.map(u=><option key={u} value={u}>{u}</option>)}</select>
@@ -649,7 +649,7 @@ function DemoPanel({isSuperAdmin}){
   async function loadDemo(){if(!confirm("Caricare i dati demo? I dati esistenti saranno sovrascritti."))return;window.__loadDemo&&await window.__loadDemo();alert("Dati demo caricati!");}
   async function clearDb(){if(!confirm("Eliminare TUTTI i dati?"))return;if(!confirm("Sei sicuro? Operazione irreversibile."))return;window.__clearDb&&await window.__clearDb();alert("Database svuotato.");}
   return(<div style={{maxWidth:720}}>
-    <h2 style={{fontSize:18,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>Dati demo</h2>
+    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Dati demo</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Carica dati di esempio o azzera tutto.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--accent)",borderRadius:"var(--radius-md)",padding:22,marginBottom:14,boxShadow:"var(--shadow-xs)"}}>
       <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
