@@ -224,50 +224,121 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
 }
 
 // ── INSIGHTS SCREEN ───────────────────────────────────────────────────────
-function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey}){
-  const[viewMode,setViewMode]=useState("tutor");const[timeMode,setTimeMode]=useState("mese");
+function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,onClose,onNavigate}){
+  const[viewMode,setViewMode]=useState("tutor");
+  const[selMonthKey,setSelMonthKey]=useState(currentMonthKey);
+  const[expandedTut,setExpandedTut]=useState({});
+  const[expandedTutAv,setExpandedTutAv]=useState({});
+  const[expandedAv,setExpandedAv]=useState({});
+  const[expandedAvTut,setExpandedAvTut]=useState({});
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
-  function getTutOreAnnoPerAv(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
-  function getOreFiltered(tId,avName){let t=0;const ana=anagraficaAv.find(a=>a.nome===avName);if(!ana)return 0;const av=avById[ana.id];if(!av)return 0;const td=tutEvents[tId]||{};for(const[mk,tevs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const tev of tevs){if(tev.name!==avName)continue;for(const ae of av.events.filter(e=>e.month===mk&&e.day===tev.day)){const s=Math.max(tev.start,ae.start),en=Math.min(tev.end,ae.end);if(en>s)t+=en-s;}}}return t;}
-  function getAvOre(anaId){const av=avById[anaId];if(!av)return 0;if(timeMode==="mese")return av.events.filter(e=>e.month===currentMonthKey).reduce((s,e)=>s+e.ore,0);return av.events.reduce((s,e)=>s+e.ore,0);}
-  function getTotOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)t+=ev.ore||0;}return t;}
-  function getAvNamesForTut(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;for(const ev of evs)n.add(ev.name);}return[...n].sort();}
-  function getTutsForAv(avName){return[...tutors].filter(t=>{const td=tutEvents[t.id]||{};for(const[mk,evs]of Object.entries(td)){if(timeMode==="mese"&&mk!==currentMonthKey)continue;if(evs.some(e=>e.name===avName))return true;}return false;}).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
-  const pctBadge=(oreAnno,durataOre)=>{if(!durataOre)return null;const p=oreAnno/durataOre*100;return(<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{Math.round(p)}%</span>);};
-  const sortedTutors=[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome));
-  const sortedAna=[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome));
-  return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
-    <div className="page-header"><div><div className="page-breadcrumb">Strumenti · Insights</div><h1 className="page-title">Riepiloghi e KPI</h1><p className="page-desc">Quante ore sono state erogate, da chi, su quale avviso.</p></div>
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <div className="tab-strip"><button className={`tab-strip-btn${timeMode==="mese"?" active":""}`} onClick={()=>setTimeMode("mese")}>Mese</button><button className={`tab-strip-btn${timeMode==="anno"?" active":""}`} onClick={()=>setTimeMode("anno")}>Anno</button></div>
+  function getTutOreAnno(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
+  function getTutOreMese(tId,mk){let t=0;const td=tutEvents[tId]||{};return(td[mk]||[]).reduce((s,e)=>s+e.ore,0);}
+  function getTutOreAvMese(tId,avName,mk){let t=0;const td=tutEvents[tId]||{};return(td[mk]||[]).filter(e=>e.name===avName).reduce((s,e)=>s+e.ore,0);}
+  function getTutAvvisiMese(tId,mk){const n=new Set();(tutEvents[tId]?.[mk]||[]).forEach(e=>n.add(e.name));return[...n].sort();}
+  function getTutTotOre(tId){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)t+=ev.ore||0;return t;}
+  function getAvOreMese(anaId,mk){const av=avById[anaId];if(!av)return 0;return av.events.filter(e=>e.month===mk).reduce((s,e)=>s+e.ore,0);}
+  function getAvTotOre(anaId){const av=avById[anaId];if(!av)return 0;return av.events.reduce((s,e)=>s+e.ore,0);}
+  function getTutsForAvMese(avName,mk){return[...tutors].filter(t=>(tutEvents[t.id]?.[mk]||[]).some(e=>e.name===avName)).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
+  function getSlotsForTutAvMese(tId,avName,mk){return(tutEvents[tId]?.[mk]||[]).filter(e=>e.name===avName).sort((a,b)=>a.day-b.day||a.start-b.start);}
+  const pctBadge=(ore,max)=>{if(!max)return null;const p=ore/max*100;return<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{Math.round(p)}%</span>;};
+  const allMonths=MONTHS.filter(m=>{const mk=m.key;const hasTut=tutors.some(t=>(tutEvents[t.id]?.[mk]||[]).length>0);const hasAv=anagraficaAv.some(a=>(avById[a.id]?.events||[]).some(e=>e.month===mk));return hasTut||hasAv;});
+  const selMonth=MONTHS.find(m=>m.key===selMonthKey)||MONTHS[2];
+  const totTutOre=tutors.reduce((s,t)=>s+getTutOreMese(t.id,selMonthKey),0);
+  const totAvOre=anagraficaAv.reduce((s,a)=>s+getAvOreMese(a.id,selMonthKey),0);
+  const activeTutors=tutors.filter(t=>getTutOreMese(t.id,selMonthKey)>0);
+  const activeAvvisi=anagraficaAv.filter(a=>getAvOreMese(a.id,selMonthKey)>0);
+  function toggleTut(id){setExpandedTut(p=>({...p,[id]:!p[id]}))}
+  function toggleTutAv(key){setExpandedTutAv(p=>({...p,[key]:!p[key]}))}
+  function toggleAv(id){setExpandedAv(p=>({...p,[id]:!p[id]}))}
+  function toggleAvTut(key){setExpandedAvTut(p=>({...p,[key]:!p[key]}))}
+  return(<div className="drawer-overlay">
+    <div className="drawer-backdrop" onClick={onClose}/>
+    <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12,flexShrink:0,background:"var(--bg-elev)"}}>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:16,color:"var(--fg)"}}>Insights & Riepiloghi</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{selMonth.label}</div></div>
+        <button onClick={()=>{const d={};try{d.avvisi=avvisi;d.tutors=tutors;d.tutEvents=tutEvents;d.anagraficaAv=anagraficaAv;}catch(e){}const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`insights_${selMonthKey}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={13}/>Esporta JSON</button>
+        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={16}/></button>
       </div>
-    </div>
-    <div style={{padding:"10px 32px",borderBottom:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:8}}>
-      <div className="tab-strip">
-        <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
-        <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="clipboard" size={12}/>Per avviso</button>
+      <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"var(--bg-elev)"}}>
+        <div className="tab-strip">
+          <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
+          <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="clipboard" size={12}/>Per avviso</button>
+        </div>
+        <select className="select" value={selMonthKey} onChange={e=>setSelMonthKey(e.target.value)} style={{minWidth:160}}>{allMonths.map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select>
+        <div style={{flex:1}}/>
       </div>
-    </div>
-    <div style={{flex:1,overflow:"auto",padding:32,background:"var(--bg)"}}>
-      <div style={{maxWidth:900,margin:"0 auto"}}>
-        {viewMode==="tutor"&&sortedTutors.map(t=>{const tot=getTotOre(t.id),avNames=getAvNamesForTut(t.id);if(tot===0&&avNames.length===0)return null;return(<div key={t.id} style={{marginBottom:14,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)",boxShadow:"var(--shadow-xs)"}}>
-          <div style={{background:hexToRgba(t.color||"#4f86c6",.1),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:32,height:32,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{t.cognome} {t.nome}</span></div>
-            <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(tot)}</span>
-          </div>
-          <div style={{padding:"8px 14px"}}>{avNames.map(nm=>{const ana=anagraficaAv.find(a=>a.nome===nm);const ore=getOreFiltered(t.id,nm);const oreA=getTutOreAnnoPerAv(t.id,nm);return(<div key={nm} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid var(--divider)",fontSize:12}}><span style={{color:"var(--fg-muted)"}}>{nm}</span><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(ore)}</span>{pctBadge(oreA,ana?.durataOre)}</div></div>);})}</div>
-        </div>);})}
-        {viewMode==="avviso"&&sortedAna.map(ana=>{const avTot=getAvOre(ana.id);const tuts=getTutsForAv(ana.nome);return(<div key={ana.id} style={{marginBottom:14,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)",boxShadow:"var(--shadow-xs)"}}>
-          <div style={{background:hexToRgba(ana.colore||"#4f86c6",.1),padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><div style={{width:10,height:10,borderRadius:3,background:ana.colore||"var(--accent)"}}/><span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</span>{ana.durataOre&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>{ana.durataOre}h da bando</span>}</div>
-            <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(avTot)}</span>
-          </div>
-          <div style={{padding:"8px 14px"}}>{tuts.length===0?<span style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Nessun tutor assegnato</span>:tuts.map(t=>{const ore=getOreFiltered(t.id,ana.nome);const oreA=getTutOreAnnoPerAv(t.id,ana.nome);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid var(--divider)",fontSize:12}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:8,height:8,borderRadius:999,background:t.color||"var(--accent)"}}/><span style={{color:"var(--fg-muted)"}}>{t.cognome} {t.nome}</span></div><div style={{display:"flex",gap:6,alignItems:"center"}}><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(ore)}</span>{pctBadge(oreA,ana.durataOre)}</div></div>);})}</div>
-        </div>);})}
+      <div style={{display:"flex",gap:12,padding:"14px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        {[{label:"Tutor attivi",val:activeTutors.length,icon:"users"},{label:"Ore periodo",val:fo(viewMode==="tutor"?totTutOre:totAvOre),icon:"clock"},{label:"Avvisi attivi",val:activeAvvisi.length,icon:"briefcase"}].map(k=><div key={k.label} className="kpi-card" style={{flex:1}}><div className="kpi-icon"><Icon name={k.icon} size={15} color="var(--accent)"/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value" style={{fontSize:18}}>{k.val}</div></div></div>)}
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
+        {viewMode==="tutor"&&[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{
+          const ore=getTutOreMese(t.id,selMonthKey);const avNames=getTutAvvisiMese(t.id,selMonthKey);const totOre=getTutTotOre(t.id);
+          if(!ore&&!avNames.length)return null;
+          const exp=expandedTut[t.id];
+          return(<div key={t.id} style={{marginBottom:8,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+            <button onClick={()=>toggleTut(t.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+              <div style={{width:32,height:32,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
+              <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{t.cognome} {t.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{avNames.length} avvisi · {totOre.toFixed(1)}h totali</div></div>
+              <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',fontSize:13}}>{fo(ore)}</span>
+              <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
+            </button>
+            {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
+              {avNames.map(avName=>{const oreAv=getTutOreAvMese(t.id,avName,selMonthKey);const oreAnno=getTutOreAnnoPerAv(t.id,avName);const ana=anagraficaAv.find(a=>a.nome===avName);const avKey=`${t.id}-${avName}`;const expAv=expandedTutAv[avKey];
+                return(<div key={avName} style={{marginBottom:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                  <button onClick={()=>toggleTutAv(avKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <span style={{width:8,height:8,borderRadius:2,background:ana?.colore||"var(--accent)",flexShrink:0}}/>
+                    <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{avName}</span>
+                    {pctBadge(oreAnno,ana?.durataOre)}
+                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fo(oreAv)}</span>
+                    <Icon name={expAv?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                  </button>
+                  {expAv&&<div style={{padding:"6px 12px",borderTop:"1px solid var(--divider)",display:"flex",flexWrap:"wrap",gap:4}}>
+                    {getSlotsForTutAvMese(t.id,avName,selMonthKey).map((sl,i)=>(
+                      <button key={i} onClick={()=>{onNavigate&&onNavigate(selMonthKey,sl.day);}} style={{fontSize:10,padding:"3px 8px",borderRadius:4,background:"var(--bg-sunken)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{sl.day} · {fmt(sl.start)}–{fmt(sl.end)}</button>
+                    ))}
+                  </div>}
+                </div>);
+              })}
+            </div>}
+          </div>);
+        })}
+        {viewMode==="avviso"&&[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(ana=>{
+          const oreAv=getAvOreMese(ana.id,selMonthKey);const tuts=getTutsForAvMese(ana.nome,selMonthKey);
+          if(!oreAv&&!tuts.length)return null;
+          const exp=expandedAv[ana.id];const totOre=getAvTotOre(ana.id);const pct=ana.durataOre?Math.round(totOre/ana.durataOre*100):null;
+          return(<div key={ana.id} style={{marginBottom:8,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+            <button onClick={()=>toggleAv(ana.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+              <span style={{width:10,height:10,borderRadius:3,background:ana.colore||"var(--accent)",flexShrink:0}}/>
+              <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{tuts.length} tutor{ana.durataOre?` · ${totOre.toFixed(1)}/${ana.durataOre}h`:""}</div></div>
+              {pct!=null&&<span className="badge" data-tone={pct>100?"danger":pct>=80?"success":"info"}>{pct}%</span>}
+              <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',fontSize:13}}>{fo(oreAv)}</span>
+              <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
+            </button>
+            {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
+              {tuts.map(t=>{const oreT=getSlotsForTutAvMese(t.id,ana.nome,selMonthKey).reduce((s,e)=>s+e.ore,0);const avKey=`${ana.id}-${t.id}`;const expT=expandedAvTut[avKey];
+                return(<div key={t.id} style={{marginBottom:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                  <button onClick={()=>toggleAvTut(avKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <div style={{width:22,height:22,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
+                    <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{t.cognome} {t.nome}</span>
+                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fo(oreT)}</span>
+                    <Icon name={expT?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                  </button>
+                  {expT&&<div style={{padding:"6px 12px",borderTop:"1px solid var(--divider)",display:"flex",flexWrap:"wrap",gap:4}}>
+                    {getSlotsForTutAvMese(t.id,ana.nome,selMonthKey).map((sl,i)=>(
+                      <button key={i} onClick={()=>{onNavigate&&onNavigate(selMonthKey,sl.day);}} style={{fontSize:10,padding:"3px 8px",borderRadius:4,background:"var(--bg-sunken)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{sl.day} · {fmt(sl.start)}–{fmt(sl.end)}</button>
+                    ))}
+                  </div>}
+                </div>);
+              })}
+            </div>}
+          </div>);
+        })}
       </div>
     </div>
   </div>);
 }
+function getTutOreAnnoPerAv(tId,avName,tutEvents){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
 
 // ── CUSTOMIZE PANEL ───────────────────────────────────────────────────────
 function CustomizePanel({settings,theme,setTheme,onSaveSettings}){

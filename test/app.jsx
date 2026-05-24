@@ -162,6 +162,7 @@ function App({user}){
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
+  const[showInsights,setShowInsights]=useState(false);const[showVerificaDrawer,setShowVerificaDrawer]=useState(false);
   const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);
   const avatarRef=useRef();
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
@@ -248,6 +249,8 @@ function App({user}){
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
   function handleNavClick(id){
+    if(id==="insights"){setShowInsights(true);return;}
+    if(id==="verifica"){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);return;}
     setActiveScreen(id);
     if(id==="ai")setShowAi(true);
     else if(id!=="calendar")setShowAi(false);
@@ -313,7 +316,7 @@ function App({user}){
           <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
         </div>
         <div style={{flex:1}}/>
-        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
+        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
@@ -382,8 +385,6 @@ function App({user}){
         {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
         {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
-        {activeScreen==="insights"&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key}/>}
-        {activeScreen==="verifica"&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} onNavigate={mk=>{const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
         {activeScreen==="ai"&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",flexDirection:"column",gap:12,background:"var(--bg)"}}><Icon name="sparkles" size={40} color="var(--accent)"/><div style={{fontSize:15,fontWeight:600,color:"var(--fg)"}}>AI Import</div><p style={{fontSize:13,color:"var(--fg-muted)"}}>Attiva Edit Mode dal calendario e usa il pannello AI.</p><button className="btn" data-variant="accent" onClick={()=>{setActiveScreen("calendar");setEditMode(true);setTimeout(()=>setShowAi(true),100);}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="arrowRight" size={13} color="#fff"/>Vai al calendario</button></div>}
       </div>
@@ -392,6 +393,8 @@ function App({user}){
       {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
     </div>
 
+    {showInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
+    {showVerificaDrawer&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} onClose={()=>setShowVerificaDrawer(false)} onNavigate={mk=>{setShowVerificaDrawer(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")}/>}
   </div>);
