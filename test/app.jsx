@@ -295,7 +295,7 @@ function App({user}){
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
-        <img src="assets/appmark-color.png" width="26" height="26" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
+        <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
         <span style={{fontWeight:700,fontSize:14,letterSpacing:"-0.01em",color:"var(--fg)",whiteSpace:"nowrap"}}>TutorIA</span>
         <div className="topbar-divider"/>
         <div className="module-switch">
@@ -320,8 +320,8 @@ function App({user}){
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
-          <button className={`tab-strip-btn${!editMode?" active":""}`} onClick={()=>{setEditMode(false);setShowAi(false);}}>Visualizza</button>
-          <button className={`tab-strip-btn${editMode?" active":""}`} onClick={()=>setEditMode(true)}>Modifica</button>
+          <button className="tab-strip-btn" style={{background:!editMode?"var(--accent)":"transparent",color:!editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>{setEditMode(false);setShowAi(false);}}><Icon name="eye" size={12} color={!editMode?"#fff":"currentColor"}/>Visualizza</button>
+          <button className="tab-strip-btn" style={{background:editMode?"var(--accent)":"transparent",color:editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>setEditMode(true)}><Icon name="edit" size={12} color={editMode?"#fff":"currentColor"}/>Modifica</button>
         </div>}
         {canEdit&&undoCount>0&&<button onClick={handleUndo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Annulla (${undoCount})`}><Icon name="undo" size={15}/></button>}
         {canEdit&&redoCount>0&&<button onClick={handleRedo} className="btn" data-variant="ghost" data-size="icon-sm" title={`Ripristina (${redoCount})`}><Icon name="redo" size={15}/></button>}
