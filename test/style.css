@@ -190,7 +190,7 @@
 .month-cell.we:hover { background:rgba(155,89,182,.08); }
 
 /* ── HelpBot ── */
-.helpbot-window { position:fixed; bottom:60px; right:16px; width:300px; height:360px; background:var(--bg-elev); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border:1px solid var(--border); display:flex; flex-direction:column; z-index:500; overflow:hidden; }
+.helpbot-window { position:fixed; bottom:60px; right:16px; width:340px; height:400px; background:var(--bg-elev); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border:1px solid var(--border); display:flex; flex-direction:column; z-index:500; overflow:hidden; }
 .helpbot-header { background:linear-gradient(135deg,var(--brand-navy) 0%,#131736 100%); color:#fff; padding:12px 14px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
 
 /* ── Tab strip ── */
