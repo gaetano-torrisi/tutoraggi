@@ -106,3 +106,41 @@ function ColorPicker({value,onChange,usedColors=[]}){
     {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c} style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",opacity:used?.3:1}}/>);})}
   </div>);
 }
+
+// ── MONTH RANGE PICKER ────────────────────────────────────────────────────
+function MonthRangePicker({value,onChange,months=[]}){
+  const[open,setOpen]=useState(false);const[rangeMode,setRangeMode]=useState(false);const[rangeStart,setRangeStart]=useState(null);
+  const ref=useRef();
+  const years=[...new Set(MONTHS.map(m=>m.year))];
+  const initYear=value?.year||MONTHS[value?.month!=null?MONTHS.findIndex(m=>m.key===value?.monthKey):2]?.year||MONTHS[2].year;
+  const[selYear,setSelYear]=useState(initYear);
+  useEffect(()=>{function h(e){if(ref.current&&!ref.current.contains(e.target))setOpen(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
+  const hasData=mk=>months.includes(mk);
+  function periodLabel(){if(!value)return"Seleziona periodo";if(value.mode==="year")return`Anno ${value.year}`;if(value.mode==="range"){const s=MONTHS.find(m=>m.key===value.startKey);const e=MONTHS.find(m=>m.key===value.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} → ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"Range";}const m=MONTHS.find(x=>x.key===value.monthKey);return m?m.label:"Seleziona";}
+  function handleMonthClick(mk){if(!hasData(mk))return;if(rangeMode){if(!rangeStart){setRangeStart(mk);}else{const si=MONTHS.findIndex(m=>m.key===rangeStart),ei=MONTHS.findIndex(m=>m.key===mk);const[s,e]=si<=ei?[rangeStart,mk]:[mk,rangeStart];onChange({mode:"range",startKey:s,endKey:e});setRangeStart(null);setOpen(false);}}else{onChange({mode:"single",monthKey:mk,year:MONTHS.find(m=>m.key===mk)?.year});setOpen(false);}}
+  function isInRange(mk){if(!rangeMode||!rangeStart)return false;const si=MONTHS.findIndex(m=>m.key===rangeStart),ci=MONTHS.findIndex(m=>m.key===mk);if(si<0||ci<0)return false;const[lo,hi]=si<=ci?[si,ci]:[ci,si];return MONTHS.findIndex(m=>m.key===mk)>=lo&&MONTHS.findIndex(m=>m.key===mk)<=hi;}
+  const filtered=MONTHS.filter(m=>m.year===selYear);
+  return(<div ref={ref} style={{position:"relative",display:"inline-block"}}>
+    <button onClick={()=>setOpen(o=>!o)} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6,minWidth:180}}>
+      <Icon name="calendar" size={13} color="var(--accent)"/><span style={{flex:1,textAlign:"left",fontSize:12}}>{periodLabel()}</span><Icon name="chevDown" size={12} color="var(--fg-subtle)"/>
+    </button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 4px)",left:0,background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:14,boxShadow:"var(--shadow-lg)",zIndex:400,width:260}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+        <button onClick={()=>setSelYear(y=>Math.max(years[0],y-1))} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevLeft" size={14}/></button>
+        <span style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{selYear}</span>
+        <button onClick={()=>setSelYear(y=>Math.min(years[years.length-1],y+1))} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevRight" size={14}/></button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4,marginBottom:10}}>
+        {filtered.map(m=>{const has=hasData(m.key);const isSel=value?.monthKey===m.key||(value?.startKey===m.key||value?.endKey===m.key);const inRng=isInRange(m.key);return(<div key={m.key} onClick={()=>handleMonthClick(m.key)} style={{padding:"7px 4px",borderRadius:6,textAlign:"center",cursor:has?"pointer":"not-allowed",opacity:has?1:.35,background:isSel?"var(--accent)":inRng?"var(--accent-soft)":"transparent",color:isSel?"#fff":"var(--fg)",fontSize:12,fontWeight:600,position:"relative",border:isSel?"1px solid var(--accent)":"1px solid transparent"}}>
+          {MONTH_NAMES_SHORT[m.month]}
+          {has&&!isSel&&<div style={{position:"absolute",bottom:3,left:"50%",transform:"translateX(-50%)",width:4,height:4,borderRadius:999,background:"var(--accent)"}}/>}
+        </div>);})}
+      </div>
+      <div style={{display:"flex",gap:6,borderTop:"1px solid var(--divider)",paddingTop:10}}>
+        <button onClick={()=>{onChange({mode:"year",year:selYear});setOpen(false);}} className="btn" data-variant="ghost" data-size="sm" style={{flex:1,justifyContent:"center"}}>Anno intero</button>
+        <button onClick={()=>{setRangeMode(r=>!r);setRangeStart(null);}} className="btn" data-variant={rangeMode?"accent":"outline"} data-size="sm" style={{flex:1,justifyContent:"center"}}>{rangeMode?"Annulla":"Seleziona range"}</button>
+      </div>
+      {rangeMode&&rangeStart&&<div style={{marginTop:8,fontSize:11,color:"var(--fg-subtle)",textAlign:"center"}}>Da: {MONTHS.find(m=>m.key===rangeStart)?.label} — seleziona il mese finale</div>}
+    </div>}
+  </div>);
+}
