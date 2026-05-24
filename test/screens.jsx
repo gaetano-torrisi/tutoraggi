@@ -3,37 +3,91 @@
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   const errors=[],avById={},avByName={};
   avvisi.forEach(av=>avById[av.id]=av);anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" non in anagrafica.`});}}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione.`});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot il ${ev.day} ${mk} fuori orario.`});}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`});}}}
-  for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso (${totAv}h).`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`});}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" non in anagrafica.`,detail:"Slot orfano: l'avviso non esiste in anagrafica."});}}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione.`,detail:"Nessuna sessione avviso in questo giorno."});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot il ${ev.day} ${mk} fuori orario (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:`Orario sessione: ${fmt(avDay.start)}–${fmt(avDay.end)}`});}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`,detail:`${fmt(a.start)}–${fmt(a.end)} vs ${fmt(b.start)}–${fmt(b.end)}`});}}}
+  for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso (${totAv}h).`,detail:`Eccedenza: ${totTut-totAv}h`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`,detail:`Differenza: ${Math.abs(totAv-ana.durataOre)}h`});}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);const byDay={};for(const ev of evs){if(!byDay[ev.day])byDay[ev.day]=0;byDay[ev.day]+=ev.ore||0;}for(const[day,totH]of Object.entries(byDay)){if(totH>8)errors.push({type:"giornata8h",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": giornata >8h il ${day} ${mk} (${totH}h).`,detail:"Superato limite giornaliero consigliato."});}}}
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0||d===6)errors.push({type:"weekend",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${ev.day} ${mk}.`,detail:"Giorno festivo o weekend."});}}}
+  for(const t of tutors){let hasSlot=false;for(const[,ms]of Object.entries(tutEvents[t.id]||{}))if(Object.values(ms).some(evs=>evs.length>0)){hasSlot=true;break;}if(!hasSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non ha nessuno slot assegnato.`,detail:"Tutor presente in anagrafica ma senza sessioni."});}
+  for(const ana of anagraficaAv){const av=avById[ana.id];if(!av||!av.events.length)errors.push({type:"avviso_senza_sessioni",monthKey:null,msg:`Avviso "${ana.nome}" non ha sessioni nel calendario.`,detail:"Nessuna data inserita per questo avviso."});}
   return errors;
 }
 
-function VerificaScreen({errors,onNavigate}){
-  const icons={orfano:"user",fuori_giorno:"calendar",fuori_orario:"clock",sovrapposizione:"zap",eccedenza:"trending",durata:"clipboard"};
-  const labels={orfano:"Avviso inesistente",fuori_giorno:"Fuori giorno",fuori_orario:"Fuori orario",sovrapposizione:"Sovrapposizione",eccedenza:"Ore eccedenti",durata:"Durata non corrispondente"};
-  const tones={orfano:"danger",fuori_giorno:"warning",fuori_orario:"warning",sovrapposizione:"danger",eccedenza:"warning",durata:"info"};
+const VERIFICA_CATS=[
+  {type:"sovrapposizione",label:"Sovrapposizioni",icon:"zap",tone:"danger"},
+  {type:"fuori_orario",label:"Fuori orario",icon:"clock",tone:"warning"},
+  {type:"fuori_giorno",label:"Fuori giorno",icon:"calendar",tone:"warning"},
+  {type:"eccedenza",label:"Ore eccedenti",icon:"trending",tone:"warning"},
+  {type:"durata",label:"Durata non corrispondente",icon:"clipboard",tone:"info"},
+  {type:"orfano",label:"Slot orfani",icon:"user",tone:"warning"},
+  {type:"weekend",label:"Slot nel weekend",icon:"sun",tone:"info"},
+  {type:"tutor_senza_slot",label:"Tutor senza slot",icon:"users",tone:"info"},
+  {type:"avviso_senza_sessioni",label:"Avviso senza sessioni",icon:"briefcase",tone:"info"},
+  {type:"giornata8h",label:"Giornata >8h",icon:"alert",tone:"warning"},
+];
+
+function VerificaScreen({errors,onClose,onNavigate}){
+  const[activeCats,setActiveCats]=useState(new Set(VERIFICA_CATS.map(c=>c.type)));
+  const[catExpanded,setCatExpanded]=useState(false);
+  const[lastRun]=useState(new Date());
   const ok=errors.length===0;
-  return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
-    <div className="page-header">
-      <div><div className="page-breadcrumb">Strumenti · Audit</div><h1 className="page-title">Verifica coerenza</h1><p className="page-desc">Controllo automatico di sovrapposizioni, ore eccedenti e slot fuori orario.</p></div>
-    </div>
-    <div style={{flex:1,overflow:"auto",padding:32,background:"var(--bg)"}}>
-      <div style={{maxWidth:860,margin:"0 auto"}}>
-        <div style={{padding:"20px 22px",borderRadius:14,background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"transparent":"var(--border)"}`,display:"flex",alignItems:"center",gap:20,marginBottom:22}}>
-          <div style={{width:56,height:56,borderRadius:14,background:ok?"var(--success)":"var(--danger)",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <Icon name={ok?"checkCircle":"alert"} size={26} color="#fff"/>
+  const filtered=errors.filter(e=>activeCats.has(e.type));
+  function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
+  return(<div className="drawer-overlay">
+    <div className="drawer-backdrop" onClick={onClose}/>
+    <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{padding:"16px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:16,color:"var(--fg)"}}>Verifica coerenza</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>Ultimo controllo: {fmtTs(lastRun)}</div></div>
+        <button onClick={()=>{}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="refresh" size={13} color="#fff"/>Riesegui</button>
+        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={16}/></button>
+      </div>
+      <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        <button onClick={()=>setCatExpanded(p=>!p)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left"}}>
+          <div style={{flex:1,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            {[...activeCats].slice(0,5).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
+            {activeCats.size>5&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>+{activeCats.size-5}</span>}
+            <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{activeCats.size} di {VERIFICA_CATS.length} selezionate</span>
           </div>
-          <div style={{flex:1}}><h2 style={{fontSize:20,fontWeight:700,marginBottom:4,color:"var(--fg)"}}>{ok?"Tutto in regola.":`${errors.length} problem${errors.length===1?"a":"i"} trovat${errors.length===1?"o":"i"}`}</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>{ok?"Nessuna anomalia rilevata.":"Esamina i problemi qui sotto e naviga al mese corrispondente."}</p></div>
+          <Icon name={catExpanded?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
+        </button>
+        {catExpanded&&<div style={{marginTop:8,padding:12,background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)"}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:6,marginBottom:10}}>
+            {VERIFICA_CATS.map(c=>{const cnt=errors.filter(e=>e.type===c.type).length;const checked=activeCats.has(c.type);return(<label key={c.type} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:"var(--radius)",background:checked?"var(--bg-elev)":"transparent",border:`1px solid ${checked?"var(--border)":"transparent"}`,cursor:"pointer"}}>
+              <input type="checkbox" checked={checked} onChange={()=>toggleCat(c.type)} style={{flexShrink:0}}/>
+              <Icon name={c.icon} size={13} color={`var(--${c.tone})`}/>
+              <span style={{flex:1,fontSize:12,color:"var(--fg)"}}>{c.label}</span>
+              {cnt>0&&<span style={{fontSize:10,fontWeight:700,color:`var(--${c.tone})`}}>{cnt}</span>}
+            </label>);} )}
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setActiveCats(new Set())} className="btn" data-variant="ghost" data-size="sm">Deseleziona tutto</button>
+            <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Seleziona tutto</button>
+            <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica filtri</button>
+          </div>
+        </div>}
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
+        <div style={{padding:"14px 18px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+          <Icon name={ok?"checkCircle":"alert"} size={22} color={ok?"var(--success)":"var(--danger)"}/>
+          <span style={{fontWeight:700,fontSize:14,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri selezionati.":`${filtered.length} problem${filtered.length===1?"a":"i"} rilevat${filtered.length===1?"o":"i"} · Clicca su un problema per navigare al mese`}</span>
         </div>
-        {errors.length===0?<p style={{color:"var(--success)",fontWeight:600,textAlign:"center",marginTop:20,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="checkCircle" size={16} color="var(--success)"/>Tutti i dati sono coerenti.</p>
-        :<div style={{display:"flex",flexDirection:"column",gap:10}}>{errors.map((e,i)=>(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey)} style={{padding:"12px 16px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:12,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
-          <div style={{width:40,height:40,borderRadius:10,flexShrink:0,background:`var(--${tones[e.type]||"warning"}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Icon name={icons[e.type]||"alert"} size={18} color={`var(--${tones[e.type]||"warning"})`}/>
-          </div>
-          <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span className="badge" data-tone={tones[e.type]||"warning"}>{labels[e.type]||e.type}</span>{e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3}}><Icon name="calendar" size={11} color="var(--info)"/>Vai al mese</span>}</div><div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div></div>
-        </div>))}</div>}
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};return(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey)} style={{padding:"12px 16px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:12,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
+            <div style={{width:34,height:34,borderRadius:8,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon name={cat.icon} size={16} color={`var(--${cat.tone})`}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                <span className="badge" data-tone={cat.tone} style={{fontSize:10}}>{cat.label}</span>
+                {e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3,marginLeft:"auto"}}><Icon name="calendar" size={11} color="var(--info)"/>Vai a {MONTHS.find(m=>m.key===e.monthKey)?.label||e.monthKey}</span>}
+              </div>
+              <div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div>
+              {e.detail&&<div style={{fontSize:11,color:"var(--fg-muted)",marginTop:3}}>{e.detail}</div>}
+            </div>
+          </div>);})}
+          {filtered.length===0&&!ok&&<p style={{color:"var(--fg-subtle)",textAlign:"center",padding:20,fontSize:13}}>Nessun errore nei filtri selezionati.</p>}
+        </div>
       </div>
     </div>
   </div>);
