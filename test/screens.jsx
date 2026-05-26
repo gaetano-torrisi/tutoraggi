@@ -108,7 +108,7 @@ function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
 
 // ── ANAGRAFICA TUTOR SCREEN ───────────────────────────────────────────────
 function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
-  const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
+  const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
   function getTutOre(tId){let o=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)o+=(ev.ore||0);return o;}
   function getTutSlots(tId){let s=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))s+=evs.length;return s;}
   function getTutAvvisiSet(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)n.add(ev.name);return n;}
@@ -116,8 +116,8 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
   const filtered=[...tutors].filter(t=>`${t.nome} ${t.cognome} ${t.cf||""} ${t.azienda||""}`.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.cognome.localeCompare(b.cognome));
   useEffect(()=>{if(tutors.length>0&&!selected)setSelected(tutors[0]);},[tutors]);
   function startEdit(){setForm({...selected});setEditing(true);}
-  async function saveEdit(){if(!form.nome||!form.cognome)return;setSaving(true);const newList=tutors.map(t=>t.id===form.id?form:t);await onSaveTutor(newList,"edit",form);setEditing(false);setSelected(form);setSaving(false);}
-  async function addNew(){const usedColors=tutors.map(t=>t.color).filter(Boolean);const freeColor=PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0];const newItem={id:`tutor-${Date.now()}`,nome:"Nuovo",cognome:"Tutor",cf:"",azienda:"",color:freeColor};const newList=[...tutors,newItem];await onSaveTutor(newList,"add",newItem);setSelected(newItem);setForm({...newItem});setEditing(true);}
+  async function saveEdit(){if(!form.nome||!form.cognome)return;setSaving(true);const newList=isNew?[...tutors,form]:tutors.map(t=>t.id===form.id?form:t);await onSaveTutor(newList,isNew?"add":"edit",form);setIsNew(false);setEditing(false);setSelected(form);setSaving(false);}
+  function addNew(){const usedColors=tutors.map(t=>t.color).filter(Boolean);const freeColor=PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0];const newItem={id:`tutor-${Date.now()}`,nome:"",cognome:"",cf:"",azienda:"",color:freeColor};setForm({...newItem});setSelected(newItem);setIsNew(true);setEditing(true);}
   async function deleteSelected(){if(!selected||!confirm(`Eliminare "${selected.cognome} ${selected.nome}"?`))return;const newList=tutors.filter(t=>t.id!==selected.id);await onSaveTutor(newList,"delete",selected);setSelected(newList[0]||null);}
   const usedColors=tutors.filter(t=>t.id!==selected?.id).map(t=>t.color).filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
@@ -179,8 +179,8 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
           <div style={{marginBottom:18}}><label className="label">Azienda / Ente</label><input className="input" value={form.azienda||""} onChange={e=>setForm(f=>({...f,azienda:e.target.value}))}/></div>
           <div style={{marginBottom:18}}><label className="label">Colore identificativo</label><ColorPicker value={form.color||PALETTE[0]} onChange={c=>setForm(f=>({...f,color:c}))} usedColors={usedColors}/></div>
           <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid var(--divider)",paddingTop:14}}>
-            <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina tutor</button>
-            <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setEditing(false)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>Salva modifiche</>}</button></div>
+            {!isNew&&<button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina tutor</button>}
+            <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button className="btn" data-variant="outline" onClick={()=>{setEditing(false);setIsNew(false);if(isNew)setSelected(tutors[0]||null);}}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving||!form.nome||!form.cognome} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>{isNew?"Crea tutor":"Salva modifiche"}</>}</button></div>
           </div>
         </div>)}
       </div>):(<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-subtle)"}}>Seleziona un tutor a sinistra</div>)}
@@ -190,15 +190,15 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaAv,onSaveTutor,canEdit}){
 
 // ── ANAGRAFICA AVVISI SCREEN ──────────────────────────────────────────────
 function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
-  const[q,setQ]=useState("");const[statoFilter,setStatoFilter]=useState("all");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
+  const[q,setQ]=useState("");const[statoFilter,setStatoFilter]=useState("all");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
   function getOre(ana){const av=avById[ana.id];return av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;}
   function pct(ana){const ore=getOre(ana);return ana.durataOre?Math.round(ore/ana.durataOre*100):0;}
   const filtered=[...anagraficaAv].filter(a=>(statoFilter==="all"||a.stato===statoFilter)&&`${a.nome} ${a.codice||""}`.toLowerCase().includes(q.toLowerCase())).sort((a,b)=>a.nome.localeCompare(b.nome));
   useEffect(()=>{if(anagraficaAv.length>0&&!selected)setSelected(anagraficaAv[0]);},[anagraficaAv]);
   function startEdit(){setForm({...selected});setEditing(true);}
-  async function saveEdit(){if(!form.nome)return;setSaving(true);const newList=anagraficaAv.map(a=>a.id===form.id?form:a);await onSaveAna(newList,"edit",form);setEditing(false);setSelected(form);setSaving(false);}
-  async function addNew(){const free=PALETTE.find(c=>!anagraficaAv.map(a=>a.colore).includes(c))||PALETTE[0];const newItem={id:`av-${Date.now()}`,nome:"Nuovo avviso",codice:"",colore:free,durataOre:400,stato:"In corso",dataInizio:"",dataFine:"",note:""};const newList=[...anagraficaAv,newItem];await onSaveAna(newList,"add",newItem);setSelected(newItem);setForm({...newItem});setEditing(true);}
+  async function saveEdit(){if(!form.nome||!form.durataOre||Number(form.durataOre)<=0)return;setSaving(true);const newList=isNew?[...anagraficaAv,form]:anagraficaAv.map(a=>a.id===form.id?form:a);await onSaveAna(newList,isNew?"add":"edit",form);setIsNew(false);setEditing(false);setSelected(form);setSaving(false);}
+  function addNew(){const free=PALETTE.find(c=>!anagraficaAv.map(a=>a.colore).includes(c))||PALETTE[0];const newItem={id:`av-${Date.now()}`,nome:"",codice:"",colore:free,durataOre:"",stato:"In corso",dataInizio:"",dataFine:"",note:""};setForm({...newItem});setSelected(newItem);setIsNew(true);setEditing(true);}
   async function deleteSelected(){if(!selected||!confirm(`Eliminare "${selected.nome}"?`))return;const newList=anagraficaAv.filter(a=>a.id!==selected.id);await onSaveAna(newList,"delete",selected);setSelected(newList[0]||null);}
   const usedColors=anagraficaAv.filter(a=>a.id!==selected?.id).map(a=>a.colore).filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
@@ -280,8 +280,8 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}><div><label className="label">Data inizio</label><input className="input" value={form.dataInizio||""} onChange={e=>setForm(f=>({...f,dataInizio:e.target.value}))}/></div><div><label className="label">Data fine</label><input className="input" value={form.dataFine||""} onChange={e=>setForm(f=>({...f,dataFine:e.target.value}))}/></div></div>
             <div style={{marginBottom:14}}><label className="label">Note</label><textarea className="textarea" value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} rows={3}/></div>
             <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid var(--divider)",paddingTop:14}}>
-              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina avviso</button>
-              <div style={{display:"flex",gap:8}}><button className="btn" data-variant="outline" onClick={()=>setEditing(false)}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>Salva modifiche</>}</button></div>
+              {!isNew&&<button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina avviso</button>}
+              <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button className="btn" data-variant="outline" onClick={()=>{setEditing(false);setIsNew(false);if(isNew)setSelected(anagraficaAv[0]||null);}}>Annulla</button><button className="btn" data-variant="accent" onClick={saveEdit} disabled={saving||!form.nome||!form.durataOre||Number(form.durataOre)<=0} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="check" size={14} color="#fff"/>{isNew?"Crea avviso":"Salva modifiche"}</>}</button></div>
             </div>
           </div>
         )}
