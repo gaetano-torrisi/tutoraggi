@@ -191,7 +191,9 @@ function App({user}){
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
   const[showInsights,setShowInsights]=useState(false);const[showVerificaDrawer,setShowVerificaDrawer]=useState(false);
   const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);
+  const[dragWarn,setDragWarn]=useState(null);
   const avatarRef=useRef();
+  const dragWarnTimerRef=useRef();
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
@@ -417,7 +419,7 @@ function App({user}){
 
       <div className="screen-area">
         {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
-        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>editTutoraggio(evId,u):null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
+        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(!avDay)warn=`Nessuna sessione "${avName}" il giorno ${newDay}`;else if((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end)warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
         {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
@@ -426,6 +428,7 @@ function App({user}){
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
       {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
+      {isCalendar&&dragWarn&&<div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:300,display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderRadius:"var(--radius-md)",background:"var(--warning-soft)",border:"1px solid var(--warning)",boxShadow:"var(--shadow-lg)",fontSize:13,color:"var(--fg)",maxWidth:520}}><Icon name="alert" size={15} color="var(--warning)"/><span style={{flex:1}}>{dragWarn}</span><button onClick={()=>setDragWarn(null)} style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",display:"flex",flexShrink:0}}><Icon name="x" size={13} color="var(--fg-muted)"/></button></div>}
     </div>
 
     {showInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
