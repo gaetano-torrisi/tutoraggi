@@ -144,3 +144,82 @@ function MonthRangePicker({value,onChange,months=[]}){
     </div>}
   </div>);
 }
+
+// ── INLINE CREATE TUTOR ───────────────────────────────────────────────────
+function InlineCreateTutor({tutors,onSaveTutor,onCreated,onCancel,onAddMessage}){
+  const[form,setForm]=useState({nome:"",cognome:"",cf:"",azienda:"",color:PALETTE[0]});
+  const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
+  const presetColors=PALETTE.slice(0,8);
+  async function handleCreate(){
+    if(!form.nome||!form.cognome){setErr("Nome e Cognome sono obbligatori.");return;}
+    setSaving(true);setErr("");
+    const newTutor={...form,id:`tutor-${Date.now()}`};
+    const newList=[...tutors,newTutor];
+    await onSaveTutor(newList,"add",newTutor);
+    onAddMessage&&onAddMessage(`Tutor ${newTutor.cognome} ${newTutor.nome} creato e selezionato.`);
+    onCreated(newTutor);
+    setSaving(false);
+  }
+  return(
+    <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo tutor</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
+        <div><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+        <div><label className="label" style={{fontSize:10}}>Cognome *</label><input className="input" value={form.cognome} onChange={e=>setForm(f=>({...f,cognome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      </div>
+      <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>CF</label><input className="input mono" value={form.cf} onChange={e=>setForm(f=>({...f,cf:e.target.value.toUpperCase()}))} maxLength={16} style={{height:28,fontSize:12}}/></div>
+      <div style={{marginBottom:8}}><label className="label" style={{fontSize:10}}>Azienda</label><input className="input" value={form.azienda} onChange={e=>setForm(f=>({...f,azienda:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      <div style={{marginBottom:8}}>
+        <label className="label" style={{fontSize:10}}>Colore</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>{presetColors.map(c=><div key={c} onClick={()=>setForm(f=>({...f,color:c}))} style={{width:20,height:20,borderRadius:4,background:c,cursor:"pointer",border:form.color===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
+      </div>
+      {err&&<div style={{fontSize:11,color:"var(--danger)",marginBottom:6}}>{err}</div>}
+      <div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
+        <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
+        <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
+          {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea e seleziona</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── INLINE CREATE AVVISO ──────────────────────────────────────────────────
+function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMessage}){
+  const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1]});
+  const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
+  const presetColors=PALETTE.slice(0,8);
+  async function handleCreate(){
+    if(!form.nome){setErr("Nome è obbligatorio.");return;}
+    if(!form.durataOre||isNaN(Number(form.durataOre))||Number(form.durataOre)<=0){setErr("Durata ore è obbligatoria.");return;}
+    setSaving(true);setErr("");
+    const newAv={...form,id:`av-${Date.now()}`,durataOre:Number(form.durataOre),dataInizio:"",dataFine:"",note:""};
+    const newList=[...anagraficaAv,newAv];
+    await onSaveAna(newList,"add",newAv);
+    onAddMessage&&onAddMessage(`Avviso "${newAv.nome}" creato e selezionato.`);
+    onCreated(newAv);
+    setSaving(false);
+  }
+  return(
+    <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso</div>
+      <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Codice</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+        <div><label className="label" style={{fontSize:10}}>Durata ore *</label><input className="input mono" type="number" min="1" value={form.durataOre} onChange={e=>setForm(f=>({...f,durataOre:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+        <div><label className="label" style={{fontSize:10}}>Stato</label><select className="select" value={form.stato} onChange={e=>setForm(f=>({...f,stato:e.target.value}))} style={{height:28,fontSize:12}}>{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+      </div>
+      <div style={{marginBottom:8}}>
+        <label className="label" style={{fontSize:10}}>Colore</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>{presetColors.map(c=><div key={c} onClick={()=>setForm(f=>({...f,colore:c}))} style={{width:20,height:20,borderRadius:4,background:c,cursor:"pointer",border:form.colore===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box"}}/>)}</div>
+      </div>
+      {err&&<div style={{fontSize:11,color:"var(--danger)",marginBottom:6}}>{err}</div>}
+      <div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
+        <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
+        <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
+          {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea e seleziona</>}
+        </button>
+      </div>
+    </div>
+  );
+}

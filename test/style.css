@@ -39,7 +39,7 @@
 .app-shell { display:flex; height:100vh; background:var(--bg); overflow:hidden; }
 
 /* ── Sidebar ── */
-.sidebar-container { display:flex; flex-direction:row; flex-shrink:0; transition:width .2s ease; overflow:hidden; }
+.sidebar-container { display:flex; flex-direction:row; flex-shrink:0; transition:width .3s ease; overflow:hidden; }
 .sidebar {
   width:248px; flex-shrink:0; background:var(--bg-elev);
   border-right:1px solid var(--border); display:flex; flex-direction:column;
@@ -209,3 +209,8 @@
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; border:2px solid var(--bg-elev); }
 ::-webkit-scrollbar-thumb:hover { background:var(--border-strong); }
+
+@media (max-width:900px) {
+  .sidebar-container { position:relative; }
+  .sidebar-ai-panel { position:absolute; left:0; top:0; bottom:0; z-index:150; box-shadow:var(--shadow-lg); }
+}

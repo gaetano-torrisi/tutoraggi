@@ -31,8 +31,9 @@ function ProfileModal({user,onClose}){
 }
 
 // ── AI PANEL ──────────────────────────────────────────────────────────────
-function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
+function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onSaveTutor,onSaveAna,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
+  const[showInlineTutor,setShowInlineTutor]=useState(false);const[showInlineAvviso,setShowInlineAvviso]=useState(false);
   const PHRASES=["Cosa importiamo oggi? 🚀","Quale documento analizziamo? 📄","Pronti per l'import!","Carica il file, penso a tutto io. ✨","Un documento alla volta, un passo alla volta. 📋","Dimmi tutto, estraggo io le date. 🗓️"];
   const phrase=useRef(PHRASES[Math.floor(Math.random()*6)]).current;
   const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
@@ -40,7 +41,7 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   const uname=user?.email?.split("@")[0]||"utente";
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){addMsg({role:"ai",text:"Nessun tutor in anagrafica.",showOpenTutor:true});return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){addMsg({role:"ai",text:"Nessun avviso in anagrafica.",showOpenAv:true});return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){setStep("selTutor");addMsg({role:"ai",text:"Nessun tutor ancora. Creane uno per procedere:",showTutorSel:true});setShowInlineTutor(true);return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){setStep("selAv");addMsg({role:"ai",text:"Nessun avviso ancora. Creane uno per procedere:",showAvSel:true});setShowInlineAvviso(true);return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
   async function processSource(file,text){if(file)addMsg({role:"user",text:file.name,icon:"paperclip"});else addMsg({role:"user",text:`Testo incollato (${text.length} caratteri)`,icon:"clipboard"});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
@@ -70,8 +71,31 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
       {msg.showOpenAv&&<button onClick={onOpenAnaAvvisi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Avvisi</button>}
       {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
       {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
-      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}><select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>{(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}</div>}
-      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}><select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:8}}><option value="">— Seleziona avviso —</option>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>{!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic"}}>Seleziona un avviso per procedere.</div>:uploadButtons()}</div>}
+      {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
+        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:4}}>
+          <option value="">— Seleziona tutor —</option>
+          {[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
+        </select>
+        {!showInlineTutor
+          ?<button onClick={()=>setShowInlineTutor(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo tutor</button>
+          :<InlineCreateTutor tutors={tutors} onSaveTutor={onSaveTutor} onCreated={t=>{setSelTutor(t.id);setShowInlineTutor(false);}} onCancel={()=>setShowInlineTutor(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+        <select value={selAv} onChange={e=>{if(e.target.value==="__create__"){setShowInlineAvviso(true);setSelAv("");}else{setSelAv(e.target.value);setShowInlineAvviso(false);}}} className="select" style={{marginTop:4,marginBottom:4}}>
+          <option value="">— Seleziona avviso —</option>
+          {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
+          <option value="__create__">+ Crea nuovo avviso...</option>
+        </select>
+        {showInlineAvviso&&<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+        {(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}
+      </div>}
+      {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
+        <select value={selAv} onChange={e=>{if(e.target.value==="__create__"){setShowInlineAvviso(true);setSelAv("");}else{setSelAv(e.target.value);setShowInlineAvviso(false);}}} className="select" style={{marginBottom:4}}>
+          <option value="">— Seleziona avviso —</option>
+          {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
+          <option value="__create__">+ Crea nuovo avviso...</option>
+        </select>
+        {showInlineAvviso&&<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+        {!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona un avviso per procedere.</div>:uploadButtons()}
+      </div>}
       {msg.showUpload&&uploadButtons()}
       {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center",display:"flex",alignItems:"center",gap:6}}>{loading?<><Icon name="loader" size={13} color="#fff"/>Importazione...</>:<><Icon name="check" size={13} color="#fff"/>Conferma tutto</>}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline"><Icon name="x" size={13}/></button></div>}</div>}
       {msg.showAmbiguities&&<div style={{marginTop:6,width:"100%"}}>{msg.showAmbiguities.map((a,i)=><div key={i} style={{padding:"8px 10px",marginBottom:4,borderRadius:"var(--radius)",border:"1px solid var(--warning)",background:"var(--warning-soft)",fontSize:11}}><div style={{fontWeight:700,color:"var(--warning)",marginBottom:3,display:"flex",alignItems:"center",gap:5}}><Icon name="alert" size={12} color="var(--warning)"/>{a.field}</div><div style={{color:"var(--fg-muted)",marginBottom:5}}>{a.description}</div><button onClick={()=>{const rem=ambig.filter((_,j)=>j!==i);setAmbig(rem);if(!rem.length){setStep("preview");addMsg({role:"ai",text:"Grazie! Ecco il riepilogo:",showPreview:pending});}}} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="check" size={11} color="#fff"/>Confermo</button></div>)}</div>}
@@ -254,13 +278,15 @@ function App({user}){
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
     if(id==="verifica"){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);return;}
+    if(id==="ai"){setShowAi(s=>!s);return;}
     setActiveScreen(id);
-    if(id==="ai")setShowAi(true);
-    else if(id!=="calendar")setShowAi(false);
+    if(id!=="calendar")setShowAi(false);
   }
 
+  const sidebarW=sidebarCollapsed?64:248;
+  const containerW=sidebarW+(showAi?320:0);
   return(<div className="app-shell">
-    <div className="sidebar-container">
+    <div className="sidebar-container" style={{width:containerW,transition:"width .3s ease"}}>
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
@@ -293,7 +319,7 @@ function App({user}){
         </button>
       </div>
     </aside>
-    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
     </div>
 
     <div className="main-area">
