@@ -212,12 +212,14 @@ function App({user}){
   useEffect(()=>{
     fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));
       if(s.theme)setTheme(s.theme);
-      if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(s.accentColor,.85));}
+      if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(s.accentColor,.12));}
       if(s.brandNavy&&/^#[0-9A-Fa-f]{6}$/.test(s.brandNavy))document.documentElement.style.setProperty("--brand-navy",s.brandNavy);
       if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor))document.documentElement.style.setProperty("--bg",s.bgColor);
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);
+      if(s.appSubtitle){const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
+      if(s.logoBase64)localStorage.setItem("logoBase64",s.logoBase64);
       setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
   },[]);
@@ -289,7 +291,7 @@ function App({user}){
     <div className="sidebar-container" style={{width:containerW,transition:"width .3s ease"}}>
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
-        <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
+        <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
         {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">EHT · Harmonic<br/>Innovation Group</span></div>}
       </div>
       <nav className="sidebar-nav">
@@ -324,7 +326,7 @@ function App({user}){
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
-        <img src="assets/appmark-color.png" width="32" height="32" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
+        <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
         <span style={{fontWeight:700,fontSize:14,letterSpacing:"-0.01em",color:"var(--fg)",whiteSpace:"nowrap"}}>TutorIA</span>
         <div className="topbar-divider"/>
         <div className="module-switch">

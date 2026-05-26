@@ -431,15 +431,15 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   const[saved,setSaved]=useState(false);
   const logoFileRef=useRef();const logoWhiteFileRef=useRef();
   const primaryColorRef=useRef();const accentColorRef=useRef();const bgColorRef=useRef();
-  function applyAccent(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--accent",c);document.documentElement.style.setProperty("--accent-strong",darkenHex(c,.15));document.documentElement.style.setProperty("--accent-soft",lightenHex(c,.85));}
+  function applyAccent(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--accent",c);document.documentElement.style.setProperty("--accent-strong",darkenHex(c,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(c,.12));}
   function applyPrimary(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--brand-navy",c);}
   function applyBg(c){if(c&&/^#[0-9A-Fa-f]{6}$/.test(c))document.documentElement.style.setProperty("--bg",c);}
   function setAccent(c){setAccentState(c);setAccentInput(c);applyAccent(c);}
   function setPrimary(c){setPrimaryState(c);setPrimaryInput(c);applyPrimary(c);}
   function setBg(c){setBgState(c);setBgInput(c);applyBg(c);}
   function setDensity(v){setDensityState(v);document.documentElement.setAttribute("data-density",v);}
-  function handleLogoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setLogoB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
-  function handleLogoWhiteFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>setLogoWhiteB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
+  function handleLogoFile(e){const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert("File troppo grande (max 2 MB)");e.target.value="";return;}const r=new FileReader();r.onload=ev=>setLogoB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
+  function handleLogoWhiteFile(e){const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert("File troppo grande (max 2 MB)");e.target.value="";return;}const r=new FileReader();r.onload=ev=>setLogoWhiteB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
   async function handleSave(){
     const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,startHour,defaultZoom,theme,logoBase64:logoB64,logoWhiteBase64:logoWhiteB64,appSubtitle};
     await onSaveSettings(prefs);applyAccent(accentColor);applyPrimary(primaryColor);if(bgColor)applyBg(bgColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);
@@ -477,8 +477,8 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
           <button className="btn" data-variant="accent" onClick={()=>logoFileRef.current.click()} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13} color="#fff"/>Logo chiaro</button>
           <button className="btn" data-variant="outline" onClick={()=>logoWhiteFileRef.current.click()} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={13}/>Logo scuro</button>
           {(logoB64||logoWhiteB64)&&<button className="btn" data-variant="ghost" onClick={()=>{setLogoB64("");setLogoWhiteB64("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="rotateCcw" size={13}/>Reset</button>}
-          <input ref={logoFileRef} type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoFile}/>
-          <input ref={logoWhiteFileRef} type="file" accept=".png,.svg" style={{display:"none"}} onChange={handleLogoWhiteFile}/>
+          <input ref={logoFileRef} type="file" accept=".png,.svg,.jpg,.jpeg" style={{display:"none"}} onChange={handleLogoFile}/>
+          <input ref={logoWhiteFileRef} type="file" accept=".png,.svg,.jpg,.jpeg" style={{display:"none"}} onChange={handleLogoWhiteFile}/>
         </div>
       </div>
       <div><label className="label">Sottotitolo app</label><input className="input" value={appSubtitle} onChange={e=>setAppSubtitle(e.target.value)} placeholder="EHT · Harmonic Innovation Group"/><p style={{fontSize:11,color:"var(--fg-subtle)",marginTop:4}}>Appare nella pagina di login sotto il nome dell'app.</p></div>
