@@ -19,7 +19,7 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
         {onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
         {ev.name}
       </span>
-      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"rgba(255,255,255,.9)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.18)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,.6)",borderRadius:1}}/></div>}
@@ -43,7 +43,7 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd}){
         {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
         {ev.avvisoName}
       </span>
-      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.08)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,.25)",borderRadius:1}}/></div>}
@@ -80,7 +80,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
             {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onDragEnd={onAvDragEnd?(u=>onAvDragEnd(ev.avvisoId,ev.id,u)):null}/>)}
           </div>
           <div style={{height:40,background:wk?"rgba(155,89,182,.04)":"var(--bg-sunken)",borderTop:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {footer?<span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:13,fontWeight:700,color:"var(--fg)"}}>{footer}</span>:<span style={{fontSize:10,color:"var(--fg-faint)"}}>—</span>}
+            {footer?<span style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{footer}</span>:<span style={{fontSize:10,color:"var(--fg-faint)"}}>—</span>}
           </div>
         </div>);
       })}
@@ -105,7 +105,7 @@ function MonthView({month,tutByDay,avByDay,onDayClick}){
 function ZoomBar({zoomIdx,onZoomChange,onHelpOpen}){
   return(<div className="zoom-bar">
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
-    <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center",fontFamily:'"JetBrains Mono",monospace'}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
+    <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center"}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))}>+</button>
     <div style={{width:1,height:18,background:"var(--divider)",margin:"0 2px"}}/>
     <button onClick={onHelpOpen} title="Guida e FAQ" style={{width:28,height:28,border:"1.5px solid var(--border)",borderRadius:"50%",background:"var(--bg-elev)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--accent-strong)",fontWeight:800}}>

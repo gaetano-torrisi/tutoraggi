@@ -33,8 +33,8 @@ function ProfileModal({user,onClose}){
 // ── AI PANEL ──────────────────────────────────────────────────────────────
 function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
-  const PHRASES=["Cosa importiamo oggi? 🚀","Quale documento analizziamo?","Pronti per l'import!","Carica il file, penso a tutto io."];
-  const phrase=useRef(PHRASES[Math.floor(Math.random()*PHRASES.length)]).current;
+  const PHRASES=["Cosa importiamo oggi? 🚀","Quale documento analizziamo? 📄","Pronti per l'import!","Carica il file, penso a tutto io. ✨","Un documento alla volta, un passo alla volta. 📋","Dimmi tutto, estraggo io le date. 🗓️"];
+  const phrase=useRef(PHRASES[Math.floor(Math.random()*6)]).current;
   const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
@@ -78,7 +78,10 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
     </div>);}
   return(<div className="sidebar-ai-panel">
     <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-      <span style={{fontWeight:800,fontSize:15,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={14} color="#F5A35A"/>AI Import</span>
+      <div style={{display:"flex",flexDirection:"column",gap:2}}>
+        <span style={{fontWeight:800,fontSize:15,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={14} color="#F5A35A"/>AI Import</span>
+        <span style={{fontSize:12,color:"rgba(255,255,255,.75)",fontStyle:"italic"}}>{phrase}</span>
+      </div>
       <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={16} color="#fff"/></button>
     </div>
     <div style={{flex:1,overflowY:"auto",padding:"10px 14px",display:"flex",flexDirection:"column",background:"var(--bg)",paddingBottom:16}}>{messages.map((m,i)=>renderMsg(m,i))}<div ref={btmRef}/></div>
@@ -310,10 +313,14 @@ function App({user}){
           </div>
           <button onClick={()=>setMonthIdx(i=>Math.min(MONTHS.length-1,i+1))} disabled={monthIdx===MONTHS.length-1} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevRight" size={14}/></button>
         </div>
-        <div className="tab-strip">
-          <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
-          <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Sett.</button>
-          <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
+        <div style={{display:"flex",alignItems:"center",gap:4}}>
+          {calView==="week"&&<button onClick={()=>navWeek(-1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana precedente"><Icon name="chevLeft" size={14}/></button>}
+          <div className="tab-strip">
+            <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
+            <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Sett.</button>
+            <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
+          </div>
+          {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
         <div style={{flex:1}}/>
         <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
@@ -360,7 +367,7 @@ function App({user}){
         </div>
       </div>)}
 
-      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">Sei in modalità{" "}<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--bg-sunken)",border:"1px solid var(--border)",color:"var(--fg-muted)",fontSize:11,fontWeight:500}}><Icon name="eye" size={11}/>Visualizza</span>{" "}— passa a{" "}<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--accent)",border:"1px solid var(--accent)",color:"#fff",fontSize:11,fontWeight:500}}><Icon name="edit" size={11} color="#fff"/>Modifica</span>{" "}per apportare modifiche.</div>}
+      {isCalendar&&!editMode&&!isViewer&&<div className="edit-mode-banner">Sei in modalità{" "}<span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--bg-sunken)",border:"1px solid var(--border)",color:"var(--fg-muted)",fontSize:11,fontWeight:500}}><Icon name="eye" size={11}/>Visualizza</span>{" "}— passa a{" "}<button onClick={()=>setEditMode(true)} style={{cursor:"pointer",display:"inline-flex",alignItems:"center",gap:4,padding:"1px 8px",borderRadius:100,background:"var(--accent)",border:"none",color:"#fff",fontSize:11,fontWeight:500}}><Icon name="edit" size={11} color="#fff"/>Modifica</button>{" "}per apportare modifiche.</div>}
 
       {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
