@@ -189,7 +189,7 @@ function App({user}){
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
-  const[showInsights,setShowInsights]=useState(false);const[showVerificaDrawer,setShowVerificaDrawer]=useState(false);
+  const[showInsights,setShowInsights]=useState(false);const[highlightEvId,setHighlightEvId]=useState(null);
   const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);
   const[dragWarn,setDragWarn]=useState(null);
   const avatarRef=useRef();
@@ -202,7 +202,8 @@ function App({user}){
 
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
   const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
-  const isCalendar=activeScreen==="calendar";
+  const isCalendar=activeScreen==="calendar"||activeScreen==="verifica";
+  const showVerificaPanel=activeScreen==="verifica";
 
   useEffect(()=>{document.documentElement.setAttribute("data-theme",theme);},[theme]);
 
@@ -281,7 +282,7 @@ function App({user}){
 
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
-    if(id==="verifica"){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);return;}
+    if(id==="verifica"){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");return;}
     if(id==="ai"){setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
@@ -353,7 +354,7 @@ function App({user}){
           {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
         <div style={{flex:1}}/>
-        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setShowVerificaDrawer(true);}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
+        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
@@ -417,13 +418,16 @@ function App({user}){
         {avThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:avThisMonth.map(a=>{const active=activeAvvisi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
       </div>)}
 
-      <div className="screen-area">
+      <div className="screen-area" style={showVerificaPanel?{flexDirection:"row"}:{}}>
+        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden",minHeight:0}}>
         {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
-        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(!avDay)warn=`Nessuna sessione "${avName}" il giorno ${newDay}`;else if((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end)warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null}/>}
+        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(!avDay)warn=`Nessuna sessione "${avName}" il giorno ${newDay}`;else if((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end)warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null} highlightEvId={highlightEvId}/>}
         {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
         {activeScreen==="ai"&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",flexDirection:"column",gap:12,background:"var(--bg)"}}><Icon name="sparkles" size={40} color="var(--accent)"/><div style={{fontSize:15,fontWeight:600,color:"var(--fg)"}}>AI Import</div><p style={{fontSize:13,color:"var(--fg-muted)"}}>Attiva Edit Mode dal calendario e usa il pannello AI.</p><button className="btn" data-variant="accent" onClick={()=>{setActiveScreen("calendar");setEditMode(true);setTimeout(()=>setShowAi(true),100);}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="arrowRight" size={13} color="#fff"/>Vai al calendario</button></div>}
+        </div>
+        {showVerificaPanel&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} anagraficaAv={anagraficaAv} tutors={tutors} onNavigate={(mk,evId)=>{if(mk){const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);setTimeout(()=>{const el=document.getElementById(`slot-${evId}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},100);}}}/>}
       </div>
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
@@ -432,7 +436,6 @@ function App({user}){
     </div>
 
     {showInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
-    {showVerificaDrawer&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} anagraficaAv={anagraficaAv} tutors={tutors} onClose={()=>setShowVerificaDrawer(false)} onNavigate={mk=>{setShowVerificaDrawer(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")}/>}
   </div>);
