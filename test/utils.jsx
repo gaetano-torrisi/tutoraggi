@@ -7,6 +7,7 @@ const MONTHS=[
   {key:"gen-27",label:"Gennaio 2027",year:2027,month:0,days:31},{key:"feb-27",label:"Febbraio 2027",year:2027,month:1,days:28},{key:"mar-27",label:"Marzo 2027",year:2027,month:2,days:31},{key:"apr-27",label:"Aprile 2027",year:2027,month:3,days:30},{key:"mag-27",label:"Maggio 2027",year:2027,month:4,days:31},{key:"giu-27",label:"Giugno 2027",year:2027,month:5,days:30},{key:"lug-27",label:"Luglio 2027",year:2027,month:6,days:31},{key:"ago-27",label:"Agosto 2027",year:2027,month:7,days:31},{key:"set-27",label:"Settembre 2027",year:2027,month:8,days:30},{key:"ott-27",label:"Ottobre 2027",year:2027,month:9,days:31},{key:"nov-27",label:"Novembre 2027",year:2027,month:10,days:30},{key:"dic-27",label:"Dicembre 2027",year:2027,month:11,days:31},
 ];
 const MONTH_NAMES_SHORT=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+const MONTH_ABBR_IT=["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
 const PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B","#9B59B6","#16A085","#E67E22","#34495E","#D35400","#27AE60","#8E44AD","#2980B9","#e74c3c","#f1c40f","#1abc9c","#3498db","#e91e63","#673ab7","#2196f3","#00bcd4","#4caf50","#ff9800","#ff5722","#795548","#607d8b","#f06292","#ba68c8","#4db6ac","#4fc3f7","#aed581","#ffb74d","#ff8a65","#a1887f","#90a4ae","#80cbc4","#ce93d8","#ef9a9a","#80deea","#c5e1a5","#ffe082"];
 const ZOOM_LEVELS=[0.6,0.8,1,1.25,1.5,2,2.5,3];
 const AV_STATI=["In corso","Concluso","Sospeso"];
@@ -64,6 +65,7 @@ function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();ret
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
 function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}:${String(m).padStart(2,"0")}`;}
+function fmtDayMonth(day,monthKey){const m=MONTHS.find(x=>x.key===monthKey);return`${day}${m?" "+MONTH_ABBR_IT[m.month]:""}`;}
 function sortMK(keys){return[...keys].sort((a,b)=>MONTHS.findIndex(m=>m.key===a)-MONTHS.findIndex(m=>m.key===b));}
 function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i].some(p=>p.test(text));}
 function layoutEvents(evs){
