@@ -44,15 +44,16 @@ function VerificaScreen({avvisi=[],tutors=[],tutEvents={},anagraficaAv=[],onNavi
   const[catExpanded,setCatExpanded]=useState(false);
   const[selAv,setSelAv]=useState("");
   const[selTutor,setSelTutor]=useState("");
-  const[sortBy,setSortBy]=useState("type");
+  const[sortBy,setSortBy]=useState("date");
 
   function riesegui(){setErrors(runVerifica(avvisi,anagraficaAv,tutors,tutEvents));setLastRun(new Date());}
   function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
 
+  function dateRank(e){const mi=e.monthKey?MONTHS.findIndex(m=>m.key===e.monthKey):Infinity;return[mi===undefined||mi===-1?Infinity:mi,e.day||0];}
   const ok=errors.length===0;
   let filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
-  if(sortBy==="type")filtered=[...filtered].sort((a,b)=>a.type.localeCompare(b.type));
-  else if(sortBy==="month")filtered=[...filtered].sort((a,b)=>(a.monthKey||"").localeCompare(b.monthKey||""));
+  if(sortBy==="date")filtered=[...filtered].sort((a,b)=>{const[ami,ad]=dateRank(a);const[bmi,bd]=dateRank(b);return ami!==bmi?ami-bmi:ad-bd;});
+  else if(sortBy==="type")filtered=[...filtered].sort((a,b)=>a.type.localeCompare(b.type));
   else if(sortBy==="msg")filtered=[...filtered].sort((a,b)=>a.msg.localeCompare(b.msg));
 
   return(<div className="verifica-panel" style={{width:380,flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
@@ -96,7 +97,7 @@ function VerificaScreen({avvisi=[],tutors=[],tutEvents={},anagraficaAv=[],onNavi
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
           <span style={{fontSize:10,color:"var(--fg-subtle)",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em"}}>Ordina:</span>
-          {[{v:"type",l:"Tipo"},{v:"month",l:"Mese"},{v:"msg",l:"A→Z"}].map(o=><button key={o.v} onClick={()=>setSortBy(o.v)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,border:`1px solid ${sortBy===o.v?"var(--accent)":"var(--border)"}`,background:sortBy===o.v?"var(--accent)":"transparent",color:sortBy===o.v?"#fff":"var(--fg-muted)",cursor:"pointer"}}>{o.l}</button>)}
+          {[{v:"date",l:"Cronologico"},{v:"type",l:"Tipo"},{v:"msg",l:"A→Z"}].map(o=><button key={o.v} onClick={()=>setSortBy(o.v)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,border:`1px solid ${sortBy===o.v?"var(--accent)":"var(--border)"}`,background:sortBy===o.v?"var(--accent)":"transparent",color:sortBy===o.v?"#fff":"var(--fg-muted)",cursor:"pointer"}}>{o.l}</button>)}
           {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{marginLeft:"auto",fontSize:10}}>Reset</button>}
         </div>
       </div>
