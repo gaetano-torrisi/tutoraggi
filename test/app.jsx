@@ -106,7 +106,6 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
     <div style={{background:"linear-gradient(135deg,var(--brand-navy),#2A2F66)",color:"#fff",padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
       <div style={{display:"flex",flexDirection:"column",gap:2}}>
         <span style={{fontWeight:800,fontSize:15,display:"flex",alignItems:"center",gap:7}}><Icon name="sparkles" size={14} color="#F5A35A"/>AI Import</span>
-        <span style={{fontSize:12,color:"rgba(255,255,255,.75)",fontStyle:"italic"}}>{phrase}</span>
       </div>
       <button onClick={onClose} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="x" size={16} color="#fff"/></button>
     </div>
