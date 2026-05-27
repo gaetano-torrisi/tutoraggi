@@ -29,6 +29,18 @@ const LOG_TYPE_LABELS={
 const ROLE_LABEL={superadmin:"Super Admin",admin:"Admin",user:"Utente",viewer:"Viewer"};
 const ROLE_ICON={superadmin:"star",admin:"shieldCheck",user:"user",viewer:"eye"};
 const ROLE_COLOR={superadmin:"var(--danger)",admin:"var(--accent-strong)",user:"var(--info)",viewer:"var(--fg-subtle)"};
+const VERIFICA_CATEGORIES=[
+  {id:"sovrapposizione",label:"Sovrapposizioni",icon:"zap",color:"var(--danger)"},
+  {id:"fuori_orario",label:"Fuori orario",icon:"clock",color:"var(--warning)"},
+  {id:"fuori_giorno",label:"Fuori giorno",icon:"calendar",color:"var(--warning)"},
+  {id:"eccedenza",label:"Ore eccedenti",icon:"trending",color:"var(--warning)"},
+  {id:"durata",label:"Durata non corrispondente",icon:"clipboard",color:"var(--info)"},
+  {id:"orfano",label:"Slot orfani",icon:"alert",color:"var(--warning)"},
+  {id:"weekend",label:"Slot nel weekend",icon:"sun",color:"var(--info)"},
+  {id:"tutor_senza_slot",label:"Tutor senza slot",icon:"user",color:"var(--info)"},
+  {id:"avviso_senza_sessioni",label:"Avviso senza sessioni",icon:"briefcase",color:"var(--info)"},
+  {id:"giornata_lunga",label:"Giornata >8h",icon:"alert",color:"var(--warning)"},
+];
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
 function markDrag(){_dragDone=true;setTimeout(()=>{_dragDone=false;},50);}
@@ -64,8 +76,9 @@ function snapH(h){return Math.round(h*4)/4;}
 function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
-function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}:${String(m).padStart(2,"0")}`;}
-function fmtDayMonth(day,monthKey){const m=MONTHS.find(x=>x.key===monthKey);return`${day}${m?" "+MONTH_ABBR_IT[m.month]:""}`;}
+function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}h ${m}min`;}
+function fmtDayMonth(day,monthKey){const m=MONTHS.find(x=>x.key===monthKey);if(!m)return`${day} ${monthKey}`;return`${day} ${MONTH_ABBR_IT[m.month]}-${String(m.year).slice(2)}`;}
+function fmtPct(ore,totale){if(!totale||totale===0)return"—";return(ore/totale*100).toFixed(2)+"%";}
 function sortMK(keys){return[...keys].sort((a,b)=>MONTHS.findIndex(m=>m.key===a)-MONTHS.findIndex(m=>m.key===b));}
 function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i].some(p=>p.test(text));}
 function layoutEvents(evs){
@@ -74,7 +87,7 @@ function layoutEvents(evs){
   return res.map(({ev,col})=>({ev,col,numCols:cols.length}));
 }
 function cleanObj(obj){if(Array.isArray(obj))return obj.map(cleanObj);if(obj&&typeof obj==="object"){const o={};for(const[k,v]of Object.entries(obj)){if(typeof v!=="function"&&!k.startsWith("_"))o[k]=cleanObj(v);}return o;}return obj;}
-function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv){return JSON.stringify({version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents},null,2);}
+function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings,userProfiles,authorizedEmails,activityLog){return JSON.stringify({version:5,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents,settings,userProfiles,authorizedEmails,activityLog},null,2);}
 function downloadJSON(avvisi,tutors,tutEvents,anagraficaAv){const b64=btoa(unescape(encodeURIComponent(makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv))));const a=document.createElement("a");a.href=`data:application/json;base64,${b64}`;a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────
