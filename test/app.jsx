@@ -231,6 +231,7 @@ function App({user}){
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
   useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
+  useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
 
   window.__restoreBackup=async(data)=>{
     const v=data.version||0;
@@ -318,7 +319,6 @@ function App({user}){
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
-  useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
   function navigateToError(monthKey,evId){if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);}}
 
   function handleNavClick(id){
