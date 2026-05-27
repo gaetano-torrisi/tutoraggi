@@ -69,8 +69,8 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
       {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label,icon:b.icon});startImport(b.value);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}>{b.icon&&<Icon name={b.icon} size={13} color="var(--accent)"/>}{b.label}</button>)}</div>}
       {msg.showOpenTutor&&<button onClick={onOpenAnaTutors} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13}/>Apri Anagrafica Tutor</button>}
       {msg.showOpenAv&&<button onClick={onOpenAnaAvvisi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Avvisi</button>}
-      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenTutor:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
-      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>addMsg({role:"ai",text:"Aggiungilo prima:",showOpenAv:true})} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedTutor();setShowInlineTutor(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedAv();setShowInlineAvviso(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
       {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
         <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:4}}>
           <option value="">— Seleziona tutor —</option>
@@ -79,21 +79,23 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
         {!showInlineTutor
           ?<button onClick={()=>setShowInlineTutor(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo tutor</button>
           :<InlineCreateTutor tutors={tutors} onSaveTutor={onSaveTutor} onCreated={t=>{setSelTutor(t.id);setShowInlineTutor(false);}} onCancel={()=>setShowInlineTutor(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
-        <select value={selAv} onChange={e=>{if(e.target.value==="__create__"){setShowInlineAvviso(true);setSelAv("");}else{setSelAv(e.target.value);setShowInlineAvviso(false);}}} className="select" style={{marginTop:4,marginBottom:4}}>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginTop:4,marginBottom:4}}>
           <option value="">— Seleziona avviso —</option>
           {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-          <option value="__create__">+ Crea nuovo avviso...</option>
         </select>
-        {showInlineAvviso&&<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+        {!showInlineAvviso
+          ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo avviso</button>
+          :<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
         {(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}
       </div>}
       {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selAv} onChange={e=>{if(e.target.value==="__create__"){setShowInlineAvviso(true);setSelAv("");}else{setSelAv(e.target.value);setShowInlineAvviso(false);}}} className="select" style={{marginBottom:4}}>
+        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:4}}>
           <option value="">— Seleziona avviso —</option>
           {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-          <option value="__create__">+ Crea nuovo avviso...</option>
         </select>
-        {showInlineAvviso&&<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+        {!showInlineAvviso
+          ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo avviso</button>
+          :<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
         {!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona un avviso per procedere.</div>:uploadButtons()}
       </div>}
       {msg.showUpload&&uploadButtons()}
