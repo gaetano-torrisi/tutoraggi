@@ -353,7 +353,6 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
     <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{padding:"16px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12,flexShrink:0,background:"var(--bg-elev)"}}>
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:18,color:"var(--fg)"}}>Insights & Riepiloghi</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{periodSubtitle()}</div></div>
-        <button onClick={()=>{const d={avvisi,tutors,tutEvents,anagraficaAv};const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`insights_${mks[0]||"export"}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={13}/>Esporta</button>
         <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={16}/></button>
       </div>
       <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"var(--bg-elev)"}}>
@@ -672,7 +671,6 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,settings={},role="use
       <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.{isSuperAdmin?" Include userProfiles e autorizzazioni.":role==="admin"?" Include log attività.":""}</p></div>
       <div style={{display:"flex",gap:8}}>
         <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const v=raw.version||0;if(v>0&&v<5&&!confirm(`File v${v} (formato precedente). Continuare?`))return;window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
-        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv,settings,role)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
         <button className="btn" data-variant="accent" onClick={doBackup} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="save" size={14} color="#fff"/>Crea backup</>}</button>
       </div>
     </div>

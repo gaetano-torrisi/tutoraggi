@@ -394,7 +394,6 @@ function App({user}){
         </div>
         <div style={{flex:1}}/>
         <button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>
-        <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
           <button className="tab-strip-btn" style={{background:!editMode?"var(--accent)":"transparent",color:!editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>{setEditMode(false);setShowAi(false);}}><Icon name="eye" size={12} color={!editMode?"#fff":"currentColor"}/>Visualizza</button>
