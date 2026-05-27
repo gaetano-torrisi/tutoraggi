@@ -588,7 +588,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
         {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
         {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
-        {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv}/>}
+        {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} settings={settings} role={role} isSuperAdmin={isSuperAdmin}/>}
         {section==="log"&&<LogPanel/>}
         {section==="demo"&&<DemoPanel isSuperAdmin={isSuperAdmin}/>}
       </div>
@@ -656,21 +656,21 @@ function ApiPanel({settings,onSave}){
   </div>);
 }
 
-function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv}){
+function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,settings={},role="user",isSuperAdmin}){
   const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState(null);
   function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
   async function load(){setLoading(true);setBackups(await fsListBackups());setLoading(false);}
   useEffect(()=>{load();},[]);
-  async function doBackup(){setSaving(true);setMsg(null);try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg({ok:true,text:"Backup creato."});await load();}catch(e){setMsg({ok:false,text:e.message});}setSaving(false);}
-  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg({ok:true,text:"Ripristinato."});}catch(e){setMsg({ok:false,text:e.message});}}
+  async function doBackup(){setSaving(true);setMsg(null);try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv,settings,role);await fsApplyBackupPolicy(await fsListBackups());setMsg({ok:true,text:"Backup v5 creato."});await load();}catch(e){setMsg({ok:false,text:e.message});}setSaving(false);}
+  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);const v=data.version||0;if(v>0&&v<5&&!confirm(`Backup v${v} (formato precedente). Alcuni dati non verranno ripristinati. Continuare?`))return;window.__restoreBackup&&await window.__restoreBackup(data);setMsg({ok:true,text:`Ripristinato (v${v||"?"}).`});}catch(e){setMsg({ok:false,text:e.message});}}
   function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
   async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
   return(<div style={{maxWidth:880}}>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:22}}>
-      <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.</p></div>
+      <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.{isSuperAdmin?" Include userProfiles e autorizzazioni.":role==="admin"?" Include log attività.":""}</p></div>
       <div style={{display:"flex",gap:8}}>
-        <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
-        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
+        <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const v=raw.version||0;if(v>0&&v<5&&!confirm(`File v${v} (formato precedente). Continuare?`))return;window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
+        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv,settings,role)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
         <button className="btn" data-variant="accent" onClick={doBackup} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="save" size={14} color="#fff"/>Crea backup</>}</button>
       </div>
     </div>

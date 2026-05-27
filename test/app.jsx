@@ -232,7 +232,16 @@ function App({user}){
   useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
   useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
 
-  window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
+  window.__restoreBackup=async(data)=>{
+    const v=data.version||0;
+    if(v>5)console.warn(`Backup v${v} più recente di v5 — ripristino base.`);
+    const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];
+    setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
+    await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);
+    for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
+    if(isSuperAdmin&&data.authorizedEmails&&typeof data.authorizedEmails==="object"){const b=db.batch();for(const[email,rd]of Object.entries(data.authorizedEmails))b.set(db.collection("authorizedEmails").doc(email),rd,{merge:true});await b.commit();}
+    if((isSuperAdmin||isAdmin)&&data.userProfiles&&typeof data.userProfiles==="object"){const b=db.batch();for(const[uid,p]of Object.entries(data.userProfiles))b.set(db.collection("userProfiles").doc(uid),p,{merge:true});await b.commit();}
+  };
   window.__loadDemo=async()=>{
     const T=[
       {id:"td0",nome:"Mario",cognome:"Rossi",cf:"",azienda:"Ente Demo Srl",color:"#EC7A26"},
