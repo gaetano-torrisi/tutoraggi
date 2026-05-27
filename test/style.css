@@ -221,6 +221,9 @@
   z-index: 10 !important;
 }
 
+/* ── Drag vincolo colonna ── */
+.day-col-drop-warning { border: 2px dashed var(--danger) !important; background: rgba(192,57,43,.04) !important; }
+
 /* ── Verifica panel responsive ── */
 .verifica-panel { width: 380px; }
 @media (max-width: 1100px) {
