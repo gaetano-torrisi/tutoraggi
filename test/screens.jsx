@@ -340,9 +340,14 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   const totSlots=tutors.reduce((s,t)=>s+mks.reduce((s2,mk)=>s2+(tutEvents[t.id]?.[mk]||[]).length,0),0)+anagraficaAv.reduce((s,a)=>s+(avById[a.id]?.events||[]).filter(e=>mks.includes(e.month)).length,0);
   const RC=typeof window.Recharts!=="undefined"?window.Recharts:{};
   const safeColor=c=>(c&&c.startsWith("#"))?c:"#4f86c6";
-  const chartDataTutor=[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).slice(0,8).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color)}));
-  const chartDataAv=[...anagraficaAv].filter(a=>getAvOrePeriodo(a.id)>0).sort((a,b)=>getAvOrePeriodo(b.id)-getAvOrePeriodo(a.id)).slice(0,8).map(a=>({name:a.nome,ore:getAvOrePeriodo(a.id),color:safeColor(a.colore)}));
-  const chartData=viewMode==="tutor"?chartDataTutor:chartDataAv;
+  const chartDataTutor=[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color),id:t.id}));
+  const lineTutors=tutors.filter(t=>mks.some(mk=>(tutEvents[t.id]?.[mk]||[]).length>0));
+  const chartDataLine=mks.map(mk=>{const m=MONTHS.find(x=>x.key===mk);const obj={label:m?MONTH_ABBR_IT[m.month]:mk};lineTutors.forEach(t=>{obj[t.id]=(tutEvents[t.id]?.[mk]||[]).reduce((s,e)=>s+(e.ore||0),0);});return obj;});
+  const weeklyTutors=tutors.filter(t=>getTutOrePeriodo(t.id)>0);
+  const chartDataWeekly=[1,2,3,4].map(w=>{const obj={week:`S${w}`};weeklyTutors.forEach(t=>{obj[t.id]=(tutEvents[t.id]?.[mks[0]]||[]).filter(e=>Math.ceil(e.day/7)===w).reduce((s,e)=>s+(e.ore||0),0);});return obj;});
+  function getErogato(avName){return tutors.reduce((tot,t)=>tot+mks.reduce((s,mk)=>s+(tutEvents[t.id]?.[mk]||[]).filter(e=>e.name===avName).reduce((x,e)=>x+(e.ore||0),0),0),0);}
+  const donutData=anagraficaAv.map(a=>({name:a.nome,ore:getErogato(a.nome),color:safeColor(a.colore)})).filter(d=>d.ore>0);
+  const totDonut=donutData.reduce((s,d)=>s+d.ore,0);
   function periodSubtitle(){if(selPeriod.mode==="year")return`Anno ${selPeriod.year}`;if(selPeriod.mode==="range"){const s=MONTHS.find(m=>m.key===selPeriod.startKey);const e=MONTHS.find(m=>m.key===selPeriod.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} → ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"";}return MONTHS.find(m=>m.key===selPeriod.monthKey)?.label||"";}
   function toggleTut(id){setExpandedTut(p=>({...p,[id]:!p[id]}))}
   function toggleTutAv(key){setExpandedTutAv(p=>({...p,[key]:!p[key]}))}
@@ -373,20 +378,108 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
           <div style={{fontSize:10,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginTop:4,display:"flex",alignItems:"center",gap:5}}><Icon name={k.icon} size={10} color="var(--fg-subtle)"/>{k.label}</div>
         </div>)}
       </div>
-      {RC.BarChart&&chartData.length>0&&<div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-        <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>ORE {viewMode==="tutor"?"PER TUTOR":"PER AVVISO"} — {periodSubtitle()}</div>
-        <RC.ResponsiveContainer width="100%" height={Math.max(80,chartData.length*32)}>
-          <RC.BarChart data={chartData} layout="vertical" margin={{top:0,right:60,bottom:0,left:100}}>
-            <RC.XAxis type="number" tick={{fontSize:10}} tickFormatter={v=>fmtOreMin(v)} stroke="var(--border)"/>
-            <RC.YAxis type="category" dataKey="name" tick={{fontSize:10,fill:"var(--fg-muted)"}} width={100} stroke="none"/>
-            <RC.Tooltip formatter={(v)=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
-            <RC.Bar dataKey="ore" radius={[0,4,4,0]}>
-              {chartData.map((d,i)=><RC.Cell key={i} fill={d.color}/>)}
-            </RC.Bar>
-          </RC.BarChart>
-        </RC.ResponsiveContainer>
-      </div>}
       <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
+        {/* ── GRAFICI VISTA TUTOR ── */}
+        {viewMode==="tutor"&&chartDataTutor.length>0&&RC.BarChart&&<>
+          <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:12}}>
+            <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Ore erogate per tutor</div>
+            <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:10}}>Periodo selezionato · tutor ordinati per ore decrescenti</div>
+            <RC.ResponsiveContainer width="100%" height={Math.max(80,chartDataTutor.length*38)}>
+              <RC.BarChart data={chartDataTutor} layout="vertical" margin={{top:0,right:72,bottom:0,left:110}}>
+                <RC.XAxis type="number" tick={{fontSize:10}} tickFormatter={v=>v?fmtOreMin(v):""} stroke="var(--border)" axisLine={false} tickLine={false}/>
+                <RC.YAxis type="category" dataKey="name" tick={{fontSize:11,fill:"var(--fg)"}} width={110} stroke="none" axisLine={false}/>
+                <RC.Tooltip formatter={v=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
+                <RC.Bar dataKey="ore" radius={[0,4,4,0]} label={{position:"right",formatter:v=>v?fmtOreMin(v):"",fontSize:11,fill:"var(--fg-muted)"}}>
+                  {chartDataTutor.map((d,i)=><RC.Cell key={i} fill={d.color}/>)}
+                </RC.Bar>
+              </RC.BarChart>
+            </RC.ResponsiveContainer>
+          </div>
+          {selPeriod.mode==="single"
+            ?weeklyTutors.length>0&&<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:12}}>
+                <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Distribuzione settimanale</div>
+                <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:10}}>Ore erogate per settimana — {periodSubtitle()}</div>
+                <RC.ResponsiveContainer width="100%" height={200}>
+                  <RC.BarChart data={chartDataWeekly} margin={{top:4,right:10,bottom:0,left:0}}>
+                    <RC.XAxis dataKey="week" tick={{fontSize:11}} stroke="none" axisLine={false} tickLine={false}/>
+                    <RC.YAxis tick={{fontSize:10}} tickFormatter={v=>v?`${v}h`:""} stroke="none" axisLine={false}/>
+                    <RC.Tooltip formatter={v=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
+                    <RC.Legend iconSize={8} wrapperStyle={{fontSize:11}}/>
+                    {weeklyTutors.map(t=><RC.Bar key={t.id} dataKey={t.id} name={`${t.cognome} ${t.nome[0]}.`} fill={safeColor(t.color)} radius={[3,3,0,0]}/>)}
+                  </RC.BarChart>
+                </RC.ResponsiveContainer>
+              </div>
+            :lineTutors.length>0&&chartDataLine.length>1&&RC.LineChart&&<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:12}}>
+                <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Andamento ore mensile</div>
+                <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:10}}>{selPeriod.mode==="year"?`Ore erogate per mese — anno ${selPeriod.year}`:periodSubtitle()}</div>
+                <RC.ResponsiveContainer width="100%" height={220}>
+                  <RC.LineChart data={chartDataLine} margin={{top:10,right:16,bottom:0,left:0}}>
+                    <RC.CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
+                    <RC.XAxis dataKey="label" tick={{fontSize:11}} stroke="none" axisLine={false} tickLine={false}/>
+                    <RC.YAxis tick={{fontSize:10}} tickFormatter={v=>v?`${v}h`:""} stroke="none" axisLine={false}/>
+                    <RC.Tooltip formatter={v=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
+                    <RC.Legend iconSize={8} wrapperStyle={{fontSize:11}}/>
+                    {lineTutors.map((t,i)=><RC.Line key={t.id} type="monotone" dataKey={t.id} name={`${t.cognome} ${t.nome}`} stroke={safeColor(t.color)} strokeWidth={2} dot={{r:3}} strokeDasharray={i%2===1?"5 5":undefined}/>)}
+                  </RC.LineChart>
+                </RC.ResponsiveContainer>
+              </div>
+          }
+        </>}
+        {/* ── GRAFICI VISTA AVVISO ── */}
+        {viewMode==="avviso"&&anagraficaAv.length>0&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+          <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px"}}>
+            <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Avanzamento avvisi</div>
+            <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:12}}>Pianificato/erogato su ore da bando</div>
+            {anagraficaAv.filter(a=>a.durataOre).map(ana=>{const pian=getAvOrePeriodo(ana.id);const erog=getErogato(ana.nome);const bando=ana.durataOre;const pctP=Math.min(pian/bando*100,100);const pctE=Math.min(erog/bando*100,100);return(<div key={ana.id} style={{marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{width:8,height:8,borderRadius:2,background:safeColor(ana.colore),flexShrink:0}}/>
+                <span style={{fontSize:12,fontWeight:600,color:"var(--fg)",flex:1}}>{ana.nome}</span>
+                <span style={{fontSize:10,color:"var(--fg-muted)"}}>{fmtOreMin(pian)} pianif. · {fmtOreMin(erog)} erogati · {bando}h bando</span>
+              </div>
+              <div style={{height:10,borderRadius:5,background:"var(--bg-sunken)",position:"relative",overflow:"hidden",marginBottom:3}}>
+                <div style={{position:"absolute",top:0,left:0,height:"100%",width:`${pctP}%`,background:safeColor(ana.colore),opacity:.28,borderRadius:5}}/>
+                <div style={{position:"absolute",top:0,left:0,height:"100%",width:`${pctE}%`,background:safeColor(ana.colore),borderRadius:5}}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:10}}>
+                <span style={{color:safeColor(ana.colore),fontWeight:600}}>{fmtPct(pian,bando)} pianificato</span>
+                <span style={{color:safeColor(ana.colore),opacity:.8}}>{fmtPct(erog,bando)} erogato</span>
+              </div>
+            </div>);})}
+          </div>
+          {donutData.length>0&&RC.PieChart?<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px"}}>
+            <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Distribuzione ore erogate</div>
+            <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:8}}>Peso di ogni avviso sul totale</div>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{position:"relative",width:160,height:160,flexShrink:0}}>
+                <RC.ResponsiveContainer width={160} height={160}>
+                  <RC.PieChart>
+                    <RC.Pie data={donutData} dataKey="ore" cx="50%" cy="50%" innerRadius={48} outerRadius={72} strokeWidth={0}>
+                      {donutData.map((d,i)=><RC.Cell key={i} fill={d.color}/>)}
+                    </RC.Pie>
+                    <RC.Tooltip formatter={v=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
+                  </RC.PieChart>
+                </RC.ResponsiveContainer>
+                <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",pointerEvents:"none"}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fmtOreMin(totDonut)}</div>
+                  <div style={{fontSize:9,color:"var(--fg-subtle)"}}>totale</div>
+                </div>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                {donutData.map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <span style={{width:10,height:10,borderRadius:2,background:d.color,flexShrink:0}}/>
+                  <span style={{fontSize:11,color:"var(--fg)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.name}</span>
+                  <span style={{fontSize:11,fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',flexShrink:0}}>{fmtOreMin(d.ore)}</span>
+                  <span style={{fontSize:10,color:"var(--fg-muted)",flexShrink:0,minWidth:38,textAlign:"right"}}>{fmtPct(d.ore,totDonut)}</span>
+                </div>)}
+                <div style={{borderTop:"1px solid var(--divider)",paddingTop:5,marginTop:2,display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:11,color:"var(--fg-muted)",flex:1}}>Totale erogato</span>
+                  <span style={{fontSize:11,fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fmtOreMin(totDonut)}</span>
+                  <span style={{fontSize:10,color:"var(--fg-muted)",minWidth:38,textAlign:"right"}}>100%</span>
+                </div>
+              </div>
+            </div>
+          </div>:<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-subtle)",fontSize:12}}>Nessun dato erogato nel periodo</div>}
+        </div>}
         {viewMode==="tutor"&&[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{
           const ore=getTutOrePeriodo(t.id);const avNames=getTutAvvisiPeriodo(t.id).filter(n=>!selAvFilter||n===selAvFilter);const totOre=getTutTotOre(t.id);
           if(!ore&&!avNames.length)return null;
