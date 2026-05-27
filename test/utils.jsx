@@ -97,7 +97,7 @@ async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await 
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
-async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
+async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 async function fsLog(userEmail,type,detail){try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error(e);}}
 async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate()||new Date(0)};});}catch(e){return[];}}
 async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv){const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size});return ref.id;}

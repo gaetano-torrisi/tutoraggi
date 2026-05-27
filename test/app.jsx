@@ -196,7 +196,8 @@ function App({user}){
   const dragWarnTimerRef=useRef();
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
-  const[verificaErr,setVerificaErr]=useState([]);const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
+  const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
+  const[appSubtitle,setAppSubtitle]=useState("Gestionale tutoraggi");
   const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
   const monthPickerRef=useRef();
 
@@ -221,7 +222,7 @@ function App({user}){
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);
-      if(s.appSubtitle){const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
+      if(s.appSubtitle){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
       if(s.logoBase64)localStorage.setItem("logoBase64",s.logoBase64);
       setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
@@ -232,7 +233,35 @@ function App({user}){
   useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
 
   window.__restoreBackup=async(data)=>{const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);};
-  window.__loadDemo=async()=>{const DEMO_PALETTE=["#EC7A26","#3E6FB8","#2F8F5B","#C0392B"];const tutorDefs=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"]];const t=tutorDefs.map(([nome,cognome],i)=>({id:`tutor-demo-${i}`,nome,cognome,cf:"",azienda:"Ente Demo Srl",color:DEMO_PALETTE[i]}));const an=[{id:"av-demo-0",nome:"Avviso 1",codice:"DDG 001/2026",colore:DEMO_PALETTE[1],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/04/2026",note:""},{id:"av-demo-1",nome:"Avviso 2",codice:"DDG 002/2026",colore:DEMO_PALETTE[0],durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/06/2026",note:""}];const a=an.map(ana=>({id:ana.id,events:[]}));setTutors(t);setAnagraficaAv(an);anaRef.current=an;setAvvisi(a);avRef.current=a;setTutEvents({});tutEvRef.current={};setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);await fsSaveTutors(t);await fsSaveAna(an);await fsSaveAvvisi(a);};
+  window.__loadDemo=async()=>{
+    const T=[
+      {id:"td0",nome:"Mario",cognome:"Rossi",cf:"",azienda:"Ente Demo Srl",color:"#EC7A26"},
+      {id:"td1",nome:"Laura",cognome:"Bianchi",cf:"",azienda:"Ente Demo Srl",color:"#3E6FB8"},
+      {id:"td2",nome:"Giuseppe",cognome:"Verdi",cf:"",azienda:"Ente Demo Srl",color:"#2F8F5B"},
+      {id:"td3",nome:"Anna",cognome:"Ferrari",cf:"",azienda:"Ente Demo Srl",color:"#9B59B6"},
+    ];
+    const AN=[
+      {id:"avd0",nome:"Avviso 1.9",codice:"DDG 001/2026",colore:"#3E6FB8",durataOre:450,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/06/2026",note:""},
+      {id:"avd1",nome:"Avviso 3",codice:"DDG 003/2026",colore:"#2F8F5B",durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/09/2026",note:""},
+      {id:"avd2",nome:"Avviso 5",codice:"DDG 005/2026",colore:"#9B59B6",durataOre:350,stato:"In corso",dataInizio:"01/06/2026",dataFine:"31/12/2026",note:""},
+    ];
+    const mks=(from,to)=>MONTHS.filter(m=>m.year===2026&&m.month>=from&&m.month<=to).map(m=>m.key);
+    const av1Mks=mks(0,5),av3Mks=mks(2,8),av5Mks=mks(5,11);
+    function avSlots(mkList,avId){let i=0;return mkList.flatMap(mk=>[10,17,24].map(d=>({id:`ave-${avId}-${mk}-${d}-${i++}`,month:mk,day:d,start:9,end:13,ore:4})));}
+    const AV=[{id:"avd0",events:avSlots(av1Mks,"avd0")},{id:"avd1",events:avSlots(av3Mks,"avd1")},{id:"avd2",events:avSlots(av5Mks,"avd2")}];
+    function makeTutMkSlots(avName,mkList,s,e,prefix){let i=0;const ore=e-s;const byMk={};for(const mk of mkList){byMk[mk]=[10,17].map(d=>({id:`${prefix}-${mk}-${d}-${i++}`,name:avName,day:d,start:s,end:e,ore}));}return byMk;}
+    function mergeMk(...maps){const r={};for(const m of maps)for(const[mk,evs]of Object.entries(m)){if(!r[mk])r[mk]=[];r[mk].push(...evs);}return r;}
+    const rossiMks=mks(0,7),bianchiMks=mks(0,11),verdiMks=mks(2,8),ferrariMks=mks(3,11);
+    const te={
+      td0:mergeMk(makeTutMkSlots("Avviso 1.9",rossiMks.filter(mk=>av1Mks.includes(mk)),9.5,10.5,"r1"),makeTutMkSlots("Avviso 3",rossiMks.filter(mk=>av3Mks.includes(mk)),9.5,10.5,"r3")),
+      td1:mergeMk(makeTutMkSlots("Avviso 1.9",bianchiMks.filter(mk=>av1Mks.includes(mk)),10,11,"b1"),makeTutMkSlots("Avviso 5",bianchiMks.filter(mk=>av5Mks.includes(mk)),10,11,"b5")),
+      td2:mergeMk(makeTutMkSlots("Avviso 3",verdiMks,9,10,"v3")),
+      td3:mergeMk(makeTutMkSlots("Avviso 3",ferrariMks.filter(mk=>av3Mks.includes(mk)),11,12,"f3"),makeTutMkSlots("Avviso 5",ferrariMks.filter(mk=>av5Mks.includes(mk)),11,12,"f5")),
+    };
+    setTutors(T);setAnagraficaAv(AN);anaRef.current=AN;setAvvisi(AV);avRef.current=AV;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
+    await fsSaveTutors(T);await fsSaveAna(AN);await fsSaveAvvisi(AV);
+    for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
+  };
   window.__clearDb=async()=>{await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);};
 
   function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
@@ -274,15 +303,17 @@ function App({user}){
   async function handleSaveAna(newList,action,item){
     if(action==="edit"){const old=anaRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
     anaRef.current=newList;setAnagraficaAv(newList);await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);}
-  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);await fsSaveSettings(m);}
+  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined)setAppSubtitle(s.appSubtitle);await fsSaveSettings(m);}
 
   if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",background:"var(--bg)",gap:10}}><Icon name="loader" size={20} color="var(--fg-muted)"/>Caricamento...</div>;
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
+  function navigateToError(monthKey,evId){if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${evId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},100);}}
+
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
-    if(id==="verifica"){setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");return;}
+    if(id==="verifica"){setActiveScreen("verifica");return;}
     if(id==="ai"){setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
@@ -329,9 +360,6 @@ function App({user}){
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
-        <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{borderRadius:5,flexShrink:0}}/>
-        <span style={{fontWeight:700,fontSize:14,letterSpacing:"-0.01em",color:"var(--fg)",whiteSpace:"nowrap"}}>TutorIA</span>
-        <div className="topbar-divider"/>
         <div className="module-switch">
           <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
           <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
@@ -354,7 +382,7 @@ function App({user}){
           {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
         <div style={{flex:1}}/>
-        <button onClick={()=>{setVerificaErr(runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current));setActiveScreen("verifica");}} className="btn" data-variant="ghost" data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15}/></button>
+        <button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>
         <button className="btn" data-variant="ghost" data-size="icon-sm" title="Notifiche"><Icon name="bell" size={15}/></button>
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
@@ -427,7 +455,7 @@ function App({user}){
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
         {activeScreen==="ai"&&<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",flexDirection:"column",gap:12,background:"var(--bg)"}}><Icon name="sparkles" size={40} color="var(--accent)"/><div style={{fontSize:15,fontWeight:600,color:"var(--fg)"}}>AI Import</div><p style={{fontSize:13,color:"var(--fg-muted)"}}>Attiva Edit Mode dal calendario e usa il pannello AI.</p><button className="btn" data-variant="accent" onClick={()=>{setActiveScreen("calendar");setEditMode(true);setTimeout(()=>setShowAi(true),100);}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="arrowRight" size={13} color="#fff"/>Vai al calendario</button></div>}
         </div>
-        {showVerificaPanel&&<VerificaScreen errors={verificaErr.length>0?verificaErr:runVerifica(avRef.current,anaRef.current,tutors,tutEvRef.current)} anagraficaAv={anagraficaAv} tutors={tutors} onNavigate={(mk,evId)=>{if(mk){const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);setTimeout(()=>{const el=document.getElementById(`slot-${evId}`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},100);}}}/>}
+        {showVerificaPanel&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
       </div>
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
