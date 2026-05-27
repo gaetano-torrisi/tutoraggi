@@ -37,73 +37,86 @@ const VERIFICA_CATS=[
   {type:"giornata_lunga",label:"Giornata >8h",icon:"alert",tone:"warning"},
 ];
 
-function VerificaScreen({errors,onNavigate,anagraficaAv=[],tutors=[]}){
+function VerificaScreen({avvisi=[],tutors=[],tutEvents={},anagraficaAv=[],onNavigateToError}){
+  const[errors,setErrors]=useState(()=>runVerifica(avvisi,anagraficaAv,tutors,tutEvents));
+  const[lastRun,setLastRun]=useState(()=>new Date());
   const[activeCats,setActiveCats]=useState(new Set(VERIFICA_CATS.map(c=>c.type)));
   const[catExpanded,setCatExpanded]=useState(false);
   const[selAv,setSelAv]=useState("");
   const[selTutor,setSelTutor]=useState("");
-  const[lastRun]=useState(new Date());
-  const ok=errors.length===0;
-  const filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
+  const[sortBy,setSortBy]=useState("type");
+
+  function riesegui(){setErrors(runVerifica(avvisi,anagraficaAv,tutors,tutEvents));setLastRun(new Date());}
   function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
-  return(<div className="verifica-panel" style={{flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
+
+  const ok=errors.length===0;
+  let filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
+  if(sortBy==="type")filtered=[...filtered].sort((a,b)=>a.type.localeCompare(b.type));
+  else if(sortBy==="month")filtered=[...filtered].sort((a,b)=>(a.monthKey||"").localeCompare(b.monthKey||""));
+  else if(sortBy==="msg")filtered=[...filtered].sort((a,b)=>a.msg.localeCompare(b.msg));
+
+  return(<div className="verifica-panel" style={{width:380,flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
       <div style={{padding:"12px 16px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:"var(--fg)"}}>Verifica coerenza</div><div style={{fontSize:10,color:"var(--fg-subtle)",marginTop:1}}>Ultimo controllo: {fmtTs(lastRun)}</div></div>
-        <button onClick={()=>{}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:5}}><Icon name="refresh" size={12} color="#fff"/>Riesegui</button>
+        <button onClick={riesegui} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:5}}><Icon name="refresh" size={12} color="#fff"/>Riesegui</button>
       </div>
       <div style={{padding:"8px 12px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
         <button onClick={()=>setCatExpanded(p=>!p)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left"}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-            {[...activeCats].slice(0,5).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
-            {activeCats.size>5&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>+{activeCats.size-5}</span>}
-            <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{activeCats.size} di {VERIFICA_CATS.length} selezionate</span>
+            {[...activeCats].slice(0,4).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
+            {activeCats.size>4&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>+{activeCats.size-4}</span>}
+            <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{activeCats.size}/{VERIFICA_CATS.length}</span>
           </div>
           <Icon name={catExpanded?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
         </button>
         {catExpanded&&<div style={{marginTop:8,padding:12,background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)"}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:6,marginBottom:10}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
             {VERIFICA_CATS.map(c=>{const cnt=errors.filter(e=>e.type===c.type).length;const checked=activeCats.has(c.type);return(<label key={c.type} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:"var(--radius)",background:checked?"var(--bg-elev)":"transparent",border:`1px solid ${checked?"var(--border)":"transparent"}`,cursor:"pointer"}}>
               <input type="checkbox" checked={checked} onChange={()=>toggleCat(c.type)} style={{flexShrink:0}}/>
               <Icon name={c.icon} size={13} color={`var(--${c.tone})`}/>
-              <span style={{flex:1,fontSize:12,color:"var(--fg)"}}>{c.label}</span>
+              <span style={{flex:1,fontSize:11,color:"var(--fg)"}}>{c.label}</span>
               {cnt>0&&<span style={{fontSize:10,fontWeight:700,color:`var(--${c.tone})`}}>{cnt}</span>}
             </label>);} )}
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setActiveCats(new Set())} className="btn" data-variant="ghost" data-size="sm">Deseleziona tutto</button>
-            <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Seleziona tutto</button>
-            <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica filtri</button>
+            <button onClick={()=>setActiveCats(new Set())} className="btn" data-variant="ghost" data-size="sm">Nessuna</button>
+            <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Tutte</button>
+            <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica</button>
           </div>
         </div>}
-        {(anagraficaAv.length>0||tutors.length>0)&&<div style={{display:"flex",gap:8,marginTop:8}}>
-          {anagraficaAv.length>0&&<select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+        <div style={{display:"flex",gap:6,marginTop:8}}>
+          {anagraficaAv.length>0&&<select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{flex:1,fontSize:11}}>
             <option value="">Tutti gli avvisi</option>
             {anagraficaAv.map(a=><option key={a.id||a.nome} value={a.nome}>{a.nome}</option>)}
           </select>}
-          {tutors.length>0&&<select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+          {tutors.length>0&&<select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{flex:1,fontSize:11}}>
             <option value="">Tutti i tutor</option>
             {[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
           </select>}
-          {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{flexShrink:0}}>Reset</button>}
-        </div>}
-      </div>
-      <div style={{flex:1,overflowY:"auto",padding:"10px 14px",background:"var(--bg)"}}>
-        <div style={{padding:"10px 12px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-          <Icon name={ok?"checkCircle":"alert"} size={18} color={ok?"var(--success)":"var(--danger)"}/>
-          <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"} · Clicca per navigare`}</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};return(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey,e.evId)} style={{padding:"10px 12px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:10,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
-            <div style={{width:34,height:34,borderRadius:8,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Icon name={cat.icon} size={16} color={`var(--${cat.tone})`}/>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+          <span style={{fontSize:10,color:"var(--fg-subtle)",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em"}}>Ordina:</span>
+          {[{v:"type",l:"Tipo"},{v:"month",l:"Mese"},{v:"msg",l:"A→Z"}].map(o=><button key={o.v} onClick={()=>setSortBy(o.v)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,border:`1px solid ${sortBy===o.v?"var(--accent)":"var(--border)"}`,background:sortBy===o.v?"var(--accent)":"transparent",color:sortBy===o.v?"#fff":"var(--fg-muted)",cursor:"pointer"}}>{o.l}</button>)}
+          {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{marginLeft:"auto",fontSize:10}}>Reset</button>}
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 12px",background:"var(--bg)"}}>
+        <div style={{padding:"10px 12px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <Icon name={ok?"checkCircle":"alert"} size={18} color={ok?"var(--success)":"var(--danger)"}/>
+          <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"}`}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};const canNav=!!(e.monthKey&&onNavigateToError);return(<div key={i} onClick={()=>canNav&&onNavigateToError(e.monthKey,e.evId)} style={{padding:"9px 10px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:9,alignItems:"flex-start",cursor:canNav?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(canNav)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
+            <div style={{width:30,height:30,borderRadius:7,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon name={cat.icon} size={14} color={`var(--${cat.tone})`}/>
             </div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
                 <span className="badge" data-tone={cat.tone} style={{fontSize:10}}>{cat.label}</span>
-                {e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3,marginLeft:"auto"}}><Icon name="calendar" size={11} color="var(--info)"/>Vai a {MONTHS.find(m=>m.key===e.monthKey)?.label||e.monthKey}</span>}
+                {canNav&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3,marginLeft:"auto"}}><Icon name="calendar" size={10} color="var(--info)"/>{MONTHS.find(m=>m.key===e.monthKey)?.label||e.monthKey}</span>}
               </div>
-              <div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div>
-              {e.detail&&<div style={{fontSize:11,color:"var(--fg-muted)",marginTop:3}}>{e.detail}</div>}
+              <div style={{fontSize:12,color:"var(--fg)",lineHeight:1.45}}>{e.msg}</div>
+              {e.detail&&<div style={{fontSize:10,color:"var(--fg-muted)",marginTop:2}}>{e.detail}</div>}
             </div>
           </div>);})}
           {filtered.length===0&&!ok&&<p style={{color:"var(--fg-subtle)",textAlign:"center",padding:20,fontSize:13}}>Nessun errore nei filtri selezionati.</p>}
