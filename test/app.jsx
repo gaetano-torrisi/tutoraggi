@@ -245,35 +245,68 @@ function App({user}){
     if((isSuperAdmin||isAdmin)&&data.userProfiles&&typeof data.userProfiles==="object"){const b=db.batch();for(const[uid,p]of Object.entries(data.userProfiles))b.set(db.collection("userProfiles").doc(uid),p,{merge:true});await b.commit();}
   };
   window.__loadDemo=async()=>{
+    function isWd(mo,d){const w=new Date(2026,mo,d).getDay();return w>0&&w<6;}
+    function nWd(mo,d,max){while(d<=max&&!isWd(mo,d))d++;return d<=max?d:null;}
+    const M26=MONTHS.filter(m=>m.year===2026);
+    const mR=(a,b)=>M26.filter(m=>m.month>=a&&m.month<=b);
+    const ANCH=[2,6,9,13,16,20,23,27];
+    function aS(aid,months,sh,eh){
+      const ore=eh-sh;let i=0;
+      return months.flatMap(m=>ANCH.map(a=>{const d=nWd(m.month,a,m.days);if(!d)return null;
+        return{id:`as-${aid}-${m.key}-${d}-${i++}`,month:m.key,day:d,start:sh,end:eh,ore};
+      }).filter(Boolean));
+    }
+    function tS(tid,nom,sess,step,off,dur){
+      const r={};let i=0;
+      sess.filter((_,n)=>n%step===0).forEach(s=>{
+        const st=s.start+off,en=Math.min(st+dur,s.end);if(en<=st)return;
+        r[s.month]=[...(r[s.month]||[]),{id:`ts-${tid}-${s.month}-${s.day}-${i++}`,name:nom,day:s.day,start:st,end:en,ore:en-st}];
+      });
+      return r;
+    }
+    function mT(...ms){const r={};for(const m of ms)for(const[k,v]of Object.entries(m))r[k]=[...(r[k]||[]),...v];return r;}
+    const sumH=s=>s.reduce((t,e)=>t+(e.ore||0),0);
+    // sessioni avviso: mattina (9-13) e pomeriggio (14-18) per evitare conflitti orari per-tutor
+    const s0=aS("avd0",mR(0,5),9,13);    // gen-giu  mattina  8 sess/mo × 4h = 192h
+    const s1=aS("avd1",mR(2,7),14,17);   // mar-ago  pomerig. 8 sess/mo × 3h = 144h
+    const s2=aS("avd2",mR(0,4),9,12);    // gen-mag  mattina  8 sess/mo × 3h = 120h
+    const s3=aS("avd3",mR(0,11),14,18);  // gen-dic  pomerig. 8 sess/mo × 4h = 384h
+    const s4=aS("avd4",mR(1,6),9,12);    // feb-lug  mattina  8 sess/mo × 3h = 144h
+    const s5=aS("avd5",mR(5,11),14,18);  // giu-dic  pomerig. 8 sess/mo × 4h = 224h
     const T=[
-      {id:"td0",nome:"Mario",cognome:"Rossi",cf:"",azienda:"Ente Demo Srl",color:"#EC7A26"},
-      {id:"td1",nome:"Laura",cognome:"Bianchi",cf:"",azienda:"Ente Demo Srl",color:"#3E6FB8"},
-      {id:"td2",nome:"Giuseppe",cognome:"Verdi",cf:"",azienda:"Ente Demo Srl",color:"#2F8F5B"},
-      {id:"td3",nome:"Anna",cognome:"Ferrari",cf:"",azienda:"Ente Demo Srl",color:"#9B59B6"},
+      {id:"td0",nome:"Marco",cognome:"Ferretti",cf:"FRTMRC85A01H501X",azienda:"Università degli Studi",color:"#3E6FB8"},
+      {id:"td1",nome:"Chiara",cognome:"Lombardi",cf:"LMBCHR90B41F839Y",azienda:"Università degli Studi",color:"#2F8F5B"},
+      {id:"td2",nome:"Alessandro",cognome:"Bruno",cf:"BRNLSN88C02L219Z",azienda:"Università degli Studi",color:"#EC7A26"},
+      {id:"td3",nome:"Francesca",cognome:"Mancini",cf:"MNCFNC92D51H501W",azienda:"Università degli Studi",color:"#9B59B6"},
+      {id:"td4",nome:"Davide",cognome:"Esposito",cf:"SPSDVD87E03F839V",azienda:"Università degli Studi",color:"#16A085"},
     ];
     const AN=[
-      {id:"avd0",nome:"Avviso 1.9",codice:"DDG 001/2026",colore:"#3E6FB8",durataOre:450,stato:"In corso",dataInizio:"01/01/2026",dataFine:"30/06/2026",note:""},
-      {id:"avd1",nome:"Avviso 3",codice:"DDG 003/2026",colore:"#2F8F5B",durataOre:400,stato:"In corso",dataInizio:"01/03/2026",dataFine:"30/09/2026",note:""},
-      {id:"avd2",nome:"Avviso 5",codice:"DDG 005/2026",colore:"#9B59B6",durataOre:350,stato:"In corso",dataInizio:"01/06/2026",dataFine:"31/12/2026",note:""},
+      {id:"avd0",nome:"Tutorato Ingegneria",codice:"DDG 001/2026",colore:"#3E6FB8",durataOre:sumH(s0),stato:"In corso",dataInizio:"05/01/2026",dataFine:"30/06/2026",note:""},
+      {id:"avd1",nome:"Tutorato Informatica",codice:"DDG 002/2026",colore:"#2F8F5B",durataOre:sumH(s1),stato:"In corso",dataInizio:"02/03/2026",dataFine:"31/08/2026",note:""},
+      {id:"avd2",nome:"Supporto Economia",codice:"DDG 003/2026",colore:"#E67E22",durataOre:sumH(s2),stato:"Concluso",dataInizio:"05/01/2026",dataFine:"29/05/2026",note:""},
+      {id:"avd3",nome:"Tutorato Lingue e Letterature",codice:"DDG 004/2026",colore:"#9B59B6",durataOre:sumH(s3),stato:"In corso",dataInizio:"05/01/2026",dataFine:"18/12/2026",note:""},
+      {id:"avd4",nome:"Accompagnamento Studenti",codice:"DDG 005/2026",colore:"#C0392B",durataOre:sumH(s4),stato:"Sospeso",dataInizio:"02/02/2026",dataFine:"31/07/2026",note:""},
+      {id:"avd5",nome:"Tutorato Scienze",codice:"DDG 006/2026",colore:"#16A085",durataOre:sumH(s5),stato:"In corso",dataInizio:"01/06/2026",dataFine:"18/12/2026",note:""},
     ];
-    const mks=(from,to)=>MONTHS.filter(m=>m.year===2026&&m.month>=from&&m.month<=to).map(m=>m.key);
-    const av1Mks=mks(0,5),av3Mks=mks(2,8),av5Mks=mks(5,11);
-    function avSlots(mkList,avId){let i=0;return mkList.flatMap(mk=>[10,17,24].map(d=>({id:`ave-${avId}-${mk}-${d}-${i++}`,month:mk,day:d,start:9,end:13,ore:4})));}
-    const AV=[{id:"avd0",events:avSlots(av1Mks,"avd0")},{id:"avd1",events:avSlots(av3Mks,"avd1")},{id:"avd2",events:avSlots(av5Mks,"avd2")}];
-    function makeTutMkSlots(avName,mkList,s,e,prefix){let i=0;const ore=e-s;const byMk={};for(const mk of mkList){byMk[mk]=[10,17].map(d=>({id:`${prefix}-${mk}-${d}-${i++}`,name:avName,day:d,start:s,end:e,ore}));}return byMk;}
-    function mergeMk(...maps){const r={};for(const m of maps)for(const[mk,evs]of Object.entries(m)){if(!r[mk])r[mk]=[];r[mk].push(...evs);}return r;}
-    const rossiMks=mks(0,7),bianchiMks=mks(0,11),verdiMks=mks(2,8),ferrariMks=mks(3,11);
+    const AV=[{id:"avd0",events:s0},{id:"avd1",events:s1},{id:"avd2",events:s2},{id:"avd3",events:s3},{id:"avd4",events:s4},{id:"avd5",events:s5}];
+    // ogni tutor: 1 avviso mattina + 1 pomeriggio → zero sovrapposizioni garantite
     const te={
-      td0:mergeMk(makeTutMkSlots("Avviso 1.9",rossiMks.filter(mk=>av1Mks.includes(mk)),9.5,10.5,"r1"),makeTutMkSlots("Avviso 3",rossiMks.filter(mk=>av3Mks.includes(mk)),9.5,10.5,"r3")),
-      td1:mergeMk(makeTutMkSlots("Avviso 1.9",bianchiMks.filter(mk=>av1Mks.includes(mk)),10,11,"b1"),makeTutMkSlots("Avviso 5",bianchiMks.filter(mk=>av5Mks.includes(mk)),10,11,"b5")),
-      td2:mergeMk(makeTutMkSlots("Avviso 3",verdiMks,9,10,"v3")),
-      td3:mergeMk(makeTutMkSlots("Avviso 3",ferrariMks.filter(mk=>av3Mks.includes(mk)),11,12,"f3"),makeTutMkSlots("Avviso 5",ferrariMks.filter(mk=>av5Mks.includes(mk)),11,12,"f5")),
+      td0:mT(tS("td0","Tutorato Ingegneria",s0,2,0,3),tS("td0","Tutorato Lingue e Letterature",s3,2,0,3)),
+      td1:mT(tS("td1","Tutorato Ingegneria",s0,2,1,2),tS("td1","Tutorato Informatica",s1,2,0,2)),
+      td2:mT(tS("td2","Supporto Economia",s2,2,0,2),tS("td2","Tutorato Scienze",s5,2,0,3)),
+      td3:mT(tS("td3","Accompagnamento Studenti",s4,2,0,2),tS("td3","Tutorato Lingue e Letterature",s3,2,1,2)),
+      td4:mT(tS("td4","Accompagnamento Studenti",s4,2,1,1),tS("td4","Tutorato Scienze",s5,2,2,2)),
     };
-    setTutors(T);setAnagraficaAv(AN);anaRef.current=AN;setAvvisi(AV);avRef.current=AV;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
+    setTutors(T);setAnagraficaAv(AN);anaRef.current=AN;setAvvisi(AV);avRef.current=AV;setTutEvents(te);tutEvRef.current=te;
+    setActiveAvvisi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
     await fsSaveTutors(T);await fsSaveAna(AN);await fsSaveAvvisi(AV);
     for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
   };
-  window.__clearDb=async()=>{await fsClearAll();setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);};
+  window.__clearDb=async()=>{
+    await fsClearAll();
+    try{const s=await db.collection("activityLog").get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}catch(e){}
+    setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);
+  };
 
   function getVisibleDays(){if(calView==="month")return Array.from({length:month.days},(_,i)=>i+1);if(calView==="week"&&weekStart){const m=MONTHS[monthIdx];const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);if(d.getMonth()===m.month&&d.getDate()>=1&&d.getDate()<=m.days)days.push(d.getDate());}return days.length?days:Array.from({length:month.days},(_,i)=>i+1);}return Array.from({length:month.days},(_,i)=>i+1);}
   function navWeek(dir){setWeekStart(prev=>{const m=MONTHS[monthIdx];const d=new Date(prev);d.setDate(d.getDate()+dir*7);const f=new Date(m.year,m.month,1),fd=f.getDay()||7;const fmon=new Date(f);fmon.setDate(f.getDate()-(fd-1));const l=new Date(m.year,m.month,m.days),ld=l.getDay()||7;const lmon=new Date(l);lmon.setDate(l.getDate()-(ld-1));if(d<fmon)return fmon;if(d>lmon)return lmon;return d;});}

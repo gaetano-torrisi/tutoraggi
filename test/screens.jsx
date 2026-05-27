@@ -714,7 +714,7 @@ function DemoPanel({isSuperAdmin}){
         <div style={{width:48,height:48,borderRadius:12,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <Icon name="dice" size={22} color="var(--accent)"/>
         </div>
-        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>4 tutor · 5 avvisi · ~280 slot distribuiti su 12 mesi</p></div>
+        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>5 tutor · 6 avvisi · ~620 slot distribuiti su tutto il 2026</p></div>
       </div>
       <div style={{padding:12,background:"var(--warning-soft)",borderRadius:8,marginBottom:12,fontSize:11.5,color:"var(--fg)",lineHeight:1.6,display:"flex",alignItems:"flex-start",gap:8}}>
         <Icon name="alert" size={14} color="var(--warning)" style={{flexShrink:0,marginTop:1}}/>
