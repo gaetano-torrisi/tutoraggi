@@ -2,14 +2,24 @@
 // ── VERIFICA ──────────────────────────────────────────────────────────────
 function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   const errors=[],avById={},avByName={};
-  avvisi.forEach(av=>avById[av.id]=av);anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" non in anagrafica.`,detail:"Slot orfano: l'avviso non esiste in anagrafica."});}}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" il ${ev.day} ${mk} non corrisponde ad alcuna sessione.`,detail:"Nessuna sessione avviso in questo giorno."});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot il ${ev.day} ${mk} fuori orario (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:`Orario sessione: ${fmt(avDay.start)}–${fmt(avDay.end)}`});}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${a.day} ${mk} tra "${a.name}" e "${b.name}".`,detail:`${fmt(a.start)}–${fmt(a.end)} vs ${fmt(b.start)}–${fmt(b.end)}`});}}}
+  avvisi.forEach(av=>avById[av.id]=av);
+  anagraficaAv.forEach(a=>{if(avById[a.id])avByName[a.nome]=avById[a.id];});
+  // orfano
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,evId:ev.id,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non in anagrafica.`,detail:"Slot orfano: l'avviso non esiste in anagrafica.",day:ev.day});}}}}
+  // fuori_giorno, fuori_orario
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=av.events.find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non corrisponde ad alcuna sessione.`,detail:"Nessuna sessione avviso in questo giorno."});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot del ${fmtDayMonth(ev.day,mk)} fuori orario (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:`Orario sessione: ${fmt(avDay.start)}–${fmt(avDay.end)}`});}}}
+  // sovrapposizione
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,evId:a.id,day:a.day,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${fmtDayMonth(a.day,mk)} tra "${a.name}" e "${b.name}".`,detail:`${fmt(a.start)}–${fmt(a.end)} vs ${fmt(b.start)}–${fmt(b.end)}`});}}}
+  // eccedenza, durata
   for(const ana of anagraficaAv){const av=avById[ana.id];const totAv=av?av.events.reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Avviso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore avviso (${totAv}h).`,detail:`Eccedenza: ${totTut-totAv}h`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Avviso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`,detail:`Differenza: ${Math.abs(totAv-ana.durataOre)}h`});}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);const byDay={};for(const ev of evs){if(!byDay[ev.day])byDay[ev.day]=0;byDay[ev.day]+=ev.ore||0;}for(const[day,totH]of Object.entries(byDay)){if(totH>8)errors.push({type:"giornata8h",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": giornata >8h il ${day} ${mk} (${totH}h).`,detail:"Superato limite giornaliero consigliato."});}}}
-  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0||d===6)errors.push({type:"weekend",monthKey:mk,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${ev.day} ${mk}.`,detail:"Giorno festivo o weekend."});}}}
-  for(const t of tutors){let hasSlot=false;for(const[,ms]of Object.entries(tutEvents[t.id]||{}))if(Object.values(ms).some(evs=>evs.length>0)){hasSlot=true;break;}if(!hasSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non ha nessuno slot assegnato.`,detail:"Tutor presente in anagrafica ma senza sessioni."});}
+  // giornata_lunga
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const t=tutors.find(x=>x.id===tid);const byDay={};for(const ev of evs){if(!byDay[ev.day])byDay[ev.day]=0;byDay[ev.day]+=ev.ore||0;}for(const[day,totH]of Object.entries(byDay)){if(totH>8)errors.push({type:"giornata_lunga",monthKey:mk,day:Number(day),msg:`Tutor "${t?.cognome} ${t?.nome}": giornata >8h il ${fmtDayMonth(Number(day),mk)} (${totH}h).`,detail:"Superato limite giornaliero consigliato."});}}}
+  // weekend
+  for(const[tid,months]of Object.entries(tutEvents)){for(const[mk,evs]of Object.entries(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0||d===6)errors.push({type:"weekend",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${fmtDayMonth(ev.day,mk)}.`,detail:"Giorno festivo o weekend."});}}}
+  // tutor_senza_slot (logica aggiornata)
+  const avNamesSet=new Set(anagraficaAv.map(a=>a.nome));
+  for(const t of tutors){let totalSlots=0,hasLinkedSlot=false;for(const[,ms]of Object.entries(tutEvents[t.id]||{}))for(const[,evs]of Object.entries(ms)){totalSlots+=evs.length;if(evs.some(ev=>avNamesSet.has(ev.name)))hasLinkedSlot=true;}if(totalSlots===0)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non è mai presente nel calendario.`,detail:"Tutor presente in anagrafica ma senza sessioni."});else if(!hasLinkedSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" presente ma non collegato ad alcun avviso in anagrafica.`,detail:"Tutti gli slot fanno riferimento ad avvisi non in anagrafica."});}
+  // avviso_senza_sessioni
   for(const ana of anagraficaAv){const av=avById[ana.id];if(!av||!av.events.length)errors.push({type:"avviso_senza_sessioni",monthKey:null,msg:`Avviso "${ana.nome}" non ha sessioni nel calendario.`,detail:"Nessuna data inserita per questo avviso."});}
   return errors;
 }
@@ -24,76 +34,89 @@ const VERIFICA_CATS=[
   {type:"weekend",label:"Slot nel weekend",icon:"sun",tone:"info"},
   {type:"tutor_senza_slot",label:"Tutor senza slot",icon:"users",tone:"info"},
   {type:"avviso_senza_sessioni",label:"Avviso senza sessioni",icon:"briefcase",tone:"info"},
-  {type:"giornata8h",label:"Giornata >8h",icon:"alert",tone:"warning"},
+  {type:"giornata_lunga",label:"Giornata >8h",icon:"alert",tone:"warning"},
 ];
 
-function VerificaScreen({errors,onNavigate,anagraficaAv=[],tutors=[]}){
+function VerificaScreen({avvisi=[],tutors=[],tutEvents={},anagraficaAv=[],onNavigateToError}){
+  const[errors,setErrors]=useState(()=>runVerifica(avvisi,anagraficaAv,tutors,tutEvents));
+  const[lastRun,setLastRun]=useState(()=>new Date());
   const[activeCats,setActiveCats]=useState(new Set(VERIFICA_CATS.map(c=>c.type)));
   const[catExpanded,setCatExpanded]=useState(false);
   const[selAv,setSelAv]=useState("");
   const[selTutor,setSelTutor]=useState("");
-  const[lastRun]=useState(new Date());
-  const ok=errors.length===0;
-  const filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
+  const[sortBy,setSortBy]=useState("type");
+
+  function riesegui(){setErrors(runVerifica(avvisi,anagraficaAv,tutors,tutEvents));setLastRun(new Date());}
   function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
-  return(<div className="verifica-panel" style={{flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
+
+  const ok=errors.length===0;
+  let filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
+  if(sortBy==="type")filtered=[...filtered].sort((a,b)=>a.type.localeCompare(b.type));
+  else if(sortBy==="month")filtered=[...filtered].sort((a,b)=>(a.monthKey||"").localeCompare(b.monthKey||""));
+  else if(sortBy==="msg")filtered=[...filtered].sort((a,b)=>a.msg.localeCompare(b.msg));
+
+  return(<div className="verifica-panel" style={{width:380,flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
       <div style={{padding:"12px 16px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
         <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:"var(--fg)"}}>Verifica coerenza</div><div style={{fontSize:10,color:"var(--fg-subtle)",marginTop:1}}>Ultimo controllo: {fmtTs(lastRun)}</div></div>
-        <button onClick={()=>{}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:5}}><Icon name="refresh" size={12} color="#fff"/>Riesegui</button>
+        <button onClick={riesegui} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:5}}><Icon name="refresh" size={12} color="#fff"/>Riesegui</button>
       </div>
       <div style={{padding:"8px 12px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
         <button onClick={()=>setCatExpanded(p=>!p)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left"}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-            {[...activeCats].slice(0,5).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
-            {activeCats.size>5&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>+{activeCats.size-5}</span>}
-            <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{activeCats.size} di {VERIFICA_CATS.length} selezionate</span>
+            {[...activeCats].slice(0,4).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
+            {activeCats.size>4&&<span style={{fontSize:11,color:"var(--fg-subtle)"}}>+{activeCats.size-4}</span>}
+            <span style={{fontSize:11,color:"var(--fg-subtle)",marginLeft:"auto"}}>{activeCats.size}/{VERIFICA_CATS.length}</span>
           </div>
           <Icon name={catExpanded?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
         </button>
         {catExpanded&&<div style={{marginTop:8,padding:12,background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)"}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:6,marginBottom:10}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
             {VERIFICA_CATS.map(c=>{const cnt=errors.filter(e=>e.type===c.type).length;const checked=activeCats.has(c.type);return(<label key={c.type} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",borderRadius:"var(--radius)",background:checked?"var(--bg-elev)":"transparent",border:`1px solid ${checked?"var(--border)":"transparent"}`,cursor:"pointer"}}>
               <input type="checkbox" checked={checked} onChange={()=>toggleCat(c.type)} style={{flexShrink:0}}/>
               <Icon name={c.icon} size={13} color={`var(--${c.tone})`}/>
-              <span style={{flex:1,fontSize:12,color:"var(--fg)"}}>{c.label}</span>
+              <span style={{flex:1,fontSize:11,color:"var(--fg)"}}>{c.label}</span>
               {cnt>0&&<span style={{fontSize:10,fontWeight:700,color:`var(--${c.tone})`}}>{cnt}</span>}
             </label>);} )}
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setActiveCats(new Set())} className="btn" data-variant="ghost" data-size="sm">Deseleziona tutto</button>
-            <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Seleziona tutto</button>
-            <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica filtri</button>
+            <button onClick={()=>setActiveCats(new Set())} className="btn" data-variant="ghost" data-size="sm">Nessuna</button>
+            <button onClick={()=>setActiveCats(new Set(VERIFICA_CATS.map(c=>c.type)))} className="btn" data-variant="outline" data-size="sm">Tutte</button>
+            <button onClick={()=>setCatExpanded(false)} className="btn" data-variant="accent" data-size="sm" style={{marginLeft:"auto"}}>Applica</button>
           </div>
         </div>}
-        {(anagraficaAv.length>0||tutors.length>0)&&<div style={{display:"flex",gap:8,marginTop:8}}>
-          {anagraficaAv.length>0&&<select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+        <div style={{display:"flex",gap:6,marginTop:8}}>
+          {anagraficaAv.length>0&&<select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{flex:1,fontSize:11}}>
             <option value="">Tutti gli avvisi</option>
             {anagraficaAv.map(a=><option key={a.id||a.nome} value={a.nome}>{a.nome}</option>)}
           </select>}
-          {tutors.length>0&&<select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{flex:1,fontSize:12}}>
+          {tutors.length>0&&<select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{flex:1,fontSize:11}}>
             <option value="">Tutti i tutor</option>
             {[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
           </select>}
-          {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{flexShrink:0}}>Reset</button>}
-        </div>}
-      </div>
-      <div style={{flex:1,overflowY:"auto",padding:"10px 14px",background:"var(--bg)"}}>
-        <div style={{padding:"10px 12px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-          <Icon name={ok?"checkCircle":"alert"} size={18} color={ok?"var(--success)":"var(--danger)"}/>
-          <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"} · Clicca per navigare`}</span>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};return(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey,e.evId)} style={{padding:"10px 12px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:10,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
-            <div style={{width:34,height:34,borderRadius:8,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <Icon name={cat.icon} size={16} color={`var(--${cat.tone})`}/>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
+          <span style={{fontSize:10,color:"var(--fg-subtle)",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em"}}>Ordina:</span>
+          {[{v:"type",l:"Tipo"},{v:"month",l:"Mese"},{v:"msg",l:"A→Z"}].map(o=><button key={o.v} onClick={()=>setSortBy(o.v)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,border:`1px solid ${sortBy===o.v?"var(--accent)":"var(--border)"}`,background:sortBy===o.v?"var(--accent)":"transparent",color:sortBy===o.v?"#fff":"var(--fg-muted)",cursor:"pointer"}}>{o.l}</button>)}
+          {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{marginLeft:"auto",fontSize:10}}>Reset</button>}
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 12px",background:"var(--bg)"}}>
+        <div style={{padding:"10px 12px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <Icon name={ok?"checkCircle":"alert"} size={18} color={ok?"var(--success)":"var(--danger)"}/>
+          <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"}`}</span>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};const canNav=!!(e.monthKey&&onNavigateToError);return(<div key={i} onClick={()=>canNav&&onNavigateToError(e.monthKey,e.evId)} style={{padding:"9px 10px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:9,alignItems:"flex-start",cursor:canNav?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(canNav)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
+            <div style={{width:30,height:30,borderRadius:7,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon name={cat.icon} size={14} color={`var(--${cat.tone})`}/>
             </div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
                 <span className="badge" data-tone={cat.tone} style={{fontSize:10}}>{cat.label}</span>
-                {e.monthKey&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3,marginLeft:"auto"}}><Icon name="calendar" size={11} color="var(--info)"/>Vai a {MONTHS.find(m=>m.key===e.monthKey)?.label||e.monthKey}</span>}
+                {canNav&&<span style={{fontSize:10,color:"var(--info)",fontWeight:600,display:"flex",alignItems:"center",gap:3,marginLeft:"auto"}}><Icon name="calendar" size={10} color="var(--info)"/>{MONTHS.find(m=>m.key===e.monthKey)?.label||e.monthKey}</span>}
               </div>
-              <div style={{fontSize:13,color:"var(--fg)",lineHeight:1.5}}>{e.msg}</div>
-              {e.detail&&<div style={{fontSize:11,color:"var(--fg-muted)",marginTop:3}}>{e.detail}</div>}
+              <div style={{fontSize:12,color:"var(--fg)",lineHeight:1.45}}>{e.msg}</div>
+              {e.detail&&<div style={{fontSize:10,color:"var(--fg-muted)",marginTop:2}}>{e.detail}</div>}
             </div>
           </div>);})}
           {filtered.length===0&&!ok&&<p style={{color:"var(--fg-subtle)",textAlign:"center",padding:20,fontSize:13}}>Nessun errore nei filtri selezionati.</p>}
@@ -306,13 +329,18 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   function getTutsForAvPeriodo(avName){return[...tutors].filter(t=>mks.some(mk=>(tutEvents[t.id]?.[mk]||[]).some(e=>e.name===avName))).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
   function getSlotsForTutAvMk(tId,avName,mk){return(tutEvents[tId]?.[mk]||[]).filter(e=>e.name===avName).sort((a,b)=>a.day-b.day||a.start-b.start);}
   function getSlotsForTutAvPeriodo(tId,avName){return mks.flatMap(mk=>getSlotsForTutAvMk(tId,avName,mk).map(sl=>({...sl,_mk:mk})));}
-  const pctBadge=(ore,max)=>{if(!max)return null;const p=ore/max*100;return<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{Math.round(p)}%</span>;};
+  const pctBadge=(ore,max)=>{if(!max)return null;const p=ore/max*100;return<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{fmtPct(ore,max)}</span>;};
   const allMonthKeys=MONTHS.filter(m=>{const mk=m.key;const hasTut=tutors.some(t=>(tutEvents[t.id]?.[mk]||[]).length>0);const hasAv=anagraficaAv.some(a=>(avById[a.id]?.events||[]).some(e=>e.month===mk));return hasTut||hasAv;}).map(m=>m.key);
   const totTutOre=tutors.reduce((s,t)=>s+getTutOrePeriodo(t.id),0);
   const totAvOre=anagraficaAv.reduce((s,a)=>s+getAvOrePeriodo(a.id),0);
   const activeTutors=tutors.filter(t=>getTutOrePeriodo(t.id)>0);
   const activeAvvisi=anagraficaAv.filter(a=>getAvOrePeriodo(a.id)>0);
   const totSlots=tutors.reduce((s,t)=>s+mks.reduce((s2,mk)=>s2+(tutEvents[t.id]?.[mk]||[]).length,0),0)+anagraficaAv.reduce((s,a)=>s+(avById[a.id]?.events||[]).filter(e=>mks.includes(e.month)).length,0);
+  const RC=typeof window.Recharts!=="undefined"?window.Recharts:{};
+  const safeColor=c=>(c&&c.startsWith("#"))?c:"#4f86c6";
+  const chartDataTutor=[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).slice(0,8).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color)}));
+  const chartDataAv=[...anagraficaAv].filter(a=>getAvOrePeriodo(a.id)>0).sort((a,b)=>getAvOrePeriodo(b.id)-getAvOrePeriodo(a.id)).slice(0,8).map(a=>({name:a.nome,ore:getAvOrePeriodo(a.id),color:safeColor(a.colore)}));
+  const chartData=viewMode==="tutor"?chartDataTutor:chartDataAv;
   function periodSubtitle(){if(selPeriod.mode==="year")return`Anno ${selPeriod.year}`;if(selPeriod.mode==="range"){const s=MONTHS.find(m=>m.key===selPeriod.startKey);const e=MONTHS.find(m=>m.key===selPeriod.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} → ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"";}return MONTHS.find(m=>m.key===selPeriod.monthKey)?.label||"";}
   function toggleTut(id){setExpandedTut(p=>({...p,[id]:!p[id]}))}
   function toggleTutAv(key){setExpandedTutAv(p=>({...p,[key]:!p[key]}))}
@@ -338,11 +366,24 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
         <div style={{flex:1}}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,padding:"14px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-        {[{label:"TUTOR ATTIVI",val:activeTutors.length,icon:"users"},{label:"ORE PERIODO",val:fo(viewMode==="tutor"?totTutOre:totAvOre),icon:"clock"},{label:"SLOT TOTALI",val:totSlots,icon:"mapPin"},{label:"AVVISI ATTIVI",val:activeAvvisi.length,icon:"briefcase"}].map(k=><div key={k.label} style={{background:"var(--bg-sunken)",borderRadius:"var(--radius-md)",padding:"10px 14px",border:"1px solid var(--border)"}}>
-          <div style={{fontSize:22,fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',lineHeight:1}}>{k.val}</div>
+        {[{label:"TUTOR ATTIVI",val:activeTutors.length,icon:"users"},{label:"ORE PERIODO",val:fmtOreMin(viewMode==="tutor"?totTutOre:totAvOre),icon:"clock"},{label:"SLOT TOTALI",val:totSlots,icon:"mapPin"},{label:"AVVISI ATTIVI",val:activeAvvisi.length,icon:"briefcase"}].map(k=><div key={k.label} style={{background:"var(--bg-sunken)",borderRadius:"var(--radius-md)",padding:"10px 14px",border:"1px solid var(--border)"}}>
+          <div style={{fontSize:20,fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',lineHeight:1}}>{k.val}</div>
           <div style={{fontSize:10,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginTop:4,display:"flex",alignItems:"center",gap:5}}><Icon name={k.icon} size={10} color="var(--fg-subtle)"/>{k.label}</div>
         </div>)}
       </div>
+      {RC.BarChart&&chartData.length>0&&<div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>ORE {viewMode==="tutor"?"PER TUTOR":"PER AVVISO"} — {periodSubtitle()}</div>
+        <RC.ResponsiveContainer width="100%" height={Math.max(80,chartData.length*32)}>
+          <RC.BarChart data={chartData} layout="vertical" margin={{top:0,right:60,bottom:0,left:100}}>
+            <RC.XAxis type="number" tick={{fontSize:10}} tickFormatter={v=>fmtOreMin(v)} stroke="var(--border)"/>
+            <RC.YAxis type="category" dataKey="name" tick={{fontSize:10,fill:"var(--fg-muted)"}} width={100} stroke="none"/>
+            <RC.Tooltip formatter={(v)=>[fmtOreMin(v),"Ore"]} contentStyle={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:6,fontSize:12}}/>
+            <RC.Bar dataKey="ore" radius={[0,4,4,0]}>
+              {chartData.map((d,i)=><RC.Cell key={i} fill={d.color}/>)}
+            </RC.Bar>
+          </RC.BarChart>
+        </RC.ResponsiveContainer>
+      </div>}
       <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
         {viewMode==="tutor"&&[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{
           const ore=getTutOrePeriodo(t.id);const avNames=getTutAvvisiPeriodo(t.id).filter(n=>!selAvFilter||n===selAvFilter);const totOre=getTutTotOre(t.id);
@@ -352,7 +393,7 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
             <button onClick={()=>toggleTut(t.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
               <div style={{width:38,height:38,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:15,color:"var(--fg)"}}>{t.cognome} {t.nome}</div><div style={{fontSize:12,color:"var(--fg-muted)"}}>{avNames.length} avvisi · {avNames.reduce((s,n)=>s+getSlotsForTutAvPeriodo(t.id,n).length,0)} slot</div></div>
-              <div style={{textAlign:"right"}}><div style={{fontWeight:600,fontSize:16,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fo(ore)}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{fo(totOre)} anno</div></div>
+              <div style={{textAlign:"right"}}><div style={{fontWeight:600,fontSize:15,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{fmtOreMin(ore)}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{fmtOreMin(totOre)} tot.</div></div>
               <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
             </button>
             {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
@@ -361,8 +402,8 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
                   <button onClick={()=>toggleTutAv(avKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
                     <span style={{width:8,height:8,borderRadius:2,background:ana?.colore||"var(--accent)",flexShrink:0}}/>
                     <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{avName}</span>
-                    {ana?.durataOre?(()=>{const p=Math.round(oreAnno/ana.durataOre*100);const tone=p>100?"danger":p>=80?"success":"info";return(<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={tone}>{p}%</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>su tot. da bando</span></div>);})():<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
-                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fo(oreAv)}</span>
+                    {ana?.durataOre?(()=>{const p=oreAnno/ana.durataOre*100;const tone=p>100?"danger":p>=80?"success":"info";return(<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={tone}>{fmtPct(oreAnno,ana.durataOre)}</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>su tot. da bando</span></div>);})():<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
+                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fmtOreMin(oreAv)}</span>
                     <Icon name={expAv?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
                   </button>
                   {expAv&&<div style={{padding:"6px 12px",borderTop:"1px solid var(--divider)",display:"flex",flexWrap:"wrap",gap:4}}>
@@ -382,9 +423,9 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
           return(<div key={ana.id} style={{marginBottom:8,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
             <button onClick={()=>toggleAv(ana.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
               <span style={{width:10,height:10,borderRadius:3,background:ana.colore||"var(--accent)",flexShrink:0}}/>
-              <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{tuts.length} tutor{ana.durataOre?` · ${totOre.toFixed(1)}/${ana.durataOre}h`:""}</div></div>
-              {ana.durataOre?<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={pct>100?"danger":pct>=80?"success":"info"}>{pct}%</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>pianificato su tot.</span></div>:<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
-              <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',fontSize:13}}>{fo(oreAv)}</span>
+              <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{ana.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{tuts.length} tutor{ana.durataOre?` · ${fmtOreMin(totOre)}/${ana.durataOre}h`:""}</div></div>
+              {ana.durataOre?<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={pct>100?"danger":pct>=80?"success":"info"}>{fmtPct(totOre,ana.durataOre)}</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>pianificato su tot.</span></div>:<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
+              <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',fontSize:13}}>{fmtOreMin(oreAv)}</span>
               <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
             </button>
             {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
@@ -393,7 +434,7 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
                   <button onClick={()=>toggleAvTut(avKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
                     <div style={{width:22,height:22,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
                     <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{t.cognome} {t.nome}</span>
-                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fo(oreT)}</span>
+                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fmtOreMin(oreT)}</span>
                     <Icon name={expT?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
                   </button>
                   {expT&&<div style={{padding:"6px 12px",borderTop:"1px solid var(--divider)",display:"flex",flexWrap:"wrap",gap:4}}>
@@ -547,7 +588,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
         {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
         {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
-        {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv}/>}
+        {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} settings={settings} role={role} isSuperAdmin={isSuperAdmin}/>}
         {section==="log"&&<LogPanel/>}
         {section==="demo"&&<DemoPanel isSuperAdmin={isSuperAdmin}/>}
       </div>
@@ -615,21 +656,21 @@ function ApiPanel({settings,onSave}){
   </div>);
 }
 
-function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv}){
+function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,settings={},role="user",isSuperAdmin}){
   const[backups,setBackups]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[msg,setMsg]=useState(null);
   function fmtSize(b){if(b<1024)return`${b} B`;if(b<1024*1024)return`${(b/1024).toFixed(1)} KB`;return`${(b/1024/1024).toFixed(2)} MB`;}
   async function load(){setLoading(true);setBackups(await fsListBackups());setLoading(false);}
   useEffect(()=>{load();},[]);
-  async function doBackup(){setSaving(true);setMsg(null);try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv);await fsApplyBackupPolicy(await fsListBackups());setMsg({ok:true,text:"Backup creato."});await load();}catch(e){setMsg({ok:false,text:e.message});}setSaving(false);}
-  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);window.__restoreBackup&&await window.__restoreBackup(data);setMsg({ok:true,text:"Ripristinato."});}catch(e){setMsg({ok:false,text:e.message});}}
+  async function doBackup(){setSaving(true);setMsg(null);try{await fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv,settings,role);await fsApplyBackupPolicy(await fsListBackups());setMsg({ok:true,text:"Backup v5 creato."});await load();}catch(e){setMsg({ok:false,text:e.message});}setSaving(false);}
+  async function doRestore(b){if(!confirm(`Ripristinare il backup del ${fmtTs(b.created)}?`))return;try{const data=JSON.parse(b.data);const v=data.version||0;if(v>0&&v<5&&!confirm(`Backup v${v} (formato precedente). Alcuni dati non verranno ripristinati. Continuare?`))return;window.__restoreBackup&&await window.__restoreBackup(data);setMsg({ok:true,text:`Ripristinato (v${v||"?"}).`});}catch(e){setMsg({ok:false,text:e.message});}}
   function doDownload(b){const blob=new Blob([b.data],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`backup_${b.created.toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
   async function doDelete(b){if(!confirm(`Eliminare il backup del ${fmtTs(b.created)}?`))return;await fsDeleteBackup(b.id);await load();}
   return(<div style={{maxWidth:880}}>
     <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:22}}>
-      <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.</p></div>
+      <div><h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Backup</h2><p style={{fontSize:13,color:"var(--fg-muted)"}}>Policy: 7 giornalieri · 4 settimanali · 12 mensili.{isSuperAdmin?" Include userProfiles e autorizzazioni.":role==="admin"?" Include log attività.":""}</p></div>
       <div style={{display:"flex",gap:8}}>
-        <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
-        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
+        <label className="btn" data-variant="outline" style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6}}><Icon name="upload" size={14}/>Importa JSON<input type="file" accept=".json" style={{display:"none"}} onChange={e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async ev=>{try{const raw=JSON.parse(ev.target.result);const v=raw.version||0;if(v>0&&v<5&&!confirm(`File v${v} (formato precedente). Continuare?`))return;window.__restoreBackup&&await window.__restoreBackup(raw);setMsg({ok:true,text:"Importato."});}catch(err){setMsg({ok:false,text:err.message});}};reader.readAsText(file);e.target.value="";}}/></label>
+        <button className="btn" data-variant="outline" onClick={()=>downloadJSON(avvisi,tutors,tutEvents,anagraficaAv,settings,role)} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta JSON</button>
         <button className="btn" data-variant="accent" onClick={doBackup} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={14} color="#fff"/>Salvataggio...</>:<><Icon name="save" size={14} color="#fff"/>Crea backup</>}</button>
       </div>
     </div>

@@ -13,7 +13,7 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
   const ore=ev.end-ev.start;
   const dTop=(ev.start-8)*slotH,dH=Math.max((ev.end-ev.start)*slotH,20);
   const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"};
-  return(<div ref={dragRef} id={`slot-${ev.id}`} className={highlightError?"highlight-error":""} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
+  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,.14)",borderBottom:"1px solid rgba(255,255,255,.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
         {onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
@@ -37,7 +37,7 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const ore=ev.end-ev.start;
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
-  return(<div ref={dragRef} id={`slot-${ev.id}`} className={highlightError?"highlight-error":""} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
+  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
         {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}

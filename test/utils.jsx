@@ -29,6 +29,18 @@ const LOG_TYPE_LABELS={
 const ROLE_LABEL={superadmin:"Super Admin",admin:"Admin",user:"Utente",viewer:"Viewer"};
 const ROLE_ICON={superadmin:"star",admin:"shieldCheck",user:"user",viewer:"eye"};
 const ROLE_COLOR={superadmin:"var(--danger)",admin:"var(--accent-strong)",user:"var(--info)",viewer:"var(--fg-subtle)"};
+const VERIFICA_CATEGORIES=[
+  {id:"sovrapposizione",label:"Sovrapposizioni",icon:"zap",color:"var(--danger)"},
+  {id:"fuori_orario",label:"Fuori orario",icon:"clock",color:"var(--warning)"},
+  {id:"fuori_giorno",label:"Fuori giorno",icon:"calendar",color:"var(--warning)"},
+  {id:"eccedenza",label:"Ore eccedenti",icon:"trending",color:"var(--warning)"},
+  {id:"durata",label:"Durata non corrispondente",icon:"clipboard",color:"var(--info)"},
+  {id:"orfano",label:"Slot orfani",icon:"alert",color:"var(--warning)"},
+  {id:"weekend",label:"Slot nel weekend",icon:"sun",color:"var(--info)"},
+  {id:"tutor_senza_slot",label:"Tutor senza slot",icon:"user",color:"var(--info)"},
+  {id:"avviso_senza_sessioni",label:"Avviso senza sessioni",icon:"briefcase",color:"var(--info)"},
+  {id:"giornata_lunga",label:"Giornata >8h",icon:"alert",color:"var(--warning)"},
+];
 const DRAG_PX=5,DRAG_MS=150;
 let _dragDone=false;
 function markDrag(){_dragDone=true;setTimeout(()=>{_dragDone=false;},50);}
@@ -64,8 +76,9 @@ function snapH(h){return Math.round(h*4)/4;}
 function isWeekday(year,month,day){const d=new Date(year,month,day).getDay();return d!==0&&d!==6;}
 function fmtTs(d){if(!d||!(d instanceof Date)||isNaN(d))return"—";const p=n=>String(n).padStart(2,"0");return`${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function fo(o){return o%1===0?`${o}h`:`${o.toFixed(1)}h`;}
-function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}:${String(m).padStart(2,"0")}`;}
-function fmtDayMonth(day,monthKey){const m=MONTHS.find(x=>x.key===monthKey);return`${day}${m?" "+MONTH_ABBR_IT[m.month]:""}`;}
+function fmtOreMin(ore){const h=Math.floor(ore);const m=Math.round((ore-h)*60);if(m===0)return`${h}h`;return`${h}h ${m}min`;}
+function fmtDayMonth(day,monthKey){const m=MONTHS.find(x=>x.key===monthKey);if(!m)return`${day} ${monthKey}`;return`${day} ${MONTH_ABBR_IT[m.month]}-${String(m.year).slice(2)}`;}
+function fmtPct(ore,totale){if(!totale||totale===0)return"—";return(ore/totale*100).toFixed(2)+"%";}
 function sortMK(keys){return[...keys].sort((a,b)=>MONTHS.findIndex(m=>m.key===a)-MONTHS.findIndex(m=>m.key===b));}
 function looksLikeCalendar(text){return[/\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/,/\b\d{1,2}:\d{2}\b/,/\b(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\b/i].some(p=>p.test(text));}
 function layoutEvents(evs){
@@ -74,8 +87,8 @@ function layoutEvents(evs){
   return res.map(({ev,col})=>({ev,col,numCols:cols.length}));
 }
 function cleanObj(obj){if(Array.isArray(obj))return obj.map(cleanObj);if(obj&&typeof obj==="object"){const o={};for(const[k,v]of Object.entries(obj)){if(typeof v!=="function"&&!k.startsWith("_"))o[k]=cleanObj(v);}return o;}return obj;}
-function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv){return JSON.stringify({version:4,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents},null,2);}
-function downloadJSON(avvisi,tutors,tutEvents,anagraficaAv){const b64=btoa(unescape(encodeURIComponent(makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv))));const a=document.createElement("a");a.href=`data:application/json;base64,${b64}`;a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings,userProfiles,authorizedEmails,activityLog){return JSON.stringify({version:5,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents,settings,userProfiles,authorizedEmails,activityLog},null,2);}
+async function downloadJSON(avvisi,tutors,tutEvents,anagraficaAv,settings,role){let userProfiles={},authorizedEmails={},activityLog=[];if(role==="admin"||role==="superadmin"){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();activityLog=s.docs.map(d=>({...d.data(),id:d.id}));}catch(e){}}if(role==="superadmin"){try{const s=await db.collection("userProfiles").get();s.docs.forEach(d=>{userProfiles[d.id]=d.data();});}catch(e){}try{const s=await db.collection("authorizedEmails").get();s.docs.forEach(d=>{authorizedEmails[d.id]=d.data();});}catch(e){}}const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings||{},userProfiles,authorizedEmails,activityLog);const blob=new Blob([json],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`calendario_${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────
 async function fsLoad(){try{const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaAv:an.docs.map(d=>d.data())};}catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{},anagraficaAv:[]};}}
@@ -84,10 +97,10 @@ async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await 
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
-async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
+async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 async function fsLog(userEmail,type,detail){try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error(e);}}
 async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate()||new Date(0)};});}catch(e){return[];}}
-async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv){const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size});return ref.id;}
+async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv,settings,role){let userProfiles={},authorizedEmails={},activityLog=[];if(role==="admin"||role==="superadmin"){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();activityLog=s.docs.map(d=>({...d.data(),id:d.id}));}catch(e){}}if(role==="superadmin"){try{const s=await db.collection("userProfiles").get();s.docs.forEach(d=>{userProfiles[d.id]=d.data();});}catch(e){}try{const s=await db.collection("authorizedEmails").get();s.docs.forEach(d=>{authorizedEmails[d.id]=d.data();});}catch(e){}}const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings||{},userProfiles,authorizedEmails,activityLog);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size,version:5});return ref.id;}
 async function fsListBackups(){try{const s=await db.collection("backups").orderBy("createdAt","desc").get();return s.docs.map(d=>({id:d.id,size:d.data().size||0,created:d.data().createdAt?.toDate()||new Date(0),data:d.data().data}));}catch(e){return[];}}
 async function fsDeleteBackup(id){await db.collection("backups").doc(id).delete();}
 async function fsApplyBackupPolicy(backups){const now=new Date(),keep=new Set(),byDay={},byWeek={},byMonth={};backups.forEach(b=>{const d=b.created;const dk=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;const wk=`${d.getFullYear()}-W${Math.floor((d.getDate()-1)/7)}`;const mk=`${d.getFullYear()}-${d.getMonth()}`;if(!byDay[dk])byDay[dk]=b;if(!byWeek[wk])byWeek[wk]=b;if(!byMonth[mk])byMonth[mk]=b;});const diffDays=b=>Math.floor((now-b.created)/(1000*60*60*24));backups.forEach(b=>{const dd=diffDays(b);const dk=`${b.created.getFullYear()}-${b.created.getMonth()}-${b.created.getDate()}`;const wk=`${b.created.getFullYear()}-W${Math.floor((b.created.getDate()-1)/7)}`;const mk=`${b.created.getFullYear()}-${b.created.getMonth()}`;if(dd<=7&&byDay[dk]?.id===b.id)keep.add(b.id);else if(dd<=28&&byWeek[wk]?.id===b.id)keep.add(b.id);else if(dd<=365&&byMonth[mk]?.id===b.id)keep.add(b.id);});for(const b of backups)if(!keep.has(b.id))try{await fsDeleteBackup(b.id);}catch(e){}}
