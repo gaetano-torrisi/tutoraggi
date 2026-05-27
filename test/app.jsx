@@ -318,7 +318,8 @@ function App({user}){
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
-  function navigateToError(monthKey,evId){if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${evId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},100);}}
+  useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
+  function navigateToError(monthKey,evId){if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);}}
 
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
