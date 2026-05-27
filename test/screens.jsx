@@ -27,7 +27,7 @@ const VERIFICA_CATS=[
   {type:"giornata8h",label:"Giornata >8h",icon:"alert",tone:"warning"},
 ];
 
-function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
+function VerificaScreen({errors,onNavigate,anagraficaAv=[],tutors=[]}){
   const[activeCats,setActiveCats]=useState(new Set(VERIFICA_CATS.map(c=>c.type)));
   const[catExpanded,setCatExpanded]=useState(false);
   const[selAv,setSelAv]=useState("");
@@ -36,15 +36,12 @@ function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
   const ok=errors.length===0;
   const filtered=errors.filter(e=>activeCats.has(e.type)&&(!selAv||e.msg.includes(selAv))&&(!selTutor||e.msg.includes(`${tutors.find(t=>t.id===selTutor)?.cognome}`)));
   function toggleCat(type){setActiveCats(p=>{const n=new Set(p);n.has(type)?n.delete(type):n.add(type);return n;});}
-  return(<div className="drawer-overlay">
-    <div className="drawer-backdrop" onClick={onClose}/>
-    <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
-      <div style={{padding:"16px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
-        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:16,color:"var(--fg)"}}>Verifica coerenza</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>Ultimo controllo: {fmtTs(lastRun)}</div></div>
-        <button onClick={()=>{}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="refresh" size={13} color="#fff"/>Riesegui</button>
-        <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={16}/></button>
+  return(<div className="verifica-panel" style={{flexShrink:0,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",display:"flex",flexDirection:"column",height:"100%",overflow:"hidden"}}>
+      <div style={{padding:"12px 16px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:"var(--fg)"}}>Verifica coerenza</div><div style={{fontSize:10,color:"var(--fg-subtle)",marginTop:1}}>Ultimo controllo: {fmtTs(lastRun)}</div></div>
+        <button onClick={()=>{}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:5}}><Icon name="refresh" size={12} color="#fff"/>Riesegui</button>
       </div>
-      <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+      <div style={{padding:"8px 12px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
         <button onClick={()=>setCatExpanded(p=>!p)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"var(--bg-sunken)",border:"1px solid var(--border)",borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left"}}>
           <div style={{flex:1,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
             {[...activeCats].slice(0,5).map(t=>{const c=VERIFICA_CATS.find(x=>x.type===t);return c?<span key={t} className="badge" data-tone={c.tone} style={{fontSize:10}}>{c.label}</span>:null;})}
@@ -80,13 +77,13 @@ function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
           {(selAv||selTutor)&&<button onClick={()=>{setSelAv("");setSelTutor("");}} className="btn" data-variant="ghost" data-size="sm" style={{flexShrink:0}}>Reset</button>}
         </div>}
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
-        <div style={{padding:"14px 18px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <Icon name={ok?"checkCircle":"alert"} size={22} color={ok?"var(--success)":"var(--danger)"}/>
-          <span style={{fontWeight:700,fontSize:14,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri selezionati.":`${filtered.length} problem${filtered.length===1?"a":"i"} rilevat${filtered.length===1?"o":"i"} · Clicca su un problema per navigare al mese`}</span>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 14px",background:"var(--bg)"}}>
+        <div style={{padding:"10px 12px",borderRadius:"var(--radius-md)",background:ok?"var(--success-soft)":"var(--bg-elev)",border:`1px solid ${ok?"var(--success)":"var(--border)"}`,display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+          <Icon name={ok?"checkCircle":"alert"} size={18} color={ok?"var(--success)":"var(--danger)"}/>
+          <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"} · Clicca per navigare`}</span>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};return(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey)} style={{padding:"12px 16px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:12,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
+          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};return(<div key={i} onClick={()=>e.monthKey&&onNavigate(e.monthKey,e.evId)} style={{padding:"10px 12px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:10,alignItems:"flex-start",cursor:e.monthKey?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(e.monthKey)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
             <div style={{width:34,height:34,borderRadius:8,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
               <Icon name={cat.icon} size={16} color={`var(--${cat.tone})`}/>
             </div>
@@ -102,7 +99,6 @@ function VerificaScreen({errors,onClose,onNavigate,anagraficaAv=[],tutors=[]}){
           {filtered.length===0&&!ok&&<p style={{color:"var(--fg-subtle)",textAlign:"center",padding:20,fontSize:13}}>Nessun errore nei filtri selezionati.</p>}
         </div>
       </div>
-    </div>
   </div>);
 }
 
