@@ -446,7 +446,7 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
               </div>
             </div>);})}
           </div>
-          {donutData.length>0&&RC.PieChart?<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px"}}>
+          {RC.PieChart&&donutData.length>0?<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:"14px 16px"}}>
             <div style={{fontWeight:600,fontSize:13,color:"var(--fg)",marginBottom:2}}>Distribuzione ore erogate</div>
             <div style={{fontSize:11,color:"var(--fg-muted)",marginBottom:8}}>Peso di ogni avviso sul totale</div>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
