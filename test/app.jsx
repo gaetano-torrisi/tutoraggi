@@ -414,15 +414,15 @@ function App({user}){
         </div>
         <div style={{flex:1}}/>
         <button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>
+        {canEdit&&<>
+          <button onClick={handleUndo} disabled={!undoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={undoCount?`Annulla — ${undoCount} modifica${undoCount!==1?"he":""} disponibil${undoCount!==1?"i":"e"}`:"Nessuna modifica da annullare"}><Icon name="undo" size={15}/></button>
+          <button onClick={handleRedo} disabled={!redoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={redoCount?`Ripristina — ${redoCount} modifica${redoCount!==1?"he":""} disponibil${redoCount!==1?"i":"e"}`:"Nessuna modifica da ripristinare"}><Icon name="redo" size={15}/></button>
+        </>}
         <div className="topbar-divider"/>
         {!isViewer&&<div className="tab-strip">
           <button className="tab-strip-btn" style={{background:!editMode?"var(--accent)":"transparent",color:!editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>{setEditMode(false);setShowAi(false);}}><Icon name="eye" size={12} color={!editMode?"#fff":"currentColor"}/>Visualizza</button>
           <button className="tab-strip-btn" style={{background:editMode?"var(--accent)":"transparent",color:editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>setEditMode(true)}><Icon name="edit" size={12} color={editMode?"#fff":"currentColor"}/>Modifica</button>
         </div>}
-        {canEdit&&<><div className="topbar-divider"/>
-          <button onClick={handleUndo} disabled={!undoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={undoCount?`Annulla — ${undoCount} modifica${undoCount!==1?"he":""} disponibil${undoCount!==1?"i":"e"}`:"Nessuna modifica da annullare"}><Icon name="undo" size={15}/></button>
-          <button onClick={handleRedo} disabled={!redoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={redoCount?`Ripristina — ${redoCount} modifica${redoCount!==1?"he":""} disponibil${redoCount!==1?"i":"e"}`:"Nessuna modifica da ripristinare"}><Icon name="redo" size={15}/></button>
-        <div className="topbar-divider"/></>}
         {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
         <div className="topbar-divider"/>
         <div ref={avatarRef} style={{position:"relative"}}>
