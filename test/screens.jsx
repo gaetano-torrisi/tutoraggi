@@ -587,7 +587,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
           <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:"var(--fg)"}}>{s.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.desc}</div></div>
         </button>);})}
       </aside>
-      <div style={{flex:1,overflowY:"auto",padding:32,background:"var(--bg)"}}>
+      <div style={{flex:1,...(section==="users"?{display:"flex",minHeight:0,overflow:"hidden"}:{overflowY:"auto",padding:32}),background:"var(--bg)"}}>
         {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
         {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
@@ -601,31 +601,64 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
 
 // ── SETTINGS SUB-PANELS ───────────────────────────────────────────────────
 function UsersPanel({isSuperAdmin}){
-  const[emails,setEmails]=useState([]);const[newEmail,setNewEmail]=useState("");const[newRole,setNewRole]=useState("user");const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[editingRole,setEditingRole]=useState({});
-  useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setLoading(false);});},[]);
-  async function handleAdd(){if(!newEmail.trim())return;setSaving(true);await db.collection("authorizedEmails").doc(newEmail.trim().toLowerCase()).set({role:newRole});const snap=await db.collection("authorizedEmails").get();setEmails(snap.docs.map(d=>({email:d.id,...d.data()})));setNewEmail("");setSaving(false);}
-  async function handleRemove(email){if(!confirm(`Rimuovere ${email}?`))return;await db.collection("authorizedEmails").doc(email).delete();setEmails(p=>p.filter(e=>e.email!==email));}
-  async function handleRoleChange(email,r){await db.collection("authorizedEmails").doc(email).update({role:r});setEmails(p=>p.map(e=>e.email===email?{...e,role:r}:e));setEditingRole(p=>({...p,[email]:false}));}
+  const[emails,setEmails]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);
+  const[selected,setSelected]=useState(null);const[isNew,setIsNew]=useState(false);
+  const[q,setQ]=useState("");const[newEmail,setNewEmail]=useState("");const[editRole,setEditRole]=useState("user");
   const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
-  return(<div style={{maxWidth:880}}>
-    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Utenti & permessi</h2>
-    <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Aggiungi gli indirizzi email autorizzati.</p>
-    <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:22,boxShadow:"var(--shadow-xs)"}}>
-      <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Invita un nuovo utente</div>
-      <div style={{display:"flex",gap:10}}><input className="input" placeholder="email@azienda.it" value={newEmail} onChange={e=>setNewEmail(e.target.value)} style={{flex:2}}/><select className="select" value={newRole} onChange={e=>setNewRole(e.target.value)} style={{flex:1}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select><button className="btn" data-variant="accent" onClick={handleAdd} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="plus" size={14} color="#fff"/>}Aggiungi</button></div>
+  useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setLoading(false);});},[]);
+  function selectUser(e){setSelected(e);setIsNew(false);setEditRole(e.role||"user");}
+  function startNew(){setSelected(null);setIsNew(true);setNewEmail("");setEditRole("user");}
+  async function handleSave(){setSaving(true);if(isNew){const email=newEmail.trim().toLowerCase();if(!email){setSaving(false);return;}await db.collection("authorizedEmails").doc(email).set({role:editRole});const snap=await db.collection("authorizedEmails").get();const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setSelected({email,role:editRole});setIsNew(false);}else{await db.collection("authorizedEmails").doc(selected.email).update({role:editRole});const updated={...selected,role:editRole};setEmails(p=>p.map(e=>e.email===selected.email?updated:e));setSelected(updated);}setSaving(false);}
+  async function handleRemove(){if(!selected||!confirm(`Rimuovere ${selected.email}?`))return;await db.collection("authorizedEmails").doc(selected.email).delete();setEmails(p=>p.filter(e=>e.email!==selected.email));setSelected(null);}
+  const filtered=[...emails].filter(e=>e.email.includes(q.toLowerCase())).sort((a,b)=>a.email.localeCompare(b.email));
+  function RoleCards({value,onChange}){return(<div style={{display:"grid",gridTemplateColumns:`repeat(${roleOptions.length},1fr)`,gap:8}}>{roleOptions.map(r=>{const col=ROLE_COLOR[r]||"var(--fg-subtle)";const sel=value===r;return(<button key={r} onClick={()=>onChange(r)} style={{padding:"12px 6px",borderRadius:"var(--radius)",border:`1.5px solid ${sel?col:"var(--border)"}`,background:sel?"var(--bg-sunken)":"var(--bg-elev)",cursor:"pointer",textAlign:"center",transition:"border-color .15s"}}>
+    <Icon name={ROLE_ICON[r]||"user"} size={16} color={sel?col:"var(--fg-muted)"}/>
+    <div style={{fontSize:11,fontWeight:700,color:sel?col:"var(--fg-muted)",marginTop:5}}>{ROLE_LABEL[r]}</div>
+  </button>);})}</div>);}
+  return(<div style={{display:"flex",flex:1,minHeight:0,overflow:"hidden"}}>
+    <div style={{width:300,flexShrink:0,display:"flex",flexDirection:"column",borderRight:"1px solid var(--border)",background:"var(--bg)",overflow:"hidden"}}>
+      <div style={{padding:"12px 14px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        <div style={{position:"relative",marginBottom:8}}><Icon name="search" size={13} color="var(--fg-faint)" style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)"}}/><input className="input" placeholder="Cerca email…" value={q} onChange={e=>setQ(e.target.value)} style={{paddingLeft:30,fontSize:13}}/></div>
+        <button className="btn" data-variant="accent" onClick={startNew} style={{width:"100%",justifyContent:"center",display:"flex",alignItems:"center",gap:6,height:36}}><Icon name="plus" size={13} color="#fff"/>Aggiungi utente</button>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"10px 10px"}}>
+        {loading?<div style={{padding:24,textAlign:"center",color:"var(--fg-subtle)",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</div>
+        :filtered.map(e=>{const isSel=!isNew&&selected?.email===e.email;const col=ROLE_COLOR[e.role]||"var(--fg-subtle)";return(<button key={e.email} className={`list-item${isSel?" active":""}`} onClick={()=>selectUser(e)}>
+          {isSel&&<span style={{position:"absolute",left:0,top:12,bottom:12,width:3,background:col,borderRadius:"0 3px 3px 0"}}/>}
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:34,height:34,borderRadius:999,background:"var(--bg-sunken)",border:`1.5px solid ${col}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={ROLE_ICON[e.role]||"user"} size={14} color={col}/></div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:600,color:"var(--fg)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.email}</div>
+              <div style={{fontSize:11,color:col,fontWeight:600,marginTop:1}}>{ROLE_LABEL[e.role]||e.role}</div>
+            </div>
+          </div>
+        </button>);})}
+        {!loading&&filtered.length===0&&<div style={{padding:32,textAlign:"center",color:"var(--fg-subtle)",fontSize:13}}>Nessun utente trovato</div>}
+      </div>
     </div>
-    <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
-      <div style={{padding:"10px 18px",background:"var(--bg-sunken)",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Utenti autorizzati · {emails.length}</span></div>
-      {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,display:"flex",alignItems:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</p>:emails.map(e=>{const iconName=ROLE_ICON[e.role]||"user";const col=ROLE_COLOR[e.role]||"var(--fg-subtle)";return(<div key={e.email} style={{padding:"14px 18px",borderBottom:"1px solid var(--divider)",display:"flex",alignItems:"center",gap:14}}>
-        <div style={{width:36,height:36,borderRadius:999,background:"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name={iconName} size={16} color={col}/></div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:13.5,fontWeight:600,color:"var(--fg)"}}>{e.email}</div>
-          {editingRole[e.email]?<div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}><select defaultValue={e.role} id={`role-${e.email}`} className="select" style={{height:28,fontSize:12}}>{roleOptions.map(r=><option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</select><button onClick={()=>handleRoleChange(e.email,document.getElementById(`role-${e.email}`).value)} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}><Icon name="check" size={12} color="#fff"/>Salva</button><button onClick={()=>setEditingRole(p=>({...p,[e.email]:false}))} className="btn" data-variant="ghost" data-size="sm"><Icon name="x" size={12}/></button></div>
-          :<div style={{fontSize:11,color:col,fontWeight:600,marginTop:2,display:"flex",alignItems:"center",gap:4}}><Icon name={iconName} size={11} color={col}/>{ROLE_LABEL[e.role]||e.role}</div>}
+    <div className="detail-pane">
+      {isNew?(<div style={{maxWidth:480}}>
+        <h2 style={{fontSize:20,fontWeight:700,marginBottom:4,color:"var(--fg)"}}>Nuovo utente</h2>
+        <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Inserisci l'email autorizzata e assegna un ruolo.</p>
+        <div style={{marginBottom:18}}><label className="label">Email</label><input className="input" type="email" placeholder="email@ente.it" value={newEmail} onChange={e=>setNewEmail(e.target.value)}/></div>
+        <div style={{marginBottom:24}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
+        <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||!newEmail.trim()} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="plus" size={14} color="#fff"/>}Aggiungi utente</button>
+      </div>)
+      :selected?(<div style={{maxWidth:480}}>
+        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:28}}>
+          <div style={{width:54,height:54,borderRadius:999,background:ROLE_COLOR[selected.role]||"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={ROLE_ICON[selected.role]||"user"} size={24} color="#fff"/></div>
+          <div><h2 style={{fontSize:17,fontWeight:700,color:"var(--fg)",marginBottom:4,wordBreak:"break-all"}}>{selected.email}</h2><span className="badge" data-tone={selected.role==="superadmin"?"danger":selected.role==="admin"?"accent":selected.role==="viewer"?"default":"info"}>{ROLE_LABEL[selected.role]||selected.role}</span></div>
         </div>
-        <button onClick={()=>setEditingRole(p=>({...p,[e.email]:true}))} className="btn" data-variant="outline" data-size="icon-sm"><Icon name="edit" size={13} color="var(--fg-muted)"/></button>
-        <button onClick={()=>handleRemove(e.email)} className="btn" data-variant="danger" data-size="icon-sm"><Icon name="trash" size={13} color="var(--danger)"/></button>
-      </div>);})}
+        <div style={{marginBottom:24}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||editRole===selected.role} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="check" size={14} color="#fff"/>}Salva modifiche</button>
+          <button className="btn" data-variant="danger" onClick={handleRemove} style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}><Icon name="trash" size={13} color="var(--danger)"/>Rimuovi</button>
+        </div>
+      </div>)
+      :(<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",color:"var(--fg-subtle)",gap:10}}>
+        <Icon name="users" size={32} color="var(--fg-faint)"/>
+        <div style={{fontSize:13}}>Seleziona un utente o aggiungine uno nuovo</div>
+      </div>)}
     </div>
   </div>);
 }
