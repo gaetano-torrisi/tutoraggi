@@ -246,12 +246,7 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
               <span className="badge" data-tone={STATO_TONES[a.stato]||"info"}>{a.stato}</span>
             </div>
             <div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,color:"var(--fg-subtle)",marginBottom:8}}>{a.codice}</div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:11.5,color:"var(--fg-muted)",marginBottom:8}}>
-              <span>{a.dataInizio||"—"}{a.dataFine?` → ${a.dataFine}`:""}</span>
-              <span style={{fontFamily:'"JetBrains Mono",monospace',fontWeight:600,color:p>100?"var(--danger)":"var(--fg)"}}>{ore}/{a.durataOre||"?"}h</span>
-            </div>
-            <div className="progress-bar-track" style={{height:4}}>
-              <div className="progress-bar-fill" style={{width:`${Math.min(100,p)}%`,background:p>100?"var(--danger)":a.colore||"var(--accent)"}}/>
+            <div style={{fontSize:11.5,color:"var(--fg-muted)",marginBottom:4}}>{a.dataInizio||"—"}{a.dataFine?` → ${a.dataFine}`:""}</div>
             </div>
           </button>);})}
         </div>
@@ -271,16 +266,6 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
             {[{label:"Da bando",value:`${selected.durataOre||"?"}h`,icon:"file"},{label:"Calendario",value:`${getOre(selected)}h`,icon:"calendar",warn:getOre(selected)>selected.durataOre},{label:"Tutor",value:"—",icon:"user"},{label:"Slot",value:(avById[selected.id]?.events?.length||0),icon:"clock"}].map(k=><div key={k.label} className="kpi-card"><div className="kpi-icon"><Icon name={k.icon} size={16} color={k.warn?"var(--danger)":"var(--accent)"}/></div><div><div className="kpi-label">{k.label}</div><div className="kpi-value" style={{color:k.warn?"var(--danger)":"var(--fg)",fontSize:22}}>{k.value}</div></div></div>)}
-          </div>
-          <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:20,boxShadow:"var(--shadow-xs)"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avanzamento ore</div>
-              <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:13,fontWeight:700,color:pct(selected)>100?"var(--danger)":"var(--fg)"}}>{pct(selected)}% · {getOre(selected)}/{selected.durataOre||"?"}h</span>
-            </div>
-            <div className="progress-bar-track" style={{height:10}}>
-              <div className="progress-bar-fill" style={{width:`${Math.min(100,pct(selected))}%`,background:`linear-gradient(90deg,${selected.colore||"var(--accent)"}aa,${selected.colore||"var(--accent)"})`}}/>
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:11,color:"var(--fg-subtle)"}}><span>{selected.dataInizio||"—"}</span><span>{selected.dataFine||"—"}</span></div>
           </div>
           <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,boxShadow:"var(--shadow-xs)"}}>
             <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Dettagli</div>
@@ -433,6 +418,7 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
               <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
             </button>
             {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
+              {ana.durataOre&&pct!=null&&<div style={{marginBottom:10,paddingBottom:10,borderBottom:"1px solid var(--divider)"}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avanzamento ore</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:pct>100?"var(--danger)":"var(--fg)"}}>{pct}% · {fmtOreMin(totOre)}/{ana.durataOre}h</span></div><div className="progress-bar-track" style={{height:8}}><div className="progress-bar-fill" style={{width:`${Math.min(100,pct)}%`,background:`linear-gradient(90deg,${ana.colore||"var(--accent)"}bb,${ana.colore||"var(--accent)"})`}}/></div></div>}
               {tuts.map(t=>{const oreT=getSlotsForTutAvPeriodo(t.id,ana.nome).reduce((s,e)=>s+e.ore,0);const avKey=`${ana.id}-${t.id}`;const expT=expandedAvTut[avKey];
                 return(<div key={t.id} style={{marginBottom:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
                   <button onClick={()=>toggleAvTut(avKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
