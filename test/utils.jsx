@@ -1,6 +1,6 @@
 /* eslint-disable */
 const {useState,useEffect,useRef}=React;
-const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=10;
+const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=20;
 const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const MONTHS=[
   {key:"gen-26",label:"Gennaio 2026",year:2026,month:0,days:31},{key:"feb-26",label:"Febbraio 2026",year:2026,month:1,days:28},{key:"mar-26",label:"Marzo 2026",year:2026,month:2,days:31},{key:"apr-26",label:"Aprile 2026",year:2026,month:3,days:30},{key:"mag-26",label:"Maggio 2026",year:2026,month:4,days:31},{key:"giu-26",label:"Giugno 2026",year:2026,month:5,days:30},{key:"lug-26",label:"Luglio 2026",year:2026,month:6,days:31},{key:"ago-26",label:"Agosto 2026",year:2026,month:7,days:31},{key:"set-26",label:"Settembre 2026",year:2026,month:8,days:30},{key:"ott-26",label:"Ottobre 2026",year:2026,month:9,days:31},{key:"nov-26",label:"Novembre 2026",year:2026,month:10,days:30},{key:"dic-26",label:"Dicembre 2026",year:2026,month:11,days:31},
