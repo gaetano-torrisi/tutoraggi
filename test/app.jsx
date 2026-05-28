@@ -185,7 +185,7 @@ function App({user}){
   const[theme,setTheme]=useState("light");
   const[view,setView]=useState("tutoraggio");
   const[editMode,setEditMode]=useState(false);
-  const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(2);
+  const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(()=>{const now=new Date();const idx=MONTHS.findIndex(m=>m.year===now.getFullYear()&&m.month===now.getMonth());return idx>=0?idx:0;});
   const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
   const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
@@ -230,7 +230,7 @@ function App({user}){
   },[]);
 
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
-  useEffect(()=>{const m=MONTHS[monthIdx];const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));},[monthIdx]);
+  useEffect(()=>{const m=MONTHS[monthIdx];const now=new Date();if(m.year===now.getFullYear()&&m.month===now.getMonth()){const d=new Date(now);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));setWeekStart(d);}else{const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));}},[monthIdx]);
   useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
   useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
 
