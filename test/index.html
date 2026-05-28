@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light" data-density="cozy">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TutorIA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="tokens.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<!-- SPLASH -->
+<div id="splash-screen" style="position:fixed;inset:0;background:#1E2248;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;">
+  <img src="assets/eht-logo-white.png" alt="EHT" style="width:220px;object-fit:contain;margin-bottom:20px;"/>
+  <div style="font-size:56px;font-weight:700;color:#fff;letter-spacing:-0.03em;margin-bottom:28px;">TutorIA</div>
+  <div style="width:100px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;position:relative;">
+    <div class="splash-bar-fill"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div id="login-panel-left">
+    <div style="position:absolute;top:-120px;right:-80px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(245,163,90,.13) 0%,transparent 65%);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-140px;left:-100px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(236,122,38,.10) 0%,transparent 65%);pointer-events:none"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(62,111,184,.06) 0%,transparent 60%);pointer-events:none"></div>
+    <!-- logo -->
+    <div style="position:relative;margin-bottom:36px">
+      <img src="assets/eht-logo-white.png" alt="EHT" style="width:200px;object-fit:contain;opacity:.9"/>
+    </div>
+    <!-- hero + features -->
+    <div style="position:relative;display:flex;flex-direction:column;max-width:460px">
+      <div style="display:flex;align-items:baseline;margin-bottom:6px">
+        <span style="font-size:72px;font-weight:800;letter-spacing:-0.04em;line-height:.95;background:linear-gradient(135deg,#fff 30%,rgba(255,255,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block">Tutor</span><span style="font-size:72px;font-weight:800;letter-spacing:-0.04em;line-height:.95;display:inline-block;background:linear-gradient(135deg,#F5A35A 0%,#EC7A26 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding-right:2px">IA</span>
+      </div>
+      <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.01em;margin-bottom:18px">Pianifica. Monitora. Analizza.</div>
+      <p style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:18px">La piattaforma di coordinamento per progetti formativi finanziati. Tutto ciò che serve, in un unico calendario condiviso.</p>
+      <div style="height:2px;background:linear-gradient(90deg,#EC7A26 0%,rgba(236,122,38,.4) 70%,transparent 100%);border-radius:1px;margin-bottom:20px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Calendario multi-progetto giorno / settimana / mese</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3l1.5 4.5L15 9l-4.5 1.5L9 15l-1.5-4.5L3 9l4.5-1.5zM18 2l.75 2.25L21 5l-2.25.75L18 8l-.75-2.25L15 5l2.25-.75zM18 14l.75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75z"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Import AI da PDF, immagini e testo libero</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Verifica coerenza ore e sovrapposizioni</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Insights e statistiche per tutor e avviso</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Backup e ripristino con versioning</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Ruoli e permessi: superadmin, admin, utente, viewer</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Anagrafica tutor e avvisi con storico ore</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><div style="width:26px;height:26px;border-radius:7px;background:rgba(245,163,90,.12);border:1px solid rgba(245,163,90,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F5A35A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10M7 12h10M7 16h6"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div><span style="font-size:11.5px;font-weight:500;color:rgba(255,255,255,.8);line-height:1.45">Log attività e cronologia completa delle modifiche</span></div>
+      </div>
+    </div>
+    <!-- footer -->
+    <div style="position:relative;font-size:10.5px;color:rgba(255,255,255,.25);letter-spacing:.04em;margin-top:20px">© 2026 EHT · A Harmonic Innovation Group Company</div>
+  </div>
+  <div id="login-panel-right">
+    <div id="login-box">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+        <img id="login-app-logo" src="assets/appmark-color.png" width="36" height="36" alt="TutorIA" style="border-radius:6px;flex-shrink:0"/>
+        <div><div style="font-size:16px;font-weight:700;letter-spacing:-0.01em;color:var(--fg)">TutorIA</div><div id="login-subtitle-text" style="font-size:10.5px;color:var(--fg-subtle);letter-spacing:.02em;margin-top:2px">EHT — A Harmonic Innovation Group Company</div></div>
+      </div>
+      <h2 style="font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;color:var(--fg)">Bentornato.</h2>
+      <p style="font-size:13.5px;color:var(--fg-muted);margin-bottom:20px">Accedi per gestire il calendario tutoraggi.</p>
+      <div id="login-tabs">
+        <button class="login-tab active" onclick="showLoginTab('login')">Accedi</button>
+        <button class="login-tab" onclick="showLoginTab('register')">Registrati</button>
+      </div>
+      <div id="tab-login">
+        <form autocomplete="on" onsubmit="return false;">
+        <div style="margin-bottom:12px"><label class="label">Email</label><input id="login-email" type="email" class="input" placeholder="nome@ente.it" autocomplete="username"/></div>
+        <div style="margin-bottom:16px"><label class="label">Password</label><input id="login-password" type="password" class="input" placeholder="••••••••" autocomplete="current-password"/><div style="text-align:right;margin-top:5px"><a id="forgot-pw-link" href="#" style="font-size:11.5px;color:var(--fg-subtle);text-decoration:none" onmouseover="this.style.color='var(--fg)'" onmouseout="this.style.color='var(--fg-subtle)'">Password dimenticata?</a></div></div>
+        <button class="btn" data-variant="primary" id="login-email-btn" type="submit" style="width:100%;justify-content:center;height:44px;font-weight:700;margin-bottom:12px">Accedi</button>
+        </form>
+        <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:var(--fg-subtle);margin:8px 0"><div style="flex:1;height:1px;background:var(--divider)"></div><span>oppure</span><div style="flex:1;height:1px;background:var(--divider)"></div></div>
+        <button id="login-google-btn" class="btn" data-variant="outline" style="width:100%;justify-content:center;height:44px;font-weight:600">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="G"/> Continua con Google
+        </button>
+      </div>
+      <div id="tab-register" style="display:none">
+        <p style="font-size:13px;color:var(--fg-muted);margin-bottom:14px">Inserisci l'email autorizzata dal coordinatore.</p>
+        <div style="margin-bottom:12px"><label class="label">Email autorizzata</label><input id="reg-email" type="email" class="input" placeholder="email@ente.it"/></div>
+        <div style="margin-bottom:12px"><label class="label">Password (min. 6 caratteri)</label><input id="reg-password" type="password" class="input" placeholder="••••••••"/></div>
+        <div style="margin-bottom:16px"><label class="label">Conferma password</label><input id="reg-password2" type="password" class="input" placeholder="••••••••"/></div>
+        <button class="btn" data-variant="primary" id="register-btn" style="width:100%;justify-content:center;height:44px;font-weight:700">Crea account</button>
+      </div>
+      <div id="reset-success-panel" style="display:none;text-align:center;padding:12px 0 4px">
+        <div style="width:54px;height:54px;border-radius:50%;background:rgba(47,143,91,.1);border:1.5px solid rgba(47,143,91,.28);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F8F5B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <div style="font-size:17px;font-weight:700;color:var(--fg);letter-spacing:-.01em;margin-bottom:6px">Email inviata!</div>
+        <p style="font-size:13px;color:var(--fg-muted);line-height:1.55;margin-bottom:22px">Controlla la tua casella e segui il link per reimpostare la password.</p>
+        <button onclick="clearTimeout(window._resetTimer);document.getElementById('reset-success-panel').style.display='none';document.getElementById('login-tabs').style.display='';document.getElementById('tab-login').style.display='block';" class="btn" data-variant="outline" style="width:100%;justify-content:center;height:40px;font-weight:600">Torna al login</button>
+      </div>
+      <div id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<div id="root" style="display:none;height:100vh;flex-direction:column;"></div>
+<div id="saving-indicator"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"/></svg> Salvataggio...</div>
+
+<script>
+  const firebaseConfig={apiKey:"AIzaSyBYFTqjac0-qoCsXtVe3REgu5Tox74tyms",authDomain:"tutoraggi-6e06b.firebaseapp.com",projectId:"tutoraggi-6e06b",storageBucket:"tutoraggi-6e06b.firebasestorage.app",messagingSenderId:"682477734775",appId:"1:682477734775:web:63b092a7cc04f505646f72"};
+  firebase.initializeApp(firebaseConfig);
+  const auth=firebase.auth(),db=firebase.firestore();
+  function showLoginTab(t){document.getElementById("tab-login").style.display=t==="login"?"block":"none";document.getElementById("tab-register").style.display=t==="register"?"block":"none";document.querySelectorAll(".login-tab").forEach((b,i)=>b.classList.toggle("active",(t==="login"&&i===0)||(t==="register"&&i===1)));document.getElementById("login-error").textContent="";}
+  function showErr(m){document.getElementById("login-error").textContent=m;}
+  document.getElementById("login-google-btn").onclick=()=>{showErr("");auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>showErr(e.message));};
+  document.getElementById("login-email-btn").onclick=async()=>{showErr("");const email=document.getElementById("login-email").value.trim(),pass=document.getElementById("login-password").value;if(!email||!pass){showErr("Inserisci email e password.");return;}try{await auth.signInWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/user-not-found"?"Account non trovato.":e.code==="auth/wrong-password"?"Password errata.":e.message);}};
+  document.getElementById("forgot-pw-link").onclick=async(e)=>{e.preventDefault();const email=document.getElementById("login-email").value.trim();if(!email){showErr("Inserisci prima l'email nel campo sopra.");return;}try{await auth.sendPasswordResetEmail(email);document.getElementById("login-error").textContent="";document.getElementById("login-tabs").style.display="none";document.getElementById("tab-login").style.display="none";document.getElementById("reset-success-panel").style.display="block";window._resetTimer=setTimeout(()=>{document.getElementById("reset-success-panel").style.display="none";document.getElementById("login-tabs").style.display="";document.getElementById("tab-login").style.display="block";},10000);}catch(e){showErr(e.code==="auth/user-not-found"?"Nessun account trovato con questa email.":e.message);}};
+  document.getElementById("register-btn").onclick=async()=>{showErr("");const email=document.getElementById("reg-email").value.trim().toLowerCase(),pass=document.getElementById("reg-password").value,pass2=document.getElementById("reg-password2").value;if(!email||!pass){showErr("Compila tutti i campi.");return;}if(pass.length<6){showErr("Password min. 6 caratteri.");return;}if(pass!==pass2){showErr("Le password non coincidono.");return;}try{const snap=await db.collection("authorizedEmails").doc(email).get();if(!snap.exists){showErr("Email non autorizzata.");return;}await auth.createUserWithEmailAndPassword(email,pass);}catch(e){showErr(e.code==="auth/email-already-in-use"?"Account già esistente.":e.message);}};
+  function showSaving(){const el=document.getElementById("saving-indicator");el.classList.add("show");clearTimeout(window._st);window._st=setTimeout(()=>el.classList.remove("show"),1500);}
+  let _splashDone=false,_pendingAuth=undefined;
+  function _applyAuth(user){if(user){document.getElementById("login-screen").style.display="none";document.getElementById("root").style.display="flex";if(window.__mountApp)window.__mountApp(user);}else{document.getElementById("login-screen").style.display="flex";document.getElementById("root").style.display="none";}}
+  setTimeout(()=>{const s=document.getElementById("splash-screen");s.style.opacity="0";setTimeout(()=>{s.style.display="none";_splashDone=true;if(_pendingAuth!==undefined)_applyAuth(_pendingAuth);},400);},1500);
+  auth.onAuthStateChanged(user=>{_pendingAuth=user;if(_splashDone)_applyAuth(user);});
+  (function(){const l=localStorage.getItem("logoBase64");if(l){const img=document.getElementById("login-app-logo");if(img)img.src=l;}})();
+</script>
+
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="utils.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="calendar.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>
