@@ -1,5 +1,5 @@
 /* eslint-disable */
-function applyFavicon(src){let link=document.querySelector("link[rel='icon']")||document.querySelector("link[rel='shortcut icon']");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link);}link.href=src;}
+function applyFavicon(src){if(!src)return;const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=32;c.height=32;const ctx=c.getContext("2d");const scale=Math.min(32/img.width,32/img.height);const w=img.width*scale,h=img.height*scale;ctx.drawImage(img,(32-w)/2,(32-h)/2,w,h);const png=c.toDataURL("image/png");let link=document.querySelector("link[rel='icon']")||document.querySelector("link[rel='shortcut icon']");if(!link){link=document.createElement("link");link.rel="icon";link.type="image/png";document.head.appendChild(link);}link.href=png;};img.src=src;}
 // ── PROFILE MODAL ─────────────────────────────────────────────────────────
 function ProfileModal({user,onClose}){
   const[form,setForm]=useState({nome:"",cognome:"",telefono:"",ente:""});
