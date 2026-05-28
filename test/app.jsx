@@ -250,28 +250,40 @@ function App({user}){
     const DN=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"],["Luca","Esposito"],["Sara","Romano"],["Marco","Colombo"],["Elena","Ricci"]];
     const T=Array.from({length:nT},(_,i)=>({id:`td${i}`,nome:DN[i%DN.length][0],cognome:DN[i%DN.length][1],cf:"",azienda:"Ente Demo Srl",color:DC[i%DC.length]}));
     const AN=Array.from({length:nA},(_,i)=>({id:`avd${i}`,nome:`Avviso ${i+1}`,codice:`DDG ${String(i+1).padStart(3,"0")}/2026`,colore:DC[(i+2)%DC.length],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"31/12/2026",note:""}));
-    const DAYS=[6,13,20,27];
+    const WD=[6,13,20,27];
     const SLOTS=[[9,13],[14,18]];
     const allMks=MONTHS.filter(m=>m.year===2026).map(m=>m.key);
+    // Each avviso gets 2 sessions/month on 2 rotating anchor days.
+    // Slot: even avviso index → morning, odd → afternoon.
+    // Adjacent avvisi use different days → max 2 avvisi per slot per day (for nA≤8), never 3.
     let aei=0;
-    const AV=AN.map((an,ai)=>({id:an.id,events:allMks.flatMap((mk,mi)=>DAYS.map((d,di)=>{const[s,e]=SLOTS[(mi+di)%2];return{id:`ave-${ai}-${mi}-${di}-${aei++}`,month:mk,day:d,start:s,end:e,ore:e-s};}))}));
-    let ctr=0;
-    const te={};
-    T.forEach((t,ti)=>{
-      const mkMap={};
-      allMks.forEach((mk,mi)=>{
-        DAYS.forEach((d,di)=>{
-          const[s,e]=SLOTS[(ti+mi+di)%2];
-          const avIdx=(ti+mi+di)%nA;
-          if(!mkMap[mk])mkMap[mk]=[];
-          mkMap[mk].push({id:`tev-${ti}-${mi}-${di}-${ctr++}`,name:AN[avIdx].nome,day:d,start:s,end:e,ore:e-s,tutorId:t.id});
-          if((ti*48+mi*4+di)%10===0){
-            const avIdx2=(avIdx+1)%nA;
-            mkMap[mk].push({id:`tev-${ti}-${mi}-${di}-ov-${ctr++}`,name:AN[avIdx2].nome,day:d,start:s,end:e,ore:e-s,tutorId:t.id});
+    const AV=AN.map((an,ai)=>{
+      const[s,e]=SLOTS[ai%2];
+      const d0=WD[ai%4],d1=WD[(ai+1)%4];
+      return{id:an.id,events:allMks.flatMap((mk,mi)=>[
+        {id:`ave-${ai}-${mi}-0-${aei++}`,month:mk,day:d0,start:s,end:e,ore:e-s},
+        {id:`ave-${ai}-${mi}-1-${aei++}`,month:mk,day:d1,start:s,end:e,ore:e-s},
+      ])};
+    });
+    // 1 primary tutor per (avviso, month, session), rotated by (ai+mi+si)%nT.
+    // ~3% intentional sovrapposizione: a second tutor on same avviso+day+slot.
+    let ctr=0;const te={};
+    T.forEach(t=>{te[t.id]={};});
+    allMks.forEach((mk,mi)=>{
+      AN.forEach((an,ai)=>{
+        const[s,e]=SLOTS[ai%2];
+        [[WD[ai%4],0],[WD[(ai+1)%4],1]].forEach(([d,si])=>{
+          const pTi=(ai+mi+si)%nT;
+          const pT=T[pTi];
+          if(!te[pT.id][mk])te[pT.id][mk]=[];
+          te[pT.id][mk].push({id:`tev-${ai}-${mi}-${si}-${ctr++}`,name:an.nome,day:d,start:s,end:e,ore:e-s,tutorId:pT.id});
+          if((ai*2+si+mi*3)%33===0){
+            const sT=T[(pTi+1)%nT];
+            if(!te[sT.id][mk])te[sT.id][mk]=[];
+            te[sT.id][mk].push({id:`tev-${ai}-${mi}-${si}-ov-${ctr++}`,name:an.nome,day:d,start:s,end:e,ore:e-s,tutorId:sT.id});
           }
         });
       });
-      te[t.id]=mkMap;
     });
     setTutors(T);setAnagraficaAv(AN);anaRef.current=AN;setAvvisi(AV);avRef.current=AV;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
     await fsSaveTutors(T);await fsSaveAna(AN);await fsSaveAvvisi(AV);
