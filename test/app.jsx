@@ -241,6 +241,7 @@ function App({user}){
     setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
     await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);
     for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
+    if(data.settings&&typeof data.settings==="object"){const s={...settings,...data.settings};setSettings(s);await fsSaveSettings(s);}
     if(isSuperAdmin&&data.authorizedEmails&&typeof data.authorizedEmails==="object"){const b=db.batch();for(const[email,rd]of Object.entries(data.authorizedEmails))b.set(db.collection("authorizedEmails").doc(email),rd,{merge:true});await b.commit();}
     if((isSuperAdmin||isAdmin)&&data.userProfiles&&typeof data.userProfiles==="object"){const b=db.batch();for(const[uid,p]of Object.entries(data.userProfiles))b.set(db.collection("userProfiles").doc(uid),p,{merge:true});await b.commit();}
   };
