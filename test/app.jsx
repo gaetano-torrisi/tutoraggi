@@ -191,7 +191,7 @@ function App({user}){
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
   const[showInsights,setShowInsights]=useState(false);const[highlightEvId,setHighlightEvId]=useState(null);
-  const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);
+  const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);const[profileTarget,setProfileTarget]=useState(null);
   const[dragWarn,setDragWarn]=useState(null);
   const avatarRef=useRef();
   const dragWarnTimerRef=useRef();
@@ -433,7 +433,7 @@ function App({user}){
               <div style={{minWidth:0}}><div style={{fontWeight:600,fontSize:13,color:"var(--fg)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.displayName||userInitials}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.email}</div></div>
             </div>
             <div className="avatar-dropdown-sep"/>
-            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(isAdmin){setProfileTarget(user.email);setActiveScreen("settings");}else setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
             <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
           </div>}
@@ -451,7 +451,7 @@ function App({user}){
               <div style={{minWidth:0}}><div style={{fontWeight:600,fontSize:13,color:"var(--fg)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.displayName||userInitials}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{user?.email}</div></div>
             </div>
             <div className="avatar-dropdown-sep"/>
-            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
+            <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(isAdmin){setProfileTarget(user.email);setActiveScreen("settings");}else setShowProfileModal(true);}}><Icon name="user" size={14} color="var(--fg-muted)"/>Profilo</button>
             <div className="avatar-dropdown-sep"/>
             <button className="avatar-dropdown-item" onClick={()=>{setShowAvatarMenu(false);if(confirm("Disconnettersi dall'applicazione?"))firebase.auth().signOut();}} style={{color:"var(--danger)"}}><Icon name="logout" size={14} color="var(--danger)"/>Disconnetti</button>
           </div>}
@@ -484,7 +484,7 @@ function App({user}){
         {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!avDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end)warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)}):null} highlightEvId={highlightEvId} onTutDragMove={canEdit?(ev,dd)=>{document.querySelectorAll('.day-col-drop-warning').forEach(el=>el.classList.remove('day-col-drop-warning'));if(dd!==0){const targetDay=ev.day+dd;const hasAvviso=avEvs.some(a=>a.avvisoName===ev.name&&a.day===targetDay);if(!hasAvviso){const col=document.getElementById(`day-col-${targetDay}`);if(col)col.classList.add('day-col-drop-warning');}}}:null}/>}
         {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
-        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme}/>}
+        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
         </div>
         {showVerificaPanel&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
       </div>

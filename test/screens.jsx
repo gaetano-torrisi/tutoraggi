@@ -566,8 +566,8 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
 }
 
 // ── SETTINGS SCREEN ───────────────────────────────────────────────────────
-function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser,theme,setTheme}){
-  const[section,setSection]=useState("personalizza");
+function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser,theme,setTheme,currentUser,profileTarget}){
+  const[section,setSection]=useState(profileTarget&&isAdmin?"users":"personalizza");
   const SUB=[
     {id:"personalizza",label:"Personalizza",icon:"palette",desc:"Tema, colori, densità e preferenze."},
     isAdmin&&{id:"users",label:"Utenti & Permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
@@ -589,7 +589,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
       </aside>
       <div style={{flex:1,...(section==="users"?{display:"flex",minHeight:0,overflow:"hidden"}:{overflowY:"auto",padding:32}),background:"var(--bg)"}}>
         {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
-        {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin}/>}
+        {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} currentUser={currentUser} initialEmail={profileTarget}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
         {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} settings={settings} isSuperAdmin={isSuperAdmin}/>}
         {section==="log"&&<LogPanel/>}
@@ -600,15 +600,22 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
 }
 
 // ── SETTINGS SUB-PANELS ───────────────────────────────────────────────────
-function UsersPanel({isSuperAdmin}){
+function UsersPanel({isSuperAdmin,currentUser,initialEmail}){
   const[emails,setEmails]=useState([]);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);
   const[selected,setSelected]=useState(null);const[isNew,setIsNew]=useState(false);
   const[q,setQ]=useState("");const[newEmail,setNewEmail]=useState("");const[editRole,setEditRole]=useState("user");
+  const[profileForm,setProfileForm]=useState({nome:"",cognome:"",telefono:"",ente:""});
   const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
   useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setLoading(false);});},[]);
+  // Pre-seleziona l'utente indicato da initialEmail dopo il caricamento
+  useEffect(()=>{if(!initialEmail||loading)return;const u=emails.find(e=>e.email===initialEmail);if(u)selectUser(u);},[loading,initialEmail]);
+  // Carica profilo quando si seleziona se stessi
+  useEffect(()=>{if(!selected||!currentUser||selected.email!==currentUser.email)return;db.collection("userProfiles").doc(currentUser.uid).get().then(snap=>{const d=snap.exists?snap.data():{};setProfileForm({nome:d.nome||"",cognome:d.cognome||"",telefono:d.telefono||"",ente:d.ente||"",uid:currentUser.uid});});},[selected,currentUser]);
   function selectUser(e){setSelected(e);setIsNew(false);setEditRole(e.role||"user");}
   function startNew(){setSelected(null);setIsNew(true);setNewEmail("");setEditRole("user");}
-  async function handleSave(){setSaving(true);if(isNew){const email=newEmail.trim().toLowerCase();if(!email){setSaving(false);return;}await db.collection("authorizedEmails").doc(email).set({role:editRole});const snap=await db.collection("authorizedEmails").get();const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setSelected({email,role:editRole});setIsNew(false);}else{await db.collection("authorizedEmails").doc(selected.email).update({role:editRole});const updated={...selected,role:editRole};setEmails(p=>p.map(e=>e.email===selected.email?updated:e));setSelected(updated);}setSaving(false);}
+  const isSelf=!!selected&&!!currentUser&&selected.email===currentUser.email;
+  const profileChanged=isSelf&&(profileForm.nome||profileForm.cognome||profileForm.telefono||profileForm.ente);
+  async function handleSave(){setSaving(true);if(isNew){const email=newEmail.trim().toLowerCase();if(!email){setSaving(false);return;}await db.collection("authorizedEmails").doc(email).set({role:editRole});const snap=await db.collection("authorizedEmails").get();const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setSelected({email,role:editRole});setIsNew(false);}else{if(editRole!==selected.role)await db.collection("authorizedEmails").doc(selected.email).update({role:editRole});if(isSelf)await db.collection("userProfiles").doc(currentUser.uid).set({nome:profileForm.nome,cognome:profileForm.cognome,telefono:profileForm.telefono||"",ente:profileForm.ente||"",email:currentUser.email},{merge:true});const updated={...selected,role:editRole};setEmails(p=>p.map(e=>e.email===selected.email?updated:e));setSelected(updated);}setSaving(false);}
   async function handleRemove(){if(!selected||!confirm(`Rimuovere ${selected.email}?`))return;await db.collection("authorizedEmails").doc(selected.email).delete();setEmails(p=>p.filter(e=>e.email!==selected.email));setSelected(null);}
   const filtered=[...emails].filter(e=>e.email.includes(q.toLowerCase())).sort((a,b)=>a.email.localeCompare(b.email));
   function RoleCards({value,onChange}){return(<div style={{display:"grid",gridTemplateColumns:`repeat(${roleOptions.length},1fr)`,gap:8}}>{roleOptions.map(r=>{const col=ROLE_COLOR[r]||"var(--fg-subtle)";const sel=value===r;return(<button key={r} onClick={()=>onChange(r)} style={{padding:"12px 6px",borderRadius:"var(--radius)",border:`1.5px solid ${sel?col:"var(--border)"}`,background:sel?"var(--bg-sunken)":"var(--bg-elev)",cursor:"pointer",textAlign:"center",transition:"border-color .15s"}}>
@@ -623,12 +630,12 @@ function UsersPanel({isSuperAdmin}){
       </div>
       <div style={{flex:1,overflowY:"auto",padding:"10px 10px"}}>
         {loading?<div style={{padding:24,textAlign:"center",color:"var(--fg-subtle)",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</div>
-        :filtered.map(e=>{const isSel=!isNew&&selected?.email===e.email;const col=ROLE_COLOR[e.role]||"var(--fg-subtle)";return(<button key={e.email} className={`list-item${isSel?" active":""}`} onClick={()=>selectUser(e)}>
+        :filtered.map(e=>{const isSel=!isNew&&selected?.email===e.email;const col=ROLE_COLOR[e.role]||"var(--fg-subtle)";const isMe=e.email===currentUser?.email;return(<button key={e.email} className={`list-item${isSel?" active":""}`} onClick={()=>selectUser(e)}>
           {isSel&&<span style={{position:"absolute",left:0,top:12,bottom:12,width:3,background:col,borderRadius:"0 3px 3px 0"}}/>}
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{width:34,height:34,borderRadius:999,background:"var(--bg-sunken)",border:`1.5px solid ${col}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={ROLE_ICON[e.role]||"user"} size={14} color={col}/></div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:600,color:"var(--fg)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.email}</div>
+              <div style={{fontSize:12,fontWeight:600,color:"var(--fg)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.email}{isMe&&<span style={{marginLeft:5,fontSize:10,padding:"1px 5px",borderRadius:100,background:"var(--accent-soft)",color:"var(--accent-strong)",fontWeight:700}}>tu</span>}</div>
               <div style={{fontSize:11,color:col,fontWeight:600,marginTop:1}}>{ROLE_LABEL[e.role]||e.role}</div>
             </div>
           </div>
@@ -645,14 +652,23 @@ function UsersPanel({isSuperAdmin}){
         <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||!newEmail.trim()} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="plus" size={14} color="#fff"/>}Aggiungi utente</button>
       </div>)
       :selected?(<div style={{maxWidth:480}}>
-        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:28}}>
+        <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:24}}>
           <div style={{width:54,height:54,borderRadius:999,background:ROLE_COLOR[selected.role]||"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={ROLE_ICON[selected.role]||"user"} size={24} color="#fff"/></div>
-          <div><h2 style={{fontSize:17,fontWeight:700,color:"var(--fg)",marginBottom:4,wordBreak:"break-all"}}>{selected.email}</h2><span className="badge" data-tone={selected.role==="superadmin"?"danger":selected.role==="admin"?"accent":selected.role==="viewer"?"default":"info"}>{ROLE_LABEL[selected.role]||selected.role}</span></div>
+          <div><h2 style={{fontSize:17,fontWeight:700,color:"var(--fg)",marginBottom:4,wordBreak:"break-all"}}>{selected.email}{isSelf&&<span style={{marginLeft:8,fontSize:11,padding:"2px 7px",borderRadius:100,background:"var(--accent-soft)",color:"var(--accent-strong)",fontWeight:700,verticalAlign:"middle"}}>il tuo account</span>}</h2><span className="badge" data-tone={selected.role==="superadmin"?"danger":selected.role==="admin"?"accent":selected.role==="viewer"?"default":"info"}>{ROLE_LABEL[selected.role]||selected.role}</span></div>
         </div>
-        <div style={{marginBottom:24}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
+        <div style={{marginBottom:22}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
+        {isSelf&&<><div style={{height:1,background:"var(--divider)",margin:"20px 0"}}/>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Informazioni personali</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div><label className="label">Nome</label><input className="input" value={profileForm.nome} onChange={e=>setProfileForm(f=>({...f,nome:e.target.value}))}/></div>
+            <div><label className="label">Cognome</label><input className="input" value={profileForm.cognome} onChange={e=>setProfileForm(f=>({...f,cognome:e.target.value}))}/></div>
+          </div>
+          <div style={{marginBottom:12}}><label className="label">Telefono</label><input className="input" value={profileForm.telefono} onChange={e=>setProfileForm(f=>({...f,telefono:e.target.value}))}/></div>
+          <div style={{marginBottom:20}}><label className="label">Ente / Azienda</label><input className="input" value={profileForm.ente} onChange={e=>setProfileForm(f=>({...f,ente:e.target.value}))}/></div>
+        </>}
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||editRole===selected.role} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="check" size={14} color="#fff"/>}Salva modifiche</button>
-          <button className="btn" data-variant="danger" onClick={handleRemove} style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}><Icon name="trash" size={13} color="var(--danger)"/>Rimuovi</button>
+          <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||(editRole===selected.role&&!isSelf)} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="check" size={14} color="#fff"/>}Salva modifiche</button>
+          {!isSelf&&<button className="btn" data-variant="danger" onClick={handleRemove} style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}><Icon name="trash" size={13} color="var(--danger)"/>Rimuovi</button>}
         </div>
       </div>)
       :(<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",color:"var(--fg-subtle)",gap:10}}>
