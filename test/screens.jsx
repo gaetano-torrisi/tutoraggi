@@ -247,7 +247,6 @@ function AnaAvvisiScreen({avvisi,anagraficaAv,onSaveAna,canEdit}){
             </div>
             <div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,color:"var(--fg-subtle)",marginBottom:8}}>{a.codice}</div>
             <div style={{fontSize:11.5,color:"var(--fg-muted)",marginBottom:4}}>{a.dataInizio||"—"}{a.dataFine?` → ${a.dataFine}`:""}</div>
-            </div>
           </button>);})}
         </div>
       </div>
