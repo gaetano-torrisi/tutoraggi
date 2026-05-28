@@ -315,6 +315,7 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   const[viewMode,setViewMode]=useState("tutor");
   const[selPeriod,setSelPeriod]=useState({mode:"single",monthKey:currentMonthKey,year:MONTHS.find(m=>m.key===currentMonthKey)?.year||2026});
   const[selAvFilter,setSelAvFilter]=useState("");
+  const[selTutFilter,setSelTutFilter]=useState("");
   const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});
   const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});
   const avById={};avvisi.forEach(av=>avById[av.id]=av);
@@ -356,13 +357,15 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
       </div>
       <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"var(--bg-elev)"}}>
         <div className="tab-strip">
-          <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>setViewMode("tutor")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
-          <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>setViewMode("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={12}/>Per avviso</button>
+          <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>{setViewMode("tutor");setSelTutFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
+          <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>{setViewMode("avviso");setSelAvFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={12}/>Per avviso</button>
         </div>
         <button disabled={selPeriod.mode!=="single"} onClick={()=>{const idx=MONTHS.findIndex(m=>m.key===selPeriod.monthKey);if(idx>0)setSelPeriod({mode:"single",monthKey:MONTHS[idx-1].key,year:MONTHS[idx-1].year});}} className="btn" data-variant="ghost" data-size="icon-sm" title="Mese precedente"><Icon name="chevLeft" size={14}/></button>
         <MonthRangePicker value={selPeriod} onChange={setSelPeriod} months={allMonthKeys}/>
         <button disabled={selPeriod.mode!=="single"} onClick={()=>{const idx=MONTHS.findIndex(m=>m.key===selPeriod.monthKey);if(idx<MONTHS.length-1)setSelPeriod({mode:"single",monthKey:MONTHS[idx+1].key,year:MONTHS[idx+1].year});}} className="btn" data-variant="ghost" data-size="icon-sm" title="Mese successivo"><Icon name="chevRight" size={14}/></button>
-        <select className="select" value={selAvFilter} onChange={e=>setSelAvFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti gli avvisi</option>{anagraficaAv.map(a=><option key={a.id} value={a.nome}>{a.nome}</option>)}</select>
+        {viewMode==="tutor"
+          ?<select className="select" value={selTutFilter} onChange={e=>setSelTutFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti i tutor</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
+          :<select className="select" value={selAvFilter} onChange={e=>setSelAvFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti gli avvisi</option>{anagraficaAv.map(a=><option key={a.id} value={a.nome}>{a.nome}</option>)}</select>}
         <div style={{flex:1}}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,padding:"14px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
@@ -385,8 +388,8 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
         </RC.ResponsiveContainer>
       </div>}
       <div style={{flex:1,overflowY:"auto",padding:"16px 24px",background:"var(--bg)"}}>
-        {viewMode==="tutor"&&[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{
-          const ore=getTutOrePeriodo(t.id);const avNames=getTutAvvisiPeriodo(t.id).filter(n=>!selAvFilter||n===selAvFilter);const totOre=getTutTotOre(t.id);
+        {viewMode==="tutor"&&[...tutors].filter(t=>!selTutFilter||t.id===selTutFilter).sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{
+          const ore=getTutOrePeriodo(t.id);const avNames=getTutAvvisiPeriodo(t.id);const totOre=getTutTotOre(t.id);
           if(!ore&&!avNames.length)return null;
           const exp=expandedTut[t.id];
           return(<div key={t.id} style={{marginBottom:8,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
