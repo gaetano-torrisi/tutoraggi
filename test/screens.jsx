@@ -7,8 +7,8 @@ function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
   function safeEvs(months){return Object.entries(months).map(([mk,evs])=>({mk,evs:Array.isArray(evs)?evs:[]}));}
   // orfano
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){for(const ev of evs){if(!avByName[ev.name]){const t=tutors.find(x=>x.id===tid);errors.push({type:"orfano",monthKey:mk,evId:ev.id,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non in anagrafica.`,detail:"Slot orfano: l'avviso non esiste in anagrafica.",day:ev.day});}}}}
-  // fuori_giorno, fuori_orario
-  for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=(av.events||[]).find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay)errors.push({type:"fuori_giorno",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non corrisponde ad alcuna sessione.`,detail:"Nessuna sessione avviso in questo giorno."});else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot del ${fmtDayMonth(ev.day,mk)} fuori orario (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:`Orario sessione: ${fmt(avDay.start)}–${fmt(avDay.end)}`});}}}
+  // fuori_avviso, fuori_sessione, fuori_orario
+  for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){for(const ev of evs){const av=avByName[ev.name];if(!av)continue;const avDay=(av.events||[]).find(e=>e.month===mk&&e.day===ev.day);const t=tutors.find(x=>x.id===tid);if(!avDay){const altAvNames=Object.entries(avByName).filter(([n,a])=>n!==ev.name&&(a.events||[]).some(e=>e.month===mk&&e.day===ev.day)).map(([n])=>n);if(altAvNames.length>0)errors.push({type:"fuori_avviso",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non ha sessioni — il giorno è coperto da: ${altAvNames.join(", ")}.`,detail:"Possibile errore di assegnazione avviso."});else errors.push({type:"fuori_sessione",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name}" del ${fmtDayMonth(ev.day,mk)} non rientra in nessuna sessione pianificata.`,detail:"Nessun avviso ha sessioni programmate in questo giorno."});}else if(ev.start<avDay.start||ev.end>avDay.end)errors.push({type:"fuori_orario",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot del ${fmtDayMonth(ev.day,mk)} fuori orario (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:`Orario sessione: ${fmt(avDay.start)}–${fmt(avDay.end)}`});}}}
   // sovrapposizione
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const t=tutors.find(x=>x.id===tid);for(let i=0;i<evs.length;i++)for(let j=i+1;j<evs.length;j++){const a=evs[i],b=evs[j];if(a.day===b.day&&a.start<b.end&&b.start<a.end)errors.push({type:"sovrapposizione",monthKey:mk,evId:a.id,day:a.day,msg:`Tutor "${t?.cognome} ${t?.nome}": sovrapposizione il ${fmtDayMonth(a.day,mk)} tra "${a.name}" e "${b.name}".`,detail:`${fmt(a.start)}–${fmt(a.end)} vs ${fmt(b.start)}–${fmt(b.end)}`});}}}
   // eccedenza, durata
@@ -28,7 +28,8 @@ function runVerifica(avvisi,anagraficaAv,tutors,tutEvents){
 const VERIFICA_CATS=[
   {type:"sovrapposizione",label:"Sovrapposizioni",icon:"zap",tone:"danger"},
   {type:"fuori_orario",label:"Fuori orario",icon:"clock",tone:"warning"},
-  {type:"fuori_giorno",label:"Fuori giorno",icon:"calendar",tone:"warning"},
+  {type:"fuori_avviso",label:"Avviso errato",icon:"arrowRight",tone:"warning"},
+  {type:"fuori_sessione",label:"Fuori da ogni sessione",icon:"calendar",tone:"danger"},
   {type:"eccedenza",label:"Ore eccedenti",icon:"trending",tone:"warning"},
   {type:"durata",label:"Durata non corrispondente",icon:"clipboard",tone:"info"},
   {type:"orfano",label:"Slot orfani",icon:"user",tone:"warning"},
