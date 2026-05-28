@@ -605,23 +605,41 @@ function UsersPanel({isSuperAdmin,currentUser,initialEmail}){
   const[selected,setSelected]=useState(null);const[isNew,setIsNew]=useState(false);
   const[q,setQ]=useState("");const[newEmail,setNewEmail]=useState("");const[editRole,setEditRole]=useState("user");
   const[profileForm,setProfileForm]=useState({nome:"",cognome:"",telefono:"",ente:""});
-  const roleOptions=isSuperAdmin?["user","admin","viewer","superadmin"]:["user","admin","viewer"];
+  const[profileUid,setProfileUid]=useState(null);const[profileLoading,setProfileLoading]=useState(false);
+  const[pwForm,setPwForm]=useState({current:"",newPw:"",confirm:""});const[pwSaving,setPwSaving]=useState(false);const[pwMsg,setPwMsg]=useState(null);
+  const[resetSending,setResetSending]=useState(false);const[resetMsg,setResetMsg]=useState(null);
+  const roleOptions=isSuperAdmin?["user","viewer","admin","superadmin"]:["user","viewer","admin"];
   useEffect(()=>{db.collection("authorizedEmails").get().then(snap=>{const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setLoading(false);});},[]);
-  // Pre-seleziona l'utente indicato da initialEmail dopo il caricamento
   useEffect(()=>{if(!initialEmail||loading)return;const u=emails.find(e=>e.email===initialEmail);if(u)selectUser(u);},[loading,initialEmail]);
-  // Carica profilo quando si seleziona se stessi
-  useEffect(()=>{if(!selected||!currentUser||selected.email!==currentUser.email)return;db.collection("userProfiles").doc(currentUser.uid).get().then(snap=>{const d=snap.exists?snap.data():{};setProfileForm({nome:d.nome||"",cognome:d.cognome||"",telefono:d.telefono||"",ente:d.ente||"",uid:currentUser.uid});});},[selected,currentUser]);
-  function selectUser(e){setSelected(e);setIsNew(false);setEditRole(e.role||"user");}
+  useEffect(()=>{
+    if(!selected)return;
+    const _isSelf=selected.email===currentUser?.email;
+    const canEdit=isSuperAdmin||selected.role!=="superadmin";
+    if(!canEdit)return;
+    setProfileLoading(true);setProfileUid(null);setProfileForm({nome:"",cognome:"",telefono:"",ente:""});
+    if(_isSelf&&currentUser?.uid){
+      db.collection("userProfiles").doc(currentUser.uid).get().then(snap=>{
+        setProfileUid(currentUser.uid);
+        if(snap.exists){const d=snap.data();setProfileForm({nome:d.nome||"",cognome:d.cognome||"",telefono:d.telefono||"",ente:d.ente||""});}
+        setProfileLoading(false);
+      }).catch(()=>setProfileLoading(false));
+    }else{
+      db.collection("userProfiles").where("email","==",selected.email).limit(1).get().then(snap=>{
+        if(!snap.empty){const doc=snap.docs[0];setProfileUid(doc.id);const d=doc.data();setProfileForm({nome:d.nome||"",cognome:d.cognome||"",telefono:d.telefono||"",ente:d.ente||""});}
+        setProfileLoading(false);
+      }).catch(()=>setProfileLoading(false));
+    }
+  },[selected]);
+  function selectUser(e){setSelected(e);setIsNew(false);setEditRole(e.role||"user");setPwForm({current:"",newPw:"",confirm:""});setPwMsg(null);setResetMsg(null);}
   function startNew(){setSelected(null);setIsNew(true);setNewEmail("");setEditRole("user");}
   const isSelf=!!selected&&!!currentUser&&selected.email===currentUser.email;
-  const profileChanged=isSelf&&(profileForm.nome||profileForm.cognome||profileForm.telefono||profileForm.ente);
-  async function handleSave(){setSaving(true);if(isNew){const email=newEmail.trim().toLowerCase();if(!email){setSaving(false);return;}await db.collection("authorizedEmails").doc(email).set({role:editRole});const snap=await db.collection("authorizedEmails").get();const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setSelected({email,role:editRole});setIsNew(false);}else{if(editRole!==selected.role)await db.collection("authorizedEmails").doc(selected.email).update({role:editRole});if(isSelf)await db.collection("userProfiles").doc(currentUser.uid).set({nome:profileForm.nome,cognome:profileForm.cognome,telefono:profileForm.telefono||"",ente:profileForm.ente||"",email:currentUser.email},{merge:true});const updated={...selected,role:editRole};setEmails(p=>p.map(e=>e.email===selected.email?updated:e));setSelected(updated);}setSaving(false);}
+  const canEditProfile=!!(selected&&(isSuperAdmin||selected.role!=="superadmin"));
+  async function handleSave(){setSaving(true);if(isNew){const email=newEmail.trim().toLowerCase();if(!email){setSaving(false);return;}await db.collection("authorizedEmails").doc(email).set({role:editRole});const snap=await db.collection("authorizedEmails").get();const list=snap.docs.map(d=>({email:d.id,...d.data()}));setEmails(list);setSelected({email,role:editRole});setIsNew(false);}else{if(canEditProfile&&editRole!==selected.role)await db.collection("authorizedEmails").doc(selected.email).update({role:editRole});if(canEditProfile&&profileUid)await db.collection("userProfiles").doc(profileUid).set({nome:profileForm.nome,cognome:profileForm.cognome,telefono:profileForm.telefono||"",ente:profileForm.ente||"",email:selected.email},{merge:true});const updated={...selected,role:editRole};setEmails(p=>p.map(e=>e.email===selected.email?updated:e));setSelected(updated);}setSaving(false);}
+  async function handlePasswordChange(){if(!pwForm.newPw||pwForm.newPw!==pwForm.confirm||pwForm.newPw.length<6)return;setPwSaving(true);setPwMsg(null);try{const cred=firebase.auth.EmailAuthProvider.credential(currentUser.email,pwForm.current);await firebase.auth().currentUser.reauthenticateWithCredential(cred);await firebase.auth().currentUser.updatePassword(pwForm.newPw);setPwMsg({ok:true,text:"Password aggiornata con successo."});setPwForm({current:"",newPw:"",confirm:""});}catch(e){setPwMsg({ok:false,text:e.code==="auth/wrong-password"?"Password attuale non corretta.":e.code==="auth/weak-password"?"Password troppo debole (min. 6 caratteri).":"Errore: "+e.message});}setPwSaving(false);}
+  async function handleResetEmail(){setResetSending(true);setResetMsg(null);try{await firebase.auth().sendPasswordResetEmail(selected.email);setResetMsg({ok:true,text:`Email di reset inviata a ${selected.email}.`});}catch(e){setResetMsg({ok:false,text:"Errore: "+e.message});}setResetSending(false);}
   async function handleRemove(){if(!selected||!confirm(`Rimuovere ${selected.email}?`))return;await db.collection("authorizedEmails").doc(selected.email).delete();setEmails(p=>p.filter(e=>e.email!==selected.email));setSelected(null);}
   const filtered=[...emails].filter(e=>e.email.includes(q.toLowerCase())).sort((a,b)=>a.email.localeCompare(b.email));
-  function RoleCards({value,onChange}){return(<div style={{display:"grid",gridTemplateColumns:`repeat(${roleOptions.length},1fr)`,gap:8}}>{roleOptions.map(r=>{const col=ROLE_COLOR[r]||"var(--fg-subtle)";const sel=value===r;return(<button key={r} onClick={()=>onChange(r)} style={{padding:"12px 6px",borderRadius:"var(--radius)",border:`1.5px solid ${sel?col:"var(--border)"}`,background:sel?"var(--bg-sunken)":"var(--bg-elev)",cursor:"pointer",textAlign:"center",transition:"border-color .15s"}}>
-    <Icon name={ROLE_ICON[r]||"user"} size={16} color={sel?col:"var(--fg-muted)"}/>
-    <div style={{fontSize:11,fontWeight:700,color:sel?col:"var(--fg-muted)",marginTop:5}}>{ROLE_LABEL[r]}</div>
-  </button>);})}</div>);}
+  function RoleCards({value,onChange}){return(<div style={{display:"grid",gridTemplateColumns:`repeat(${roleOptions.length},1fr)`,gap:8}}>{roleOptions.map(r=>{const col=ROLE_COLOR[r]||"var(--fg-subtle)";const sel=value===r;return(<button key={r} onClick={()=>onChange(r)} style={{padding:"12px 6px",borderRadius:"var(--radius)",border:`1.5px solid ${sel?col:"var(--border)"}`,background:sel?"var(--bg-sunken)":"var(--bg-elev)",cursor:"pointer",textAlign:"center",transition:"border-color .15s"}}><Icon name={ROLE_ICON[r]||"user"} size={16} color={sel?col:"var(--fg-muted)"}/><div style={{fontSize:11,fontWeight:700,color:sel?col:"var(--fg-muted)",marginTop:5}}>{ROLE_LABEL[r]}</div></button>);})}</div>);}
   return(<div style={{display:"flex",flex:1,minHeight:0,overflow:"hidden"}}>
     <div style={{width:300,flexShrink:0,display:"flex",flexDirection:"column",borderRight:"1px solid var(--border)",background:"var(--bg)",overflow:"hidden"}}>
       <div style={{padding:"12px 14px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
@@ -643,7 +661,7 @@ function UsersPanel({isSuperAdmin,currentUser,initialEmail}){
         {!loading&&filtered.length===0&&<div style={{padding:32,textAlign:"center",color:"var(--fg-subtle)",fontSize:13}}>Nessun utente trovato</div>}
       </div>
     </div>
-    <div className="detail-pane">
+    <div className="detail-pane" style={{overflowY:"auto"}}>
       {isNew?(<div style={{maxWidth:480}}>
         <h2 style={{fontSize:20,fontWeight:700,marginBottom:4,color:"var(--fg)"}}>Nuovo utente</h2>
         <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Inserisci l'email autorizzata e assegna un ruolo.</p>
@@ -651,24 +669,48 @@ function UsersPanel({isSuperAdmin,currentUser,initialEmail}){
         <div style={{marginBottom:24}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
         <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||!newEmail.trim()} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="plus" size={14} color="#fff"/>}Aggiungi utente</button>
       </div>)
-      :selected?(<div style={{maxWidth:480}}>
+      :selected?(<div style={{maxWidth:520}}>
         <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:24}}>
           <div style={{width:54,height:54,borderRadius:999,background:ROLE_COLOR[selected.role]||"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={ROLE_ICON[selected.role]||"user"} size={24} color="#fff"/></div>
           <div><h2 style={{fontSize:17,fontWeight:700,color:"var(--fg)",marginBottom:4,wordBreak:"break-all"}}>{selected.email}{isSelf&&<span style={{marginLeft:8,fontSize:11,padding:"2px 7px",borderRadius:100,background:"var(--accent-soft)",color:"var(--accent-strong)",fontWeight:700,verticalAlign:"middle"}}>il tuo account</span>}</h2><span className="badge" data-tone={selected.role==="superadmin"?"danger":selected.role==="admin"?"accent":selected.role==="viewer"?"default":"info"}>{ROLE_LABEL[selected.role]||selected.role}</span></div>
         </div>
-        <div style={{marginBottom:22}}><label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label><RoleCards value={editRole} onChange={setEditRole}/></div>
-        {isSelf&&<><div style={{height:1,background:"var(--divider)",margin:"20px 0"}}/>
+        <div style={{marginBottom:18}}>
+          <label className="label" style={{marginBottom:8,display:"block"}}>Ruolo</label>
+          {canEditProfile?<RoleCards value={editRole} onChange={setEditRole}/>
+          :<div style={{padding:"10px 14px",borderRadius:"var(--radius)",background:"var(--bg-sunken)",border:"1px solid var(--border)",fontSize:13,color:"var(--fg-muted)",display:"flex",alignItems:"center",gap:8}}><Icon name="key" size={14} color="var(--fg-faint)"/>Solo il superadmin può modificare questo ruolo.</div>}
+        </div>
+        {canEditProfile&&<>
+          <div style={{height:1,background:"var(--divider)",margin:"20px 0"}}/>
           <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Informazioni personali</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-            <div><label className="label">Nome</label><input className="input" value={profileForm.nome} onChange={e=>setProfileForm(f=>({...f,nome:e.target.value}))}/></div>
-            <div><label className="label">Cognome</label><input className="input" value={profileForm.cognome} onChange={e=>setProfileForm(f=>({...f,cognome:e.target.value}))}/></div>
-          </div>
-          <div style={{marginBottom:12}}><label className="label">Telefono</label><input className="input" value={profileForm.telefono} onChange={e=>setProfileForm(f=>({...f,telefono:e.target.value}))}/></div>
-          <div style={{marginBottom:20}}><label className="label">Ente / Azienda</label><input className="input" value={profileForm.ente} onChange={e=>setProfileForm(f=>({...f,ente:e.target.value}))}/></div>
+          {profileLoading?<div style={{padding:"14px 0",color:"var(--fg-subtle)",fontSize:13,display:"flex",alignItems:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento profilo...</div>
+          :(!isSelf&&!profileUid)?<div style={{padding:"10px 14px",borderRadius:"var(--radius)",background:"var(--bg-sunken)",border:"1px solid var(--border)",fontSize:13,color:"var(--fg-muted)",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><Icon name="user" size={14} color="var(--fg-faint)"/>Utente non ancora registrato — il profilo sarà disponibile dopo il primo accesso.</div>
+          :<>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div><label className="label">Nome</label><input className="input" value={profileForm.nome} onChange={e=>setProfileForm(f=>({...f,nome:e.target.value}))}/></div>
+              <div><label className="label">Cognome</label><input className="input" value={profileForm.cognome} onChange={e=>setProfileForm(f=>({...f,cognome:e.target.value}))}/></div>
+            </div>
+            <div style={{marginBottom:12}}><label className="label">Telefono</label><input className="input" value={profileForm.telefono} onChange={e=>setProfileForm(f=>({...f,telefono:e.target.value}))}/></div>
+            <div style={{marginBottom:16}}><label className="label">Ente / Azienda</label><input className="input" value={profileForm.ente} onChange={e=>setProfileForm(f=>({...f,ente:e.target.value}))}/></div>
+          </>}
+          <div style={{height:1,background:"var(--divider)",margin:"20px 0"}}/>
+          <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Password</div>
+          {isSelf?(<>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+              <div><label className="label">Password attuale</label><input className="input" type="password" value={pwForm.current} onChange={e=>setPwForm(f=>({...f,current:e.target.value}))} placeholder="••••••••"/></div>
+              <div><label className="label">Nuova password</label><input className="input" type="password" value={pwForm.newPw} onChange={e=>setPwForm(f=>({...f,newPw:e.target.value}))} placeholder="min. 6 caratteri"/></div>
+              <div><label className="label">Conferma password</label><input className="input" type="password" value={pwForm.confirm} onChange={e=>setPwForm(f=>({...f,confirm:e.target.value}))} placeholder="Ripeti la nuova password"/></div>
+            </div>
+            {pwMsg&&<div style={{padding:"8px 12px",borderRadius:"var(--radius)",background:pwMsg.ok?"var(--success-soft)":"var(--danger-soft)",color:pwMsg.ok?"var(--success)":"var(--danger)",fontSize:12,marginBottom:10,display:"flex",alignItems:"center",gap:6}}><Icon name={pwMsg.ok?"checkCircle":"xCircle"} size={13} color={pwMsg.ok?"var(--success)":"var(--danger)"}/>{pwMsg.text}</div>}
+            <button className="btn" data-variant="outline" onClick={handlePasswordChange} disabled={pwSaving||!pwForm.current||!pwForm.newPw||pwForm.newPw!==pwForm.confirm||pwForm.newPw.length<6} style={{display:"flex",alignItems:"center",gap:6,marginBottom:20}}>{pwSaving?<><Icon name="loader" size={14}/>Aggiornamento...</>:<><Icon name="key" size={14}/>Cambia password</>}</button>
+          </>):(<div style={{marginBottom:20}}>
+            {resetMsg&&<div style={{padding:"8px 12px",borderRadius:"var(--radius)",background:resetMsg.ok?"var(--success-soft)":"var(--danger-soft)",color:resetMsg.ok?"var(--success)":"var(--danger)",fontSize:12,marginBottom:10,display:"flex",alignItems:"center",gap:6}}><Icon name={resetMsg.ok?"checkCircle":"xCircle"} size={13} color={resetMsg.ok?"var(--success)":"var(--danger)"}/>{resetMsg.text}</div>}
+            <button className="btn" data-variant="outline" onClick={handleResetEmail} disabled={resetSending} style={{display:"flex",alignItems:"center",gap:6}}>{resetSending?<><Icon name="loader" size={14}/>Invio...</>:<><Icon name="send" size={14}/>Invia email di reset password</>}</button>
+            <div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:6}}>Un link per reimpostare la password verrà inviato a {selected.email}.</div>
+          </div>)}
         </>}
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <button className="btn" data-variant="accent" onClick={handleSave} disabled={saving||(editRole===selected.role&&!isSelf)} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="check" size={14} color="#fff"/>}Salva modifiche</button>
-          {!isSelf&&<button className="btn" data-variant="danger" onClick={handleRemove} style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}><Icon name="trash" size={13} color="var(--danger)"/>Rimuovi</button>}
+        <div style={{display:"flex",alignItems:"center",gap:10,borderTop:"1px solid var(--divider)",paddingTop:16,marginTop:4}}>
+          {canEditProfile&&<button className="btn" data-variant="accent" onClick={handleSave} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<Icon name="loader" size={14} color="#fff"/>:<Icon name="check" size={14} color="#fff"/>}Salva modifiche</button>}
+          {!isSelf&&canEditProfile&&<button className="btn" data-variant="danger" onClick={handleRemove} style={{display:"flex",alignItems:"center",gap:6,marginLeft:"auto"}}><Icon name="trash" size={13} color="var(--danger)"/>Rimuovi</button>}
         </div>
       </div>)
       :(<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",color:"var(--fg-subtle)",gap:10}}>
