@@ -1,4 +1,5 @@
 /* eslint-disable */
+function applyFavicon(src){let link=document.querySelector("link[rel='icon']")||document.querySelector("link[rel='shortcut icon']");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link);}link.href=src;}
 // ── PROFILE MODAL ─────────────────────────────────────────────────────────
 function ProfileModal({user,onClose}){
   const[form,setForm]=useState({nome:"",cognome:"",telefono:"",ente:""});
@@ -224,7 +225,7 @@ function App({user}){
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);
       if(s.appSubtitle){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
-      if(s.logoBase64)localStorage.setItem("logoBase64",s.logoBase64);
+      if(s.logoBase64){localStorage.setItem("logoBase64",s.logoBase64);applyFavicon(s.logoBase64);}
       setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
   },[]);
@@ -335,7 +336,7 @@ function App({user}){
   async function handleSaveAna(newList,action,item){
     if(action==="edit"){const old=anaRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=JSON.parse(JSON.stringify(tutEvRef.current));let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
     anaRef.current=newList;setAnagraficaAv(newList);await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);}
-  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}await fsSaveSettings(m);}
+  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);await fsSaveSettings(m);}
 
   if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",background:"var(--bg)",gap:10}}><Icon name="loader" size={20} color="var(--fg-muted)"/>Caricamento...</div>;
 
@@ -358,7 +359,7 @@ function App({user}){
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
-        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">EHT · Harmonic<br/>Innovation Group</span></div>}
+        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>}
       </div>
       <nav className="sidebar-nav">
         {NAV_GROUPS.map(({group,items})=>(
