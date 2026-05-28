@@ -715,7 +715,7 @@ function UsersPanel({isSuperAdmin,currentUser,initialEmail}){
 }
 
 function ApiPanel({settings,onSave}){
-  const[aiProvider,setAiProvider]=useState(settings.aiProvider||"gemini");const[geminiKey,setGeminiKey]=useState(settings.geminiApiKey||"");const[openaiKey,setOpenaiKey]=useState(settings.openaiApiKey||"");const[saved,setSaved]=useState(false);
+  const[aiProvider,setAiProvider]=useState(settings.aiProvider||"openai");const[geminiKey,setGeminiKey]=useState(settings.geminiApiKey||"");const[openaiKey,setOpenaiKey]=useState(settings.openaiApiKey||"");const[saved,setSaved]=useState(false);
   const[testG,setTestG]=useState(null);const[testO,setTestO]=useState(null);const[cdG,setCdG]=useState(0);const[cdO,setCdO]=useState(0);
   useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
   useEffect(()=>{if(cdO<=0)return;const t=setInterval(()=>setCdO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdO]);
