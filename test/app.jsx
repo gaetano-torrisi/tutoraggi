@@ -386,7 +386,7 @@ function App({user}){
 
   function handleNavClick(id){
     if(id==="insights"){if(!perms.useInsights)return;setShowInsights(true);return;}
-    if(id==="verifica"){if(!perms.useVerifica)return;setActiveScreen("verifica");return;}
+    if(id==="verifica"){if(!perms.useVerifica)return;setActiveScreen(s=>s==="verifica"?"calendar":"verifica");return;}
     if(id==="ai"){if(!perms.useAiImport)return;setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
