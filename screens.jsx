@@ -303,9 +303,9 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   const[selTutFilter,setSelTutFilter]=useState("");
   const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});
   const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});
-  const avById={};avvisi.forEach(av=>avById[av.id]=av);
+  const avById=useMemo(()=>{const o={};avvisi.forEach(av=>o[av.id]=av);return o;},[avvisi]);
   function getMks(){if(selPeriod.mode==="single")return[selPeriod.monthKey];if(selPeriod.mode==="year")return MONTHS.filter(m=>m.year===selPeriod.year).map(m=>m.key);if(selPeriod.mode==="range"){const si=MONTHS.findIndex(m=>m.key===selPeriod.startKey),ei=MONTHS.findIndex(m=>m.key===selPeriod.endKey);if(si<0||ei<0)return[selPeriod.monthKey||currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
-  const mks=getMks();
+  const mks=useMemo(()=>getMks(),[selPeriod,currentMonthKey]);
   function getTutOrePeriodo(tId){let t=0;const td=tutEvents[tId]||{};for(const mk of mks)for(const ev of(td[mk]||[]))t+=ev.ore||0;return t;}
   function getTutOreAnno(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(ev.name===avName)t+=(ev.ore||0);return t;}
   function getTutOreAvPeriodo(tId,avName){let t=0;const td=tutEvents[tId]||{};for(const mk of mks)t+=(td[mk]||[]).filter(e=>e.name===avName).reduce((s,e)=>s+e.ore,0);return t;}
@@ -317,16 +317,16 @@ function InsightsScreen({avvisi,anagraficaAv,tutors,tutEvents,currentMonthKey,on
   function getSlotsForTutAvMk(tId,avName,mk){return(tutEvents[tId]?.[mk]||[]).filter(e=>e.name===avName).sort((a,b)=>a.day-b.day||a.start-b.start);}
   function getSlotsForTutAvPeriodo(tId,avName){return mks.flatMap(mk=>getSlotsForTutAvMk(tId,avName,mk).map(sl=>({...sl,_mk:mk})));}
   const pctBadge=(ore,max)=>{if(!max)return null;const p=ore/max*100;return<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{fmtPct(ore,max)}</span>;};
-  const allMonthKeys=MONTHS.filter(m=>{const mk=m.key;const hasTut=tutors.some(t=>(tutEvents[t.id]?.[mk]||[]).length>0);const hasAv=anagraficaAv.some(a=>(avById[a.id]?.events||[]).some(e=>e.month===mk));return hasTut||hasAv;}).map(m=>m.key);
-  const totTutOre=tutors.reduce((s,t)=>s+getTutOrePeriodo(t.id),0);
-  const totAvOre=anagraficaAv.reduce((s,a)=>s+getAvOrePeriodo(a.id),0);
-  const activeTutors=tutors.filter(t=>getTutOrePeriodo(t.id)>0);
-  const activeAvvisi=anagraficaAv.filter(a=>getAvOrePeriodo(a.id)>0);
-  const totSlots=tutors.reduce((s,t)=>s+mks.reduce((s2,mk)=>s2+(tutEvents[t.id]?.[mk]||[]).length,0),0)+anagraficaAv.reduce((s,a)=>s+(avById[a.id]?.events||[]).filter(e=>mks.includes(e.month)).length,0);
+  const allMonthKeys=useMemo(()=>MONTHS.filter(m=>{const mk=m.key;const hasTut=tutors.some(t=>(tutEvents[t.id]?.[mk]||[]).length>0);const hasAv=anagraficaAv.some(a=>(avById[a.id]?.events||[]).some(e=>e.month===mk));return hasTut||hasAv;}).map(m=>m.key),[tutors,tutEvents,anagraficaAv,avById]);
+  const totTutOre=useMemo(()=>tutors.reduce((s,t)=>s+getTutOrePeriodo(t.id),0),[tutors,tutEvents,mks]);
+  const totAvOre=useMemo(()=>anagraficaAv.reduce((s,a)=>s+getAvOrePeriodo(a.id),0),[anagraficaAv,avById,mks]);
+  const activeTutors=useMemo(()=>tutors.filter(t=>getTutOrePeriodo(t.id)>0),[tutors,tutEvents,mks]);
+  const activeAvvisi=useMemo(()=>anagraficaAv.filter(a=>getAvOrePeriodo(a.id)>0),[anagraficaAv,avById,mks]);
+  const totSlots=useMemo(()=>tutors.reduce((s,t)=>s+mks.reduce((s2,mk)=>s2+(tutEvents[t.id]?.[mk]||[]).length,0),0)+anagraficaAv.reduce((s,a)=>s+(avById[a.id]?.events||[]).filter(e=>mks.includes(e.month)).length,0),[tutors,anagraficaAv,tutEvents,avById,mks]);
   const RC=typeof window.Recharts!=="undefined"?window.Recharts:{};
   const safeColor=c=>(c&&c.startsWith("#"))?c:"#4f86c6";
-  const chartDataTutor=[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).slice(0,8).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color)}));
-  const chartDataAv=[...anagraficaAv].filter(a=>getAvOrePeriodo(a.id)>0).sort((a,b)=>getAvOrePeriodo(b.id)-getAvOrePeriodo(a.id)).slice(0,8).map(a=>({name:a.nome,ore:getAvOrePeriodo(a.id),color:safeColor(a.colore)}));
+  const chartDataTutor=useMemo(()=>[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).slice(0,8).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color)})),[tutors,tutEvents,mks]);
+  const chartDataAv=useMemo(()=>[...anagraficaAv].filter(a=>getAvOrePeriodo(a.id)>0).sort((a,b)=>getAvOrePeriodo(b.id)-getAvOrePeriodo(a.id)).slice(0,8).map(a=>({name:a.nome,ore:getAvOrePeriodo(a.id),color:safeColor(a.colore)})),[anagraficaAv,avById,mks]);
   const chartData=viewMode==="tutor"?chartDataTutor:chartDataAv;
   function periodSubtitle(){if(selPeriod.mode==="year")return`Anno ${selPeriod.year}`;if(selPeriod.mode==="range"){const s=MONTHS.find(m=>m.key===selPeriod.startKey);const e=MONTHS.find(m=>m.key===selPeriod.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} → ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"";}return MONTHS.find(m=>m.key===selPeriod.monthKey)?.label||"";}
   function toggleTut(id){setExpandedTut(p=>({...p,[id]:!p[id]}))}
@@ -790,7 +790,7 @@ function ApiPanel({settings,onSave}){
   useEffect(()=>{if(cdG<=0)return;const t=setInterval(()=>setCdG(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdG]);
   useEffect(()=>{if(cdO<=0)return;const t=setInterval(()=>setCdO(c=>Math.max(0,c-1)),1000);return()=>clearInterval(t);},[cdO]);
   async function handleSave(){await onSave({aiProvider,geminiApiKey:geminiKey,openaiApiKey:openaiKey});setSaved(true);setTimeout(()=>setSaved(false),2000);}
-  async function testGemini(){if(!geminiKey){setTestG({ok:false,msg:"Chiave non inserita"});return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:"OK"}]}]})});setTestG(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestG({ok:false,msg:"Errore di rete"});}setCdG(60);}
+  async function testGemini(){if(!geminiKey){setTestG({ok:false,msg:"Chiave non inserita"});return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`);if(r.ok){setTestG({ok:true,msg:"Connessione riuscita"});}else{let detail="";try{const j=await r.json();detail=j.error?.message||"";}catch{}setTestG({ok:false,msg:`Errore ${r.status}${detail?`: ${detail}`:""}`.trim()});}}catch{setTestG({ok:false,msg:"Errore di rete"});}setCdG(60);}
   async function testOpenai(){if(!openaiKey){setTestO({ok:false,msg:"Chiave non inserita"});return;}setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestO({ok:false,msg:"Errore di rete"});}setCdO(60);}
   return(<div style={{maxWidth:720}}>
     <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>API & AI</h2>
