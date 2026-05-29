@@ -1,5 +1,5 @@
 /* eslint-disable */
-const {useState,useEffect,useRef}=React;
+const {useState,useEffect,useRef,useMemo}=React;
 const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=20;
 const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const MONTHS=[
@@ -100,6 +100,13 @@ async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await 
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
+// Targeted single-document writes (avoid rewriting an entire collection per edit)
+async function fsSaveAvviso(av){showSaving();await db.collection("avvisi").doc(av.id).set(cleanObj(av));}
+async function fsDeleteAvviso(id){showSaving();await db.collection("avvisi").doc(id).delete();}
+async function fsSaveTutorDoc(t){showSaving();await db.collection("tutors").doc(t.id).set(cleanObj(t));}
+async function fsDeleteTutorDoc(id){showSaving();await db.collection("tutors").doc(id).delete();}
+async function fsSaveAnaDoc(a){showSaving();await db.collection("anagraficaAv").doc(a.id).set(cleanObj(a));}
+async function fsDeleteAnaDoc(id){showSaving();await db.collection("anagraficaAv").doc(id).delete();}
 async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 function fmtDateIT(mk,day){const m=MONTHS.find(x=>x.key===mk);if(!m)return`${day} ${mk}`;return`${day} ${MONTH_ABBR_IT[m.month]} ${m.year}`;}
 function fmtSlotRange(start,end){return`${fmt(start)}–${fmt(end)} (${fmtDurata(end-start)})`;}
