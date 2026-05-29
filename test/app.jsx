@@ -214,6 +214,7 @@ function App({user}){
   const[dragWarn,setDragWarn]=useState(null);
   const avatarRef=useRef();
   const dragWarnTimerRef=useRef();
+  const highlightTimerRef=useRef();
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
@@ -372,7 +373,7 @@ function App({user}){
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
-  function navigateToError(monthKey,evId){if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(evId);setTimeout(()=>setHighlightEvId(null),3100);}}
+  function navigateToError(monthKey,evId){clearTimeout(highlightTimerRef.current);if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
 
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
