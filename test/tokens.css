@@ -215,7 +215,7 @@ input, select, textarea { font-family: inherit; font-size: inherit; color: inher
 .badge[data-tone="navy"]    { background: var(--brand-navy); color: #fff; border-color: transparent; }
 
 /* Headings */
-.h-display { font-family: var(--font-display); font-size: 28px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); font-optical-sizing: auto; }
+.h-display { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
 .h-title   { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
 .h-section { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-subtle); }
 .muted { color: var(--fg-muted); }
