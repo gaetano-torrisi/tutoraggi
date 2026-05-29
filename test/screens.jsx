@@ -582,6 +582,7 @@ function GestionePermessi({rolePermissions,onSave}){
       {key:"viewLog",label:"Visualizza log attività",desc:"Accesso allo storico delle modifiche"},
       {key:"viewBackup",label:"Backup ed export",desc:"Accesso al tab backup e snapshot del database"},
       {key:"editSettings",label:"Modifica impostazioni app",desc:"Nome app, logo, colori, API key e personalizzazione"},
+      {key:"manageDemo",label:"Dati demo e reset DB",desc:"Carica dati di esempio o svuota completamente il database"},
     ]},
   ];
   const ROLES=[{key:"viewer",label:"Viewer",tone:"default",icon:"eye"},{key:"user",label:"Utente",tone:"info",icon:"user"},{key:"admin",label:"Admin",tone:"accent",icon:"shieldCheck"}];
@@ -635,7 +636,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
     isSuperAdmin&&{id:"api",label:"API & AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
     (perms?.viewBackup)&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
     (perms?.viewLog)&&{id:"log",label:"Log attività",icon:"clock",desc:"Storico delle modifiche per utente."},
-    isAdmin&&{id:"demo",label:"Dati demo",icon:"dice",desc:"Carica dati di esempio o resetta tutto."},
+    (perms?.manageDemo)&&{id:"demo",label:"Dati demo",icon:"dice",desc:"Carica dati di esempio o resetta tutto."},
   ].filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header"><div><div className="page-breadcrumb">Sistema</div><h1 className="page-title">Impostazioni</h1></div></div>
@@ -655,7 +656,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
         {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} settings={settings} isSuperAdmin={isSuperAdmin}/>}
         {section==="log"&&<LogPanel/>}
-        {section==="demo"&&<DemoPanel isSuperAdmin={isSuperAdmin}/>}
+        {section==="demo"&&perms?.manageDemo&&<DemoPanel isSuperAdmin={isSuperAdmin}/>}
       </div>
     </div>
   </div>);
