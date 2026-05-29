@@ -12,7 +12,7 @@ function VerifiedBadge({by,at}){
   const tip=by?`Verificato da ${by}${at?" — "+fmtTs(new Date(at)):""}`:""
   return(
     <span title={tip} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"999px",background:"#fff",boxShadow:"0 1px 2px rgba(0,0,0,.25)",flexShrink:0}}>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2F8F5B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
       </svg>
     </span>

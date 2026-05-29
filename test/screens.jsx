@@ -109,7 +109,7 @@ function VerificaScreen({avvisi=[],tutors=[],tutEvents={},anagraficaAv=[],onNavi
           <span style={{fontWeight:700,fontSize:12,color:ok?"var(--success)":"var(--fg)"}}>{ok?"Tutto in regola.":filtered.length===0?"Nessun problema nei filtri.":`${filtered.length} problem${filtered.length===1?"a":"i"}`}</span>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};const canNav=!!(e.monthKey&&onNavigateToError);return(<div key={i} onClick={()=>canNav&&onNavigateToError(e.monthKey,e.evId)} style={{padding:"9px 10px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:9,alignItems:"flex-start",cursor:canNav?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(canNav)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
+          {filtered.map((e,i)=>{const cat=VERIFICA_CATS.find(c=>c.type===e.type)||{icon:"alert",tone:"warning",label:e.type};const canNav=!!(e.monthKey&&onNavigateToError);return(<div key={i} onClick={()=>canNav&&onNavigateToError(e.monthKey,e.evId)} role={canNav?"button":undefined} tabIndex={canNav?0:undefined} onKeyDown={canNav?(ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();onNavigateToError(e.monthKey,e.evId);}}):undefined} style={{padding:"9px 10px",borderRadius:"var(--radius-md)",border:"1px solid var(--border)",background:"var(--bg-elev)",display:"flex",gap:9,alignItems:"flex-start",cursor:canNav?"pointer":"default",transition:"background .1s"}} onMouseEnter={ev=>{if(canNav)ev.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={ev=>ev.currentTarget.style.background="var(--bg-elev)"}>
             <div style={{width:30,height:30,borderRadius:7,flexShrink:0,background:`var(--${cat.tone}-soft)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
               <Icon name={cat.icon} size={14} color={`var(--${cat.tone})`}/>
             </div>
@@ -774,7 +774,7 @@ function LogRow({r}){
   const changes=r.changes||[];
   const hasDetail=changes.length>0;
   return(<>
-    <tr style={hasDetail?{cursor:"pointer"}:undefined} onClick={()=>hasDetail&&setOpen(o=>!o)}>
+    <tr style={hasDetail?{cursor:"pointer"}:undefined} onClick={()=>hasDetail&&setOpen(o=>!o)} role={hasDetail?"button":undefined} tabIndex={hasDetail?0:undefined} aria-expanded={hasDetail?open:undefined} onKeyDown={hasDetail?(e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setOpen(o=>!o);}}):undefined}>
       <td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td>
       <td style={{maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:"var(--fg-muted)"}}>{r.userEmail}</td>
       <td style={{whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td>
