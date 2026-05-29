@@ -389,7 +389,7 @@ function App({user}){
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
-        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">TutorIA</span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>}
+        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">Tutor<span className="ia">IA</span></span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>}
       </div>
       <nav className="sidebar-nav">
         {NAV_GROUPS.map(({group,items})=>(
