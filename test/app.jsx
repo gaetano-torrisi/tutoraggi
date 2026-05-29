@@ -379,7 +379,7 @@ function App({user}){
   function handleNavClick(id){
     if(id==="insights"){setShowInsights(true);return;}
     if(id==="verifica"){setActiveScreen("verifica");return;}
-    if(id==="ai"){setShowAi(s=>!s);return;}
+    if(id==="ai"){if(!perms.useAiImport)return;setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
   }
@@ -397,7 +397,7 @@ function App({user}){
         {NAV_GROUPS.map(({group,items})=>(
           <div key={group} className="sidebar-group">
             {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
-            {items.map(item=>(
+            {items.filter(item=>item.id!=="ai"||perms.useAiImport).map(item=>(
               <button key={item.id} className={`sidebar-item${activeScreen===item.id?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
                 {activeScreen===item.id&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
                 <Icon name={item.icon} size={16} color={activeScreen===item.id?"var(--accent)":"var(--fg-subtle)"}/>
@@ -420,7 +420,7 @@ function App({user}){
         </button>
       </div>
     </aside>
-    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
     </div>
 
     <div className="main-area">

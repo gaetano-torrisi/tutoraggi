@@ -570,6 +570,9 @@ function GestionePermessi({rolePermissions,onSave}){
       {key:"editVerified",label:"Modifica slot verificati",desc:"Può toccare slot già verificati da un admin"},
       {key:"verifySlot",label:"Verifica / de-verifica slot",desc:"Mostra la checkbox di verifica nel modale di modifica"},
     ]},
+    {label:"Strumenti",icon:"sparkles",items:[
+      {key:"useAiImport",label:"Usa AI Import",desc:"Accesso all'assistente di importazione automatica da documenti"},
+    ]},
     {label:"Anagrafica",icon:"users",items:[
       {key:"editAnagrafica",label:"Modifica tutors e avvisi",desc:"Crea, modifica, elimina tutor e avvisi in anagrafica"},
     ]},
