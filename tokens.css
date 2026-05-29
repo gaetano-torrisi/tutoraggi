@@ -94,9 +94,14 @@
 }
 
 /* Density scaling */
-:root[data-density="compact"]  { --row-h: 32px; --pad-sm: 6px;  --pad: 10px; --pad-lg: 14px; --gap: 8px;  --font-base: 13px; --font-sm: 11.5px; --font-xs: 10.5px; }
-:root[data-density="cozy"]     { --row-h: 40px; --pad-sm: 8px;  --pad: 14px; --pad-lg: 20px; --gap: 12px; --font-base: 14px; --font-sm: 12.5px; --font-xs: 11px;   }
-:root[data-density="spacious"] { --row-h: 48px; --pad-sm: 10px; --pad: 18px; --pad-lg: 26px; --gap: 16px; --font-base: 15px; --font-sm: 13px;   --font-xs: 11.5px; }
+:root[data-density="compact"]  { --row-h: 32px; --pad-sm: 6px;  --pad: 10px; --pad-lg: 14px; --gap: 8px;  --font-base: 13px; --font-sm: 11.5px; --font-xs: 10.5px; --progress-h: 6px; }
+:root[data-density="cozy"]     { --row-h: 40px; --pad-sm: 8px;  --pad: 14px; --pad-lg: 20px; --gap: 12px; --font-base: 14px; --font-sm: 12.5px; --font-xs: 11px;   --progress-h: 8px; }
+:root[data-density="spacious"] { --row-h: 48px; --pad-sm: 10px; --pad: 18px; --pad-lg: 26px; --gap: 16px; --font-base: 15px; --font-sm: 13px;   --font-xs: 11.5px; --progress-h: 10px; }
+
+/* Typography tokens */
+:root {
+  --font-display: "Fraunces", "Inter Tight", Georgia, serif;
+}
 
 /* Base reset */
 *, *::before, *::after { box-sizing: border-box; }

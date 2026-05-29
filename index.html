@@ -6,7 +6,7 @@
   <title>TutorIA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="tokens.css"/>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -21,7 +21,7 @@
 <!-- SPLASH -->
 <div id="splash-screen" style="position:fixed;inset:0;background:#1E2248;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;">
   <img src="assets/eht-logo-white.png" alt="EHT" style="width:220px;object-fit:contain;margin-bottom:20px;"/>
-  <div style="font-size:56px;font-weight:700;color:#fff;letter-spacing:-0.03em;margin-bottom:28px;">TutorIA</div>
+  <div style="font-family:'Fraunces',Georgia,serif;font-optical-sizing:auto;font-size:58px;font-weight:600;letter-spacing:-0.025em;margin-bottom:28px;"><span style="color:#fff;">Tutor</span><span style="color:#EC7A26;">IA</span></div>
   <div style="width:100px;height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;position:relative;">
     <div class="splash-bar-fill"></div>
   </div>
@@ -40,7 +40,7 @@
     <!-- hero + features -->
     <div style="position:relative;display:flex;flex-direction:column;max-width:460px">
       <div style="display:flex;align-items:baseline;margin-bottom:6px">
-        <span style="font-size:72px;font-weight:800;letter-spacing:-0.04em;line-height:.95;background:linear-gradient(135deg,#fff 30%,rgba(255,255,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block">Tutor</span><span style="font-size:72px;font-weight:800;letter-spacing:-0.04em;line-height:.95;display:inline-block;background:linear-gradient(135deg,#F5A35A 0%,#EC7A26 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding-right:2px">IA</span>
+        <span style="font-family:'Fraunces',Georgia,serif;font-optical-sizing:auto;font-size:74px;font-weight:600;letter-spacing:-0.025em;line-height:.95;background:linear-gradient(135deg,#fff 30%,rgba(255,255,255,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block">Tutor</span><span style="font-family:'Fraunces',Georgia,serif;font-optical-sizing:auto;font-size:74px;font-weight:600;letter-spacing:-0.025em;line-height:.95;display:inline-block;background:linear-gradient(135deg,#F5A35A 0%,#EC7A26 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding-right:2px">IA</span>
       </div>
       <div style="font-size:15px;font-weight:500;color:rgba(255,255,255,.5);letter-spacing:.01em;margin-bottom:18px">Pianifica. Monitora. Analizza.</div>
       <p style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.65;margin-bottom:18px">La piattaforma di coordinamento per progetti formativi finanziati. Tutto ciò che serve, in un unico calendario condiviso.</p>
@@ -90,8 +90,8 @@
         <button class="btn" data-variant="primary" id="register-btn" style="width:100%;justify-content:center;height:44px;font-weight:700">Crea account</button>
       </div>
       <div id="reset-success-panel" style="display:none;text-align:center;padding:12px 0 4px">
-        <div style="width:54px;height:54px;border-radius:50%;background:rgba(47,143,91,.1);border:1.5px solid rgba(47,143,91,.28);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F8F5B" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <div style="width:54px;height:54px;border-radius:50%;background:var(--success-soft);border:1.5px solid var(--success);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
         <div style="font-size:17px;font-weight:700;color:var(--fg);letter-spacing:-.01em;margin-bottom:6px">Email inviata!</div>
         <p style="font-size:13px;color:var(--fg-muted);line-height:1.55;margin-bottom:22px">Controlla la tua casella e segui il link per reimpostare la password.</p>

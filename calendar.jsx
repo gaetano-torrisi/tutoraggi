@@ -8,6 +8,17 @@ function useDrag({onDragEnd,onClick,onDragMove}){
 }
 
 // ── SLOTS ─────────────────────────────────────────────────────────────────
+function VerifiedBadge({by,at}){
+  const tip=by?`Verificato da ${by}${at?" — "+fmtTs(new Date(at)):""}`:""
+  return(
+    <span title={tip} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"999px",background:"#fff",boxShadow:"0 1px 2px rgba(0,0,0,.25)",flexShrink:0}}>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>
+      </svg>
+    </span>
+  );
+}
+
 function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride,highlightError,onDragMove}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u}),onClick,onDragMove:dd=>onDragMove&&onDragMove(ev,dd)});
   const ore=ev.end-ev.start;
@@ -19,7 +30,10 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
         {onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
         {ev.name}
       </span>
-      <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      <span style={{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
+        {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
+        <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.28)",padding:"0 5px",borderRadius:999,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      </span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"rgba(255,255,255,.9)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}{tutorLabel?` · ${tutorLabel}`:""}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.18)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(255,255,255,.6)",borderRadius:1}}/></div>}
@@ -29,7 +43,10 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
 function AvOverlaySlot({ev,col,numCols,color,slotH}){
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   return(<div style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",boxSizing:"border-box",zIndex:20,background:hexToRgba(color,.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
-    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"var(--bg-elev)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none"}}>{(ev.avvisoName||"").substring(0,26)}</div>
+    <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"var(--bg-elev)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none",display:"flex",alignItems:"center",gap:3}}>
+      {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
+      {(ev.avvisoName||"").substring(0,26)}
+    </div>
   </div>);
 }
 
@@ -43,7 +60,10 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
         {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
         {ev.avvisoName}
       </span>
-      <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,flexShrink:0,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      <span style={{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
+        {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
+        <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
+      </span>
     </div>
     <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.08)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,.25)",borderRadius:1}}/></div>}
@@ -125,7 +145,7 @@ const HELP_FAQ=[
   {id:"ai",q:"AI Import",opts:[{label:"Come funziona?",ans:"Dalla sidebar clicca 'AI Import' (o il pulsante nella topbar in Edit Mode). Scegli tipo, seleziona tutor/avviso e carica un PDF o incolla testo."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
   {id:"settings",q:"Impostazioni",opts:[{label:"Quali ruoli esistono?",ans:"Viewer: solo lettura. Utente: modifica + log + backup. Admin: gestione utenti. Super Admin: accesso completo."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
   {id:"backup",q:"Backup",opts:[{label:"Come creo un backup?",ans:"Dalla sidebar → Impostazioni → Backup. Clicca 'Crea backup ora'."},{label:"Come esporto?",ans:"In Impostazioni → Backup, clicca 'Esporta JSON'."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
-  {id:"verifica",q:"Verifica",opts:[{label:"Cosa controlla?",ans:"Dalla sidebar clicca 'Verifica coerenza'. Controlla: slot fuori orario, sovrapposizioni, ore eccedenti, ore giornaliere >8h."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
+  {id:"verifica",q:"Verifica",opts:[{label:"Cosa controlla?",ans:"Dalla sidebar clicca 'Verifica coerenza'. Controlla: slot fuori orario, sovrapposizioni, ore eccedenti, ore giornaliere >8h."},{label:"Come verifico uno slot?",ans:"Solo Admin e Super Admin possono verificare gli slot. In Edit Mode, apri la modifica di uno slot e spunta 'Verificato'. Lo slot mostrerà un badge verde (scudo ✓) e non sarà più modificabile dagli utenti non autorizzati."},{label:"Come de-verifico uno slot?",ans:"Apri la modifica dello slot (solo Admin/Super Admin), deseleziona 'Verificato' e salva. L'operazione viene registrata nel log attività."},{label:"Torna al menu",icon:"arrowLeft",next:"root"}]},
 ];
 
 function HelpBot({onClose}){
