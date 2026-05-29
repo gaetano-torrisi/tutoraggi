@@ -16,19 +16,22 @@ const LOG_TYPE_LABELS={
   add_tut:       <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Slot tutoraggio</span>,
   edit_tut:      <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Slot tutoraggio</span>,
   delete_tut:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Slot tutoraggio</span>,
-  add_av:        <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Slot avviso</span>,
-  edit_av:       <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Slot avviso</span>,
-  delete_av:     <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Slot avviso</span>,
+  add_corso:        <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Slot corso</span>,
+  edit_corso:       <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Slot corso</span>,
+  delete_corso:     <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Slot corso</span>,
   add_tutor_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Tutor anagrafica</span>,
   edit_tutor_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Tutor anagrafica</span>,
   delete_tutor_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Tutor anagrafica</span>,
-  add_av_ana:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Avviso anagrafica</span>,
-  edit_av_ana:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Avviso anagrafica</span>,
-  delete_av_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Avviso anagrafica</span>,
+  add_corso_ana:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Corso anagrafica</span>,
+  edit_corso_ana:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Corso anagrafica</span>,
+  delete_corso_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Corso anagrafica</span>,
+  add_avviso_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Avviso anagrafica</span>,
+  edit_avviso_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Avviso anagrafica</span>,
+  delete_avviso_ana:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Avviso anagrafica</span>,
   verify_tut:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shieldCheck" size={13} color="var(--success)"/>Slot tutoraggio verificato</span>,
   unverify_tut:  <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shield" size={13} color="var(--fg-muted)"/>Verifica rimossa (tutoraggio)</span>,
-  verify_av:     <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shieldCheck" size={13} color="var(--success)"/>Slot avviso verificato</span>,
-  unverify_av:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shield" size={13} color="var(--fg-muted)"/>Verifica rimossa (avviso)</span>,
+  verify_corso:  <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shieldCheck" size={13} color="var(--success)"/>Slot corso verificato</span>,
+  unverify_corso:<span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shield" size={13} color="var(--fg-muted)"/>Verifica rimossa (corso)</span>,
 };
 const ROLE_LABEL={superadmin:"Super Admin",admin:"Admin",user:"Utente",viewer:"Viewer"};
 const ROLE_ICON={superadmin:"star",admin:"shieldCheck",user:"user",viewer:"eye"};
@@ -42,7 +45,7 @@ const VERIFICA_CATEGORIES=[
   {id:"orfano",label:"Slot orfani",icon:"alert",color:"var(--warning)"},
   {id:"weekend",label:"Slot nel weekend",icon:"sun",color:"var(--info)"},
   {id:"tutor_senza_slot",label:"Tutor senza slot",icon:"user",color:"var(--info)"},
-  {id:"avviso_senza_sessioni",label:"Avviso senza sessioni",icon:"briefcase",color:"var(--info)"},
+  {id:"corso_senza_sessioni",label:"Corso senza sessioni",icon:"briefcase",color:"var(--info)"},
   {id:"giornata_lunga",label:"Giornata >8h",icon:"alert",color:"var(--warning)"},
 ];
 const DRAG_PX=5,DRAG_MS=150;
@@ -56,7 +59,8 @@ const NAV_GROUPS=[
   ]},
   {group:"Anagrafiche",items:[
     {id:"ana-tutors",label:"Anagrafica Tutor",icon:"users"},
-    {id:"ana-avvisi",label:"Anagrafica Avvisi",icon:"briefcase"},
+    {id:"ana-corsi",label:"Anagrafica Corsi",icon:"graduationCap"},
+    {id:"ana-avvisi",label:"Avvisi",icon:"briefcase"},
   ]},
   {group:"Strumenti",items:[
     {id:"ai",label:"AI Import",icon:"sparkles"},
@@ -91,29 +95,32 @@ function layoutEvents(evs){
   return res.map(({ev,col})=>({ev,col,numCols:cols.length}));
 }
 function cleanObj(obj){if(Array.isArray(obj))return obj.map(cleanObj);if(obj&&typeof obj==="object"){const o={};for(const[k,v]of Object.entries(obj)){if(typeof v!=="function"&&!k.startsWith("_"))o[k]=cleanObj(v);}return o;}return obj;}
-function makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings,userProfiles,authorizedEmails,activityLog){return JSON.stringify({version:5,exportedAt:new Date().toISOString(),anagraficaAv,avvisi,tutors,tutEvents,settings,userProfiles,authorizedEmails,activityLog},null,2);}
+function makeJSONBlob(corsi,tutors,tutEvents,anagraficaCorsi,avvisi,settings,userProfiles,authorizedEmails,activityLog){return JSON.stringify({version:6,exportedAt:new Date().toISOString(),anagraficaCorsi,corsi,avvisi,tutors,tutEvents,settings,userProfiles,authorizedEmails,activityLog},null,2);}
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────
-async function fsLoad(){try{const[av,tu,te,se,an]=await Promise.all([db.collection("avvisi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaAv").get()]);const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});return{avvisi:av.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaAv:an.docs.map(d=>d.data())};}catch(e){console.error(e);return{avvisi:[],tutors:[],tutEvents:{},settings:{},anagraficaAv:[]};}}
-async function fsSaveAvvisi(list){showSaving();const b=db.batch();const s=await db.collection("avvisi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("avvisi").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsLoad(){try{const[co,tu,te,se,an,av]=await Promise.all([db.collection("corsi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaCorsi").get(),db.collection("avvisi").get()]);const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});return{corsi:co.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaCorsi:an.docs.map(d=>d.data()),avvisi:av.docs.map(d=>d.data())};}catch(e){console.error(e);return{corsi:[],tutors:[],tutEvents:{},settings:{},anagraficaCorsi:[],avvisi:[]};}}
+async function fsSaveCorsi(list){showSaving();const b=db.batch();const s=await db.collection("corsi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("corsi").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await db.collection("tutors").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("tutors").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
-async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
-// Targeted single-document writes (avoid rewriting an entire collection per edit)
-async function fsSaveAvviso(av){showSaving();await db.collection("avvisi").doc(av.id).set(cleanObj(av));}
-async function fsDeleteAvviso(id){showSaving();await db.collection("avvisi").doc(id).delete();}
+async function fsSaveAnaCorsi(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaCorsi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaCorsi").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsSaveAvvisi(list){showSaving();const b=db.batch();const s=await db.collection("avvisi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("avvisi").doc(x.id),cleanObj(x)));await b.commit();}
+// Targeted single-document writes
+async function fsSaveCorso(co){showSaving();await db.collection("corsi").doc(co.id).set(cleanObj(co));}
+async function fsDeleteCorso(id){showSaving();await db.collection("corsi").doc(id).delete();}
 async function fsSaveTutorDoc(t){showSaving();await db.collection("tutors").doc(t.id).set(cleanObj(t));}
 async function fsDeleteTutorDoc(id){showSaving();await db.collection("tutors").doc(id).delete();}
-async function fsSaveAnaDoc(a){showSaving();await db.collection("anagraficaAv").doc(a.id).set(cleanObj(a));}
-async function fsDeleteAnaDoc(id){showSaving();await db.collection("anagraficaAv").doc(id).delete();}
-async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
+async function fsSaveAnaCorsoDoc(a){showSaving();await db.collection("anagraficaCorsi").doc(a.id).set(cleanObj(a));}
+async function fsDeleteAnaCorsoDoc(id){showSaving();await db.collection("anagraficaCorsi").doc(id).delete();}
+async function fsSaveAvviso(av){showSaving();await db.collection("avvisi").doc(av.id).set(cleanObj(av));}
+async function fsDeleteAvviso(id){showSaving();await db.collection("avvisi").doc(id).delete();}
+async function fsClearAll(){showSaving();for(const c of["corsi","tutors","tutEvents","settings","anagraficaCorsi","avvisi","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 function fmtDateIT(mk,day){const m=MONTHS.find(x=>x.key===mk);if(!m)return`${day} ${mk}`;return`${day} ${MONTH_ABBR_IT[m.month]} ${m.year}`;}
 function fmtSlotRange(start,end){return`${fmt(start)}–${fmt(end)} (${fmtDurata(end-start)})`;}
 // Build a [{label,from,to}] diff between two slot states. mk/mkNew = month keys.
 function diffSlotChanges(old,upd,{tutorOld,tutorNew,mk,mkNew}={}){
   const ch=[];
-  if(upd.name!==undefined&&upd.name!==old.name)ch.push({label:"Avviso",from:old.name||"—",to:upd.name||"—"});
+  if(upd.name!==undefined&&upd.name!==old.name)ch.push({label:"Corso",from:old.name||"—",to:upd.name||"—"});
   if(tutorOld!==undefined&&tutorNew!==undefined&&tutorOld!==tutorNew)ch.push({label:"Tutor",from:tutorOld||"—",to:tutorNew||"—"});
   const oldDay=old.day,newDay=upd.day!==undefined?upd.day:old.day;
   const oldMk=mk,newMk=mkNew||mk;
@@ -124,7 +131,7 @@ function diffSlotChanges(old,upd,{tutorOld,tutorNew,mk,mkNew}={}){
 }
 async function fsLog(userEmail,type,detail,changes){try{const doc={userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()};if(changes&&changes.length>0)doc.changes=changes;await db.collection("activityLog").add(doc);}catch(e){console.error(e);}}
 async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate()||new Date(0)};});}catch(e){return[];}}
-async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv,settings){let userProfiles={},authorizedEmails={},activityLog=[];try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();activityLog=s.docs.map(d=>({...d.data(),id:d.id}));}catch(e){}try{const s=await db.collection("userProfiles").get();s.docs.forEach(d=>{userProfiles[d.id]=d.data();});}catch(e){}try{const s=await db.collection("authorizedEmails").get();s.docs.forEach(d=>{authorizedEmails[d.id]=d.data();});}catch(e){}const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings||{},userProfiles,authorizedEmails,activityLog);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size,version:5});return ref.id;}
+async function fsCreateBackup(corsi,tutors,tutEvents,anagraficaCorsi,avvisi,settings){let userProfiles={},authorizedEmails={},activityLog=[];try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();activityLog=s.docs.map(d=>({...d.data(),id:d.id}));}catch(e){}try{const s=await db.collection("userProfiles").get();s.docs.forEach(d=>{userProfiles[d.id]=d.data();});}catch(e){}try{const s=await db.collection("authorizedEmails").get();s.docs.forEach(d=>{authorizedEmails[d.id]=d.data();});}catch(e){}const json=makeJSONBlob(corsi,tutors,tutEvents,anagraficaCorsi,avvisi,settings||{},userProfiles,authorizedEmails,activityLog);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size,version:6});return ref.id;}
 async function fsListBackups(){try{const s=await db.collection("backups").orderBy("createdAt","desc").get();return s.docs.map(d=>({id:d.id,size:d.data().size||0,created:d.data().createdAt?.toDate()||new Date(0),data:d.data().data}));}catch(e){return[];}}
 async function fsDeleteBackup(id){await db.collection("backups").doc(id).delete();}
 async function fsApplyBackupPolicy(backups){const sorted=[...backups].sort((a,b)=>b.created-a.created);const toDelete=sorted.slice(10);for(const b of toDelete)try{await fsDeleteBackup(b.id);}catch(e){}}

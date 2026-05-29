@@ -45,7 +45,7 @@ function AvOverlaySlot({ev,col,numCols,color,slotH}){
   return(<div style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",boxSizing:"border-box",zIndex:20,background:hexToRgba(color,.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
     <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"var(--bg-elev)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none",display:"flex",alignItems:"center",gap:3}}>
       {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
-      {(ev.avvisoName||"").substring(0,26)}
+      {(ev.corsoName||"").substring(0,26)}
     </div>
   </div>);
 }
@@ -58,7 +58,7 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
         {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
-        {ev.avvisoName}
+        {ev.corsoName}
       </span>
       <span style={{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
         {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
@@ -85,7 +85,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
       {days.map(d=>{
         const wk=isWE(d),footer=footerByDay?.[d],tEvs=tutByDay?.[d]||[],avOvEvs=(overlayActive&&avOverlayByDay)?avOverlayByDay[d]||[]:[];
         const avEvs=avByDay?.[d]||[],lA=layoutEvents(avEvs),lOv=layoutEvents(avOvEvs);
-        const avPosMap={};lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.avvisoName]={col,numCols};});
+        const avPosMap={};lOv.forEach(({ev,col,numCols})=>{avPosMap[ev.corsoName]={col,numCols};});
         const tLayout=layoutEvents(tEvs);
         return(<div key={d} id={`day-col-${d}`} style={{width:colW,flexShrink:0,borderRight:"1px solid var(--border-strong)",background:wk?"var(--bg-weekend)":"var(--bg-elev)"}}>
           <div style={{height:60,background:wk?"var(--bg-weekend)":"var(--bg-elev)",borderBottom:`2px solid ${wk?"var(--border-strong)":"var(--border-strong)"}`,padding:"6px 10px",display:"flex",flexDirection:"column",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
@@ -97,7 +97,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
             {overlayActive&&tEvs.map((tev,i)=>{const pos=avPosMap[tev.name];if(pos){const colFrac=1/pos.numCols;return(<DraggableSlot key={"to"+i} ev={tev} col={0} numCols={1} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null} posOverride={{top:(tev.start-8)*slotH+OVR_PAD,left:pos.col*colFrac*colW+OVR_PAD+1,width:colFrac*colW-OVR_PAD*2-2,height:Math.max((tev.end-tev.start)*slotH-OVR_PAD*2,20)}} highlightError={highlightEvId===tev.id} onDragMove={onTutDragMove}/>);}else{const found=tLayout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"tb"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null} highlightError={highlightEvId===tev.id} onDragMove={onTutDragMove}/>);}})}
             {!overlayActive&&tEvs.map((tev,i)=>{const found=tLayout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"t"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd?u=>onTutDragEnd(tev.id,u):null} highlightError={highlightEvId===tev.id} onDragMove={onTutDragMove}/>);})}
             {overlayActive&&lOv.map(({ev,col,numCols},i)=><AvOverlaySlot key={"ov"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH}/>)}
-            {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onDragEnd={onAvDragEnd?(u=>onAvDragEnd(ev.avvisoId,ev.id,u)):null} highlightError={highlightEvId===ev.id}/>)}
+            {lA.map(({ev,col,numCols},i)=><AvDraggableSlot key={"a"+i} ev={ev} col={col} numCols={numCols} color={ev.avColor} slotH={slotH} colW={colW} onEdit={ev._onEdit} onDragEnd={onAvDragEnd?(u=>onAvDragEnd(ev.corsoId,ev.id,u)):null} highlightError={highlightEvId===ev.id}/>)}
           </div>
           <div style={{height:40,background:"var(--bg-sunken)",borderTop:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center"}}>
             {footer?<span style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{footer}</span>:<span style={{fontSize:10,color:"var(--fg-faint)"}}>—</span>}

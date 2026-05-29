@@ -184,8 +184,8 @@ function InlineCreateTutor({tutors,onSaveTutor,onCreated,onCancel,onAddMessage})
   );
 }
 
-// ── INLINE CREATE AVVISO ──────────────────────────────────────────────────
-function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMessage}){
+// ── INLINE CREATE CORSO ──────────────────────────────────────────────────
+function InlineCreateCorso({anagraficaCorsi,onSaveAnaCorso,onCreated,onCancel,onAddMessage}){
   const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1]});
   const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
   const presetColors=PALETTE.slice(0,8);
@@ -194,15 +194,15 @@ function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMess
     if(!form.durataOre||isNaN(Number(form.durataOre))||Number(form.durataOre)<=0){setErr("Durata ore è obbligatoria.");return;}
     setSaving(true);setErr("");
     const newAv={...form,id:`av-${Date.now()}`,durataOre:Number(form.durataOre),dataInizio:"",dataFine:"",note:""};
-    const newList=[...anagraficaAv,newAv];
-    await onSaveAna(newList,"add",newAv);
-    onAddMessage&&onAddMessage(`Avviso "${newAv.nome}" creato e selezionato.`);
+    const newList=[...anagraficaCorsi,newAv];
+    await onSaveAnaCorso(newList,"add",newAv);
+    onAddMessage&&onAddMessage(`Corso "${newAv.nome}" creato e selezionato.`);
     onCreated(newAv);
     setSaving(false);
   }
   return(
     <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
-      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso</div>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo corso</div>
       <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
       <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Codice</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
