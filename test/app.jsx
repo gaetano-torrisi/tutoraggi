@@ -377,8 +377,8 @@ function App({user}){
   function navigateToError(monthKey,evId){clearTimeout(highlightTimerRef.current);if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
 
   function handleNavClick(id){
-    if(id==="insights"){setShowInsights(true);return;}
-    if(id==="verifica"){setActiveScreen("verifica");return;}
+    if(id==="insights"){if(!perms.useInsights)return;setShowInsights(true);return;}
+    if(id==="verifica"){if(!perms.useVerifica)return;setActiveScreen("verifica");return;}
     if(id==="ai"){if(!perms.useAiImport)return;setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
@@ -397,7 +397,7 @@ function App({user}){
         {NAV_GROUPS.map(({group,items})=>(
           <div key={group} className="sidebar-group">
             {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
-            {items.filter(item=>item.id!=="ai"||perms.useAiImport).map(item=>(
+            {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
               <button key={item.id} className={`sidebar-item${activeScreen===item.id?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
                 {activeScreen===item.id&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
                 <Icon name={item.icon} size={16} color={activeScreen===item.id?"var(--accent)":"var(--fg-subtle)"}/>
@@ -447,7 +447,7 @@ function App({user}){
           {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
         <div style={{flex:1}}/>
-        <button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>
+        {perms.useVerifica&&<button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>}
         {canEdit&&<>
           <button onClick={handleUndo} disabled={!undoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={undoCount?`Annulla — ${undoCount} modifica${undoCount!==1?"he":""} disponibil${undoCount!==1?"i":"e"}`:"Nessuna modifica da annullare"}><Icon name="undo" size={15}/></button>
           <button onClick={handleRedo} disabled={!redoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={redoCount?`Ripristina — ${redoCount} modifica${redoCount!==1?"he":""} disponibil${redoCount!==1?"i":"e"}`:"Nessuna modifica da ripristinare"}><Icon name="redo" size={15}/></button>
@@ -520,7 +520,7 @@ function App({user}){
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={perms.editAnagrafica}/>}
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} perms={perms} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
         </div>
-        {showVerificaPanel&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
+        {showVerificaPanel&&perms.useVerifica&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
       </div>
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
@@ -528,7 +528,7 @@ function App({user}){
       {isCalendar&&dragWarn&&<div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:300,display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderRadius:"var(--radius-md)",background:"var(--warning-soft)",border:"1px solid var(--warning)",boxShadow:"var(--shadow-lg)",fontSize:13,color:"var(--fg)",maxWidth:520}}><Icon name="alert" size={15} color="var(--warning)"/><span style={{flex:1}}>{dragWarn}</span><button onClick={()=>setDragWarn(null)} style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",display:"flex",flexShrink:0}}><Icon name="x" size={13} color="var(--fg-muted)"/></button></div>}
     </div>
 
-    {showInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
+    {showInsights&&perms.useInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
     {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
   </div>);

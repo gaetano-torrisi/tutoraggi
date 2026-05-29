@@ -572,6 +572,8 @@ function GestionePermessi({rolePermissions,onSave}){
     ]},
     {label:"Strumenti",icon:"sparkles",items:[
       {key:"useAiImport",label:"Usa AI Import",desc:"Accesso all'assistente di importazione automatica da documenti"},
+      {key:"useInsights",label:"Insights & Riepiloghi",desc:"Accesso al pannello statistiche e analisi mensili"},
+      {key:"useVerifica",label:"Verifica coerenza",desc:"Accesso al pannello di controllo e rilevamento anomalie"},
     ]},
     {label:"Anagrafica",icon:"users",items:[
       {key:"editAnagrafica",label:"Modifica tutors e avvisi",desc:"Crea, modifica, elimina tutor e avvisi in anagrafica"},
