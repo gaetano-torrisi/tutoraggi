@@ -558,15 +558,78 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   </div>);
 }
 
+// ── GESTIONE PERMESSI ─────────────────────────────────────────────────────
+function GestionePermessi({rolePermissions,onSave}){
+  const[local,setLocal]=useState(()=>{const d={};for(const r of["viewer","user","admin"])d[r]={...(DEFAULT_ROLE_PERMS[r]||{}),...((rolePermissions||{})[r]||{})};return d;});
+  const[saving,setSaving]=useState(false);const[saved,setSaved]=useState(false);
+  const GROUPS=[
+    {label:"Calendario",icon:"calendar",items:[
+      {key:"addSlot",label:"Aggiunge slot",desc:"Crea nuovi slot tutoraggi e avvisi"},
+      {key:"editSlot",label:"Modifica slot non verificati",desc:"Modifica orari, tutor, avviso degli slot liberi"},
+      {key:"deleteSlot",label:"Elimina slot",desc:"Rimuove slot non verificati dal calendario"},
+      {key:"editVerified",label:"Modifica slot verificati",desc:"Può toccare slot già verificati da un admin"},
+      {key:"verifySlot",label:"Verifica / de-verifica slot",desc:"Mostra la checkbox di verifica nel modale di modifica"},
+    ]},
+    {label:"Anagrafica",icon:"users",items:[
+      {key:"editAnagrafica",label:"Modifica tutors e avvisi",desc:"Crea, modifica, elimina tutor e avvisi in anagrafica"},
+    ]},
+    {label:"Dati & Impostazioni",icon:"activity",items:[
+      {key:"viewLog",label:"Visualizza log attività",desc:"Accesso allo storico delle modifiche"},
+      {key:"viewBackup",label:"Backup ed export",desc:"Accesso al tab backup e snapshot del database"},
+      {key:"editSettings",label:"Modifica impostazioni app",desc:"Nome app, logo, colori, API key e personalizzazione"},
+    ]},
+  ];
+  const ROLES=[{key:"viewer",label:"Viewer",tone:"default",icon:"eye"},{key:"user",label:"Utente",tone:"info",icon:"user"},{key:"admin",label:"Admin",tone:"accent",icon:"shieldCheck"}];
+  function toggle(role,key){setLocal(p=>({...p,[role]:{...p[role],[key]:!p[role][key]}}));setSaved(false);}
+  async function handleSave(){setSaving(true);await onSave(local);setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2500);}
+  function handleReset(){const d={};for(const r of["viewer","user","admin"])d[r]={...DEFAULT_ROLE_PERMS[r]};setLocal(d);setSaved(false);}
+  return(<div style={{maxWidth:780}}>
+    <div style={{marginBottom:20}}>
+      <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Gestione permessi</h2>
+      <p style={{fontSize:13,color:"var(--fg-muted)"}}>Personalizza cosa può fare ogni ruolo. Le modifiche hanno effetto immediato per tutti gli utenti.</p>
+    </div>
+    <div style={{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 14px",background:"var(--info-soft)",border:"1px solid rgba(62,111,184,.18)",borderRadius:"var(--radius)",marginBottom:22}}>
+      <Icon name="info" size={14} color="var(--info)" style={{flexShrink:0,marginTop:1}}/>
+      <span style={{fontSize:12.5,color:"var(--info)",lineHeight:1.45}}>Il ruolo <strong>Superadmin</strong> ha sempre tutti i permessi e non è modificabile. Le modifiche si applicano istantaneamente senza riavvio sessione.</span>
+    </div>
+    <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-lg)",boxShadow:"var(--shadow-xs)",overflow:"hidden",marginBottom:20}}>
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead>
+          <tr>
+            <th style={{padding:"10px 18px",textAlign:"left",fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",background:"var(--bg-sunken)",borderBottom:"2px solid var(--border)",width:"44%"}}>Permesso</th>
+            {ROLES.map(r=><th key={r.key} style={{padding:"10px 14px",background:"var(--bg-sunken)",borderBottom:"2px solid var(--border)",textAlign:"center",minWidth:100}}><span className="badge" data-tone={r.tone} style={{margin:"0 auto"}}><Icon name={r.icon} size={10}/>{r.label}</span></th>)}
+            <th style={{padding:"10px 14px",background:"rgba(192,57,43,.04)",borderBottom:"2px solid var(--border)",textAlign:"center",minWidth:100}}><span className="badge" data-tone="danger" style={{margin:"0 auto"}}><Icon name="star" size={10}/>Superadmin</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {GROUPS.map((g,gi)=>[
+            <tr key={`g${gi}`}><td colSpan={5} style={{padding:"6px 18px 4px",background:"var(--bg-sunken)",borderBottom:"1px solid var(--divider)"}}><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".07em",display:"flex",alignItems:"center",gap:6}}><Icon name={g.icon} size={11}/>{g.label}</span></td></tr>,
+            ...g.items.map((item,ii)=><tr key={`${gi}-${ii}`}>
+              <td style={{padding:"11px 18px",borderBottom:"1px solid var(--divider)"}}><div style={{fontSize:12.5,fontWeight:500,color:"var(--fg)"}}>{item.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{item.desc}</div></td>
+              {ROLES.map(r=><td key={r.key} style={{padding:"11px 14px",borderBottom:"1px solid var(--divider)",textAlign:"center"}}><label style={{display:"inline-block",position:"relative",width:34,height:20,cursor:"pointer"}}><input type="checkbox" checked={!!local[r.key]?.[item.key]} onChange={()=>toggle(r.key,item.key)} style={{opacity:0,width:0,height:0,position:"absolute"}}/><span style={{position:"absolute",inset:0,borderRadius:100,background:local[r.key]?.[item.key]?"var(--success)":"var(--border-strong)",transition:"background .15s",cursor:"pointer"}}/><span style={{position:"absolute",top:3,left:local[r.key]?.[item.key]?17:3,width:14,height:14,borderRadius:"50%",background:"#fff",transition:"left .15s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}}/></label></td>)}
+              <td style={{padding:"11px 14px",borderBottom:"1px solid var(--divider)",textAlign:"center",background:"rgba(192,57,43,.03)"}}><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:22,height:22,borderRadius:6,background:"var(--danger-soft)"}}><Icon name="check" size={12} color="var(--danger)"/></span></td>
+            </tr>)
+          ])}
+        </tbody>
+      </table>
+    </div>
+    <div style={{display:"flex",gap:8}}>
+      <button className="btn" data-variant="primary" onClick={handleSave} disabled={saving} style={{display:"flex",alignItems:"center",gap:6}}>{saving?<><Icon name="loader" size={13} color="#fff"/>Salvataggio...</>:saved?<><Icon name="check" size={13} color="#fff"/>Salvato</>:<><Icon name="save" size={13} color="#fff"/>Salva permessi</>}</button>
+      <button className="btn" data-variant="outline" onClick={handleReset} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="refresh" size={13}/>Ripristina default</button>
+    </div>
+  </div>);
+}
 // ── SETTINGS SCREEN ───────────────────────────────────────────────────────
-function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser,theme,setTheme,currentUser,profileTarget}){
-  const[section,setSection]=useState(profileTarget&&isAdmin?"users":"personalizza");
+function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSaveSettings,isSuperAdmin,isAdmin,isUser,perms,theme,setTheme,currentUser,profileTarget}){
+  const firstSec=profileTarget&&isAdmin?"users":perms?.editSettings!==false?"personalizza":isAdmin?"users":perms?.viewBackup?"backup":perms?.viewLog?"log":"personalizza";
+  const[section,setSection]=useState(firstSec);
   const SUB=[
-    {id:"personalizza",label:"Personalizza",icon:"palette",desc:"Tema, colori, densità e preferenze."},
-    isAdmin&&{id:"users",label:"Utenti & Permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
+    (perms?.editSettings!==false)&&{id:"personalizza",label:"Personalizza",icon:"palette",desc:"Tema, colori, densità e preferenze."},
+    isAdmin&&{id:"users",label:"Utenti e permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
+    isSuperAdmin&&{id:"permissions",label:"Gestione permessi",icon:"shield",desc:"Personalizza i permessi per ogni ruolo."},
     isSuperAdmin&&{id:"api",label:"API & AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
-    isUser&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
-    isUser&&{id:"log",label:"Log attività",icon:"clock",desc:"Storico delle modifiche per utente."},
+    (perms?.viewBackup)&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
+    (perms?.viewLog)&&{id:"log",label:"Log attività",icon:"clock",desc:"Storico delle modifiche per utente."},
     isAdmin&&{id:"demo",label:"Dati demo",icon:"dice",desc:"Carica dati di esempio o resetta tutto."},
   ].filter(Boolean);
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
@@ -583,6 +646,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
       <div style={{flex:1,...(section==="users"?{display:"flex",minHeight:0,overflow:"hidden"}:{overflowY:"auto",padding:32}),background:"var(--bg)"}}>
         {section==="personalizza"&&<CustomizePanel settings={settings} theme={theme} setTheme={setTheme} onSaveSettings={onSaveSettings}/>}
         {section==="users"&&<UsersPanel isSuperAdmin={isSuperAdmin} currentUser={currentUser} initialEmail={profileTarget}/>}
+        {section==="permissions"&&<GestionePermessi rolePermissions={settings.rolePermissions||{}} onSave={rp=>onSaveSettings({rolePermissions:rp})}/>}
         {section==="api"&&<ApiPanel settings={settings} onSave={onSaveSettings}/>}
         {section==="backup"&&<BackupPanel avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} settings={settings} isSuperAdmin={isSuperAdmin}/>}
         {section==="log"&&<LogPanel/>}
