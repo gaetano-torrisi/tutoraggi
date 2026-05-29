@@ -228,7 +228,15 @@ function App({user}){
   const isCalendar=activeScreen==="calendar"||activeScreen==="verifica";
   const showVerificaPanel=activeScreen==="verifica";
 
-  useEffect(()=>{document.documentElement.setAttribute("data-theme",theme);},[theme]);
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme",theme);
+    if(theme==="dark"){
+      document.documentElement.style.removeProperty("--bg");
+    } else {
+      const bg=settings.bgColor;
+      if(bg&&/^#[0-9A-Fa-f]{6}$/.test(bg))document.documentElement.style.setProperty("--bg",bg);
+    }
+  },[theme]);
 
   function pushUndo(snapTE,snapAv){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTE)),avvisi:JSON.parse(JSON.stringify(snapAv))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
   async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
@@ -240,7 +248,7 @@ function App({user}){
       if(s.theme)setTheme(s.theme);
       if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(s.accentColor,.12));}
       if(s.brandNavy&&/^#[0-9A-Fa-f]{6}$/.test(s.brandNavy))document.documentElement.style.setProperty("--brand-navy",s.brandNavy);
-      if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor))document.documentElement.style.setProperty("--bg",s.bgColor);
+      if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor)&&s.theme!=="dark")document.documentElement.style.setProperty("--bg",s.bgColor);
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);

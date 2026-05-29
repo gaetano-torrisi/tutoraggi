@@ -185,8 +185,8 @@
 /* ── Month view ── */
 .month-cell { min-height:72px; border:1px solid var(--border); border-radius:var(--radius); padding:6px; background:var(--bg-elev); cursor:pointer; transition:background .12s; }
 .month-cell:hover { background:var(--bg-hover); }
-.month-cell.we { background:rgba(155,89,182,.04); border-color:rgba(155,89,182,.2); }
-.month-cell.we:hover { background:rgba(155,89,182,.08); }
+.month-cell.we { background:var(--bg-weekend); border-color:var(--border); }
+.month-cell.we:hover { background:var(--bg-hover); }
 
 /* ── HelpBot ── */
 .helpbot-window { position:fixed; bottom:60px; right:16px; width:340px; height:400px; background:var(--bg-elev); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border:1px solid var(--border); display:flex; flex-direction:column; z-index:500; overflow:hidden; }

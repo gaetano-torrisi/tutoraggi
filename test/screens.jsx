@@ -468,7 +468,7 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   const primaryColorRef=useRef();const accentColorRef=useRef();const bgColorRef=useRef();
   function applyAccent(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--accent",c);document.documentElement.style.setProperty("--accent-strong",darkenHex(c,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(c,.12));}
   function applyPrimary(c){if(!/^#[0-9A-Fa-f]{6}$/.test(c))return;document.documentElement.style.setProperty("--brand-navy",c);}
-  function applyBg(c){if(c&&/^#[0-9A-Fa-f]{6}$/.test(c))document.documentElement.style.setProperty("--bg",c);}
+  function applyBg(c){if(c&&/^#[0-9A-Fa-f]{6}$/.test(c)&&document.documentElement.getAttribute("data-theme")!=="dark")document.documentElement.style.setProperty("--bg",c);}
   function setAccent(c){setAccentState(c);setAccentInput(c);applyAccent(c);}
   function setPrimary(c){setPrimaryState(c);setPrimaryInput(c);applyPrimary(c);}
   function setBg(c){setBgState(c);setBgInput(c);applyBg(c);}
@@ -643,7 +643,7 @@ function SettingsScreen({role,settings,avvisi,tutors,tutEvents,anagraficaAv,onSa
     <div style={{flex:1,display:"flex",minHeight:0}}>
       <aside style={{width:240,flexShrink:0,padding:"18px 14px",borderRight:"1px solid var(--border)",background:"var(--bg)"}}>
         {SUB.map(s=>{const active=section===s.id;return(<button key={s.id} onClick={()=>setSection(s.id)} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 12px",background:active?"var(--bg-elev)":"transparent",border:`1px solid ${active?"var(--border)":"transparent"}`,borderRadius:"var(--radius)",cursor:"pointer",textAlign:"left",marginBottom:4,boxShadow:active?"var(--shadow-xs)":"none"}} onMouseEnter={e=>{if(!active)e.currentTarget.style.background="var(--bg-hover)";}} onMouseLeave={e=>{if(!active)e.currentTarget.style.background="transparent";}}>
-          <div style={{width:32,height:32,borderRadius:8,background:active?"var(--accent-soft)":"var(--bg-sunken)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <div style={{width:32,height:32,borderRadius:8,background:active?"var(--accent-soft)":"var(--bg-hover)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <Icon name={s.icon} size={15} color={active?"var(--accent-strong)":"var(--fg-muted)"}/>
           </div>
           <div style={{minWidth:0}}><div style={{fontSize:13,fontWeight:600,color:"var(--fg)"}}>{s.label}</div><div style={{fontSize:11,color:"var(--fg-subtle)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.desc}</div></div>
