@@ -25,6 +25,10 @@ const LOG_TYPE_LABELS={
   add_av_ana:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="plus" size={13} color="var(--success)"/>Avviso anagrafica</span>,
   edit_av_ana:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="edit" size={13} color="var(--info)"/>Avviso anagrafica</span>,
   delete_av_ana: <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="trash" size={13} color="var(--danger)"/>Avviso anagrafica</span>,
+  verify_tut:    <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shieldCheck" size={13} color="var(--success)"/>Slot tutoraggio verificato</span>,
+  unverify_tut:  <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shield" size={13} color="var(--fg-muted)"/>Verifica rimossa (tutoraggio)</span>,
+  verify_av:     <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shieldCheck" size={13} color="var(--success)"/>Slot avviso verificato</span>,
+  unverify_av:   <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="shield" size={13} color="var(--fg-muted)"/>Verifica rimossa (avviso)</span>,
 };
 const ROLE_LABEL={superadmin:"Super Admin",admin:"Admin",user:"Utente",viewer:"Viewer"};
 const ROLE_ICON={superadmin:"star",admin:"shieldCheck",user:"user",viewer:"eye"};
