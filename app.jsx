@@ -116,7 +116,7 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
 }
 
 // ── ADD/EDIT MODAL ────────────────────────────────────────────────────────
-function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose,onOpenAnaTutors,onOpenAnaAvvisi,isAdmin,userEmail}){
+function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose,onOpenAnaTutors,onOpenAnaAvvisi,isAdmin,userEmail,canVerify,canDelete}){
   const isEdit=!!editTarget;
   const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
   const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
@@ -157,7 +157,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
         {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:hexToRgba(selAnaT.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",.3)}`}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)"}}>{selAnaT.nome}</div><div style={{display:"flex",gap:6,marginTop:4}}>{selAnaT.durataOre&&<span className="badge" data-tone="info">{selAnaT.durataOre}h</span>}{selAnaT.stato&&<span className="badge">{selAnaT.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:16}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
-        {isAdmin&&isEdit&&<label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:"var(--radius)",background:tutVerified?"var(--success-soft)":"var(--bg-sunken)",border:`1px solid ${tutVerified?"var(--success)":"var(--border)"}`,cursor:"pointer",marginBottom:12,transition:"all .12s"}}>
+        {canVerify&&isEdit&&<label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:"var(--radius)",background:tutVerified?"var(--success-soft)":"var(--bg-sunken)",border:`1px solid ${tutVerified?"var(--success)":"var(--border)"}`,cursor:"pointer",marginBottom:12,transition:"all .12s"}}>
           <input type="checkbox" checked={tutVerified} onChange={e=>setTutVerified(e.target.checked)} style={{width:15,height:15,accentColor:"var(--success)",cursor:"pointer"}}/>
           <span style={{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:600,color:tutVerified?"var(--success)":"var(--fg-muted)"}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={tutVerified?"var(--success)":"var(--fg-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
@@ -166,7 +166,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
           {tutVerified&&editTarget.ev.verifiedBy&&<span style={{fontSize:10.5,color:"var(--success)",marginLeft:"auto",opacity:.75}}>{editTarget.ev.verifiedBy}</span>}
         </label>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
-          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
+          {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
           <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;const vFields=isAdmin?{verified:tutVerified,verifiedBy:tutVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:tutVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor,...vFields},mk,{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?tutVerified:!!editTarget.ev.verified});else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
@@ -179,7 +179,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
         <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
         {!isEdit&&<p style={{fontSize:11,color:"var(--fg-subtle)",margin:"0 0 12px"}}>Altri appuntamenti si aggiungono in seguito.</p>}
-        {isAdmin&&isEdit&&<label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:"var(--radius)",background:avVerified?"var(--success-soft)":"var(--bg-sunken)",border:`1px solid ${avVerified?"var(--success)":"var(--border)"}`,cursor:"pointer",marginBottom:12,transition:"all .12s"}}>
+        {canVerify&&isEdit&&<label style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:"var(--radius)",background:avVerified?"var(--success-soft)":"var(--bg-sunken)",border:`1px solid ${avVerified?"var(--success)":"var(--border)"}`,cursor:"pointer",marginBottom:12,transition:"all .12s"}}>
           <input type="checkbox" checked={avVerified} onChange={e=>setAvVerified(e.target.checked)} style={{width:15,height:15,accentColor:"var(--success)",cursor:"pointer"}}/>
           <span style={{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:600,color:avVerified?"var(--success)":"var(--fg-muted)"}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={avVerified?"var(--success)":"var(--fg-muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
@@ -188,7 +188,7 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
           {avVerified&&editTarget.ev.verifiedBy&&<span style={{fontSize:10.5,color:"var(--success)",marginLeft:"auto",opacity:.75}}>{editTarget.ev.verifiedBy}</span>}
         </label>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
-          {isEdit&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
+          {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
           <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaAv.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const vFields=isAdmin?{verified:avVerified,verifiedBy:avVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:avVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,{...evData,...vFields},{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?avVerified:!!editTarget.ev.verified});else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
@@ -224,10 +224,19 @@ function App({user}){
 
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
   const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
+  const perms=isSuperAdmin?ALL_PERMS:{...(DEFAULT_ROLE_PERMS[role]||DEFAULT_ROLE_PERMS.viewer),...((settings.rolePermissions||{})[role]||{})};
   const isCalendar=activeScreen==="calendar"||activeScreen==="verifica";
   const showVerificaPanel=activeScreen==="verifica";
 
-  useEffect(()=>{document.documentElement.setAttribute("data-theme",theme);},[theme]);
+  useEffect(()=>{
+    document.documentElement.setAttribute("data-theme",theme);
+    if(theme==="dark"){
+      document.documentElement.style.removeProperty("--bg");
+    } else {
+      const bg=settings.bgColor;
+      if(bg&&/^#[0-9A-Fa-f]{6}$/.test(bg))document.documentElement.style.setProperty("--bg",bg);
+    }
+  },[theme]);
 
   function pushUndo(snapTE,snapAv){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:JSON.parse(JSON.stringify(snapTE)),avvisi:JSON.parse(JSON.stringify(snapAv))},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
   async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:JSON.parse(JSON.stringify(tutEvRef.current)),avvisi:JSON.parse(JSON.stringify(avRef.current))},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
@@ -239,7 +248,7 @@ function App({user}){
       if(s.theme)setTheme(s.theme);
       if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(s.accentColor,.12));}
       if(s.brandNavy&&/^#[0-9A-Fa-f]{6}$/.test(s.brandNavy))document.documentElement.style.setProperty("--brand-navy",s.brandNavy);
-      if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor))document.documentElement.style.setProperty("--bg",s.bgColor);
+      if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor)&&s.theme!=="dark")document.documentElement.style.setProperty("--bg",s.bgColor);
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);
@@ -334,13 +343,13 @@ function App({user}){
 
   const getTCol=id=>tutors.find(x=>x.id===id)?.color||"var(--accent)";
   const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
-  function buildTByDay(){const b={};for(const ev of visTEvs){const editAllowed=canEdit&&(!ev.verified||isAdmin);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:editAllowed?()=>setModal({type:"edit-tut",ev,monthKey:month.key}):null,_onClick:null});}return b;}
+  function buildTByDay(){const b={};for(const ev of visTEvs){const editAllowed=editMode&&perms.editSlot&&(!ev.verified||perms.editVerified);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:editAllowed?()=>setModal({type:"edit-tut",ev,monthKey:month.key}):null,_onClick:null});}return b;}
   function buildOvByDay(){const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
-  function buildAvByDay(){const b={};for(const ev of visAvEvs){const editAllowed=canEdit&&(!ev.verified||isAdmin);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:editAllowed?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});}:null});}return b;}
+  function buildAvByDay(){const b={};for(const ev of visAvEvs){const editAllowed=editMode&&perms.editSlot&&(!ev.verified||perms.editVerified);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:editAllowed?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey:month.key});}:null});}return b;}
   function buildMTByDay(){const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;}
   function buildMAvByDay(){const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;}
 
-  function handleGridClick(d,e){if(!canEdit)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
+  function handleGridClick(d,e){if(!editMode||!perms.addSlot)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
   function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
@@ -376,9 +385,9 @@ function App({user}){
   function navigateToError(monthKey,evId){clearTimeout(highlightTimerRef.current);if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
 
   function handleNavClick(id){
-    if(id==="insights"){setShowInsights(true);return;}
-    if(id==="verifica"){setActiveScreen("verifica");return;}
-    if(id==="ai"){setShowAi(s=>!s);return;}
+    if(id==="insights"){if(!perms.useInsights)return;setShowInsights(true);return;}
+    if(id==="verifica"){if(!perms.useVerifica)return;setActiveScreen(s=>s==="verifica"?"calendar":"verifica");return;}
+    if(id==="ai"){if(!perms.useAiImport)return;setShowAi(s=>!s);return;}
     setActiveScreen(id);
     if(id!=="calendar")setShowAi(false);
   }
@@ -396,7 +405,7 @@ function App({user}){
         {NAV_GROUPS.map(({group,items})=>(
           <div key={group} className="sidebar-group">
             {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
-            {items.map(item=>(
+            {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
               <button key={item.id} className={`sidebar-item${activeScreen===item.id?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
                 {activeScreen===item.id&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
                 <Icon name={item.icon} size={16} color={activeScreen===item.id?"var(--accent)":"var(--fg-subtle)"}/>
@@ -419,7 +428,7 @@ function App({user}){
         </button>
       </div>
     </aside>
-    {showAi&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
     </div>
 
     <div className="main-area">
@@ -446,7 +455,7 @@ function App({user}){
           {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
         <div style={{flex:1}}/>
-        <button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>
+        {perms.useVerifica&&<button onClick={()=>{activeScreen==="verifica"?setActiveScreen("calendar"):setActiveScreen("verifica");}} className="btn" data-variant={activeScreen==="verifica"?"accent":"ghost"} data-size="icon-sm" title="Verifica coerenza"><Icon name="shieldCheck" size={15} color={activeScreen==="verifica"?"#fff":"currentColor"}/></button>}
         {canEdit&&<>
           <button onClick={handleUndo} disabled={!undoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={undoCount?`Annulla — ${undoCount} modifica${undoCount!==1?"he":""} disponibil${undoCount!==1?"i":"e"}`:"Nessuna modifica da annullare"}><Icon name="undo" size={15}/></button>
           <button onClick={handleRedo} disabled={!redoCount} className="btn" data-variant="ghost" data-size="icon-sm" title={redoCount?`Ripristina — ${redoCount} modifica${redoCount!==1?"he":""} disponibil${redoCount!==1?"i":"e"}`:"Nessuna modifica da ripristinare"}><Icon name="redo" size={15}/></button>
@@ -456,7 +465,7 @@ function App({user}){
           <button className="tab-strip-btn" style={{background:!editMode?"var(--accent)":"transparent",color:!editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>{setEditMode(false);setShowAi(false);}}><Icon name="eye" size={12} color={!editMode?"#fff":"currentColor"}/>Visualizza</button>
           <button className="tab-strip-btn" style={{background:editMode?"var(--accent)":"transparent",color:editMode?"#fff":"var(--fg-muted)",display:"flex",alignItems:"center",gap:5}} onClick={()=>setEditMode(true)}><Icon name="edit" size={12} color={editMode?"#fff":"currentColor"}/>Modifica</button>
         </div>}
-        {canEdit&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
+        {canEdit&&perms.addSlot&&<button onClick={()=>setModal({type:"add",mode:view,prefill:{day:1,start:9,end:10}})} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13} color="#fff"/>Aggiungi</button>}
         <div className="topbar-divider"/>
         <div ref={avatarRef} style={{position:"relative"}}>
           <div className="user-avatar" title="Account" onClick={()=>setShowAvatarMenu(o=>!o)}>{userInitials}</div>
@@ -514,12 +523,12 @@ function App({user}){
       <div className="screen-area" style={showVerificaPanel?{flexDirection:"row"}:{}}>
         <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden",minHeight:0}}>
         {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?buildMTByDay():null} avByDay={view==="avviso"?buildMAvByDay():null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
-        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);if(origEv?.verified&&!isAdmin)return;editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!avDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if(avDay&&((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end))warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>{const origEv=visAvEvs.find(e=>e.id===evId);if(origEv?.verified&&!isAdmin)return;editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}:null} highlightEvId={highlightEvId} onTutDragMove={canEdit?(ev,dd)=>{document.querySelectorAll('.day-col-drop-warning').forEach(el=>el.classList.remove('day-col-drop-warning'));if(dd!==0){const targetDay=ev.day+dd;const hasAvviso=avEvs.some(a=>a.avvisoName===ev.name&&a.day===targetDay);if(!hasAvviso){const col=document.getElementById(`day-col-${targetDay}`);if(col)col.classList.add('day-col-drop-warning');}}}:null}/>}
-        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={!isViewer}/>}
-        {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={!isViewer}/>}
-        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
+        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?buildTByDay():null} avOverlayByDay={view==="tutoraggio"?buildOvByDay():null} avByDay={view==="avviso"?buildAvByDay():null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!avDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if(avDay&&((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end))warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>{const origEv=visAvEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}:null} highlightEvId={highlightEvId} onTutDragMove={canEdit?(ev,dd)=>{document.querySelectorAll('.day-col-drop-warning').forEach(el=>el.classList.remove('day-col-drop-warning'));if(dd!==0){const targetDay=ev.day+dd;const hasAvviso=avEvs.some(a=>a.avvisoName===ev.name&&a.day===targetDay);if(!hasAvviso){const col=document.getElementById(`day-col-${targetDay}`);if(col)col.classList.add('day-col-drop-warning');}}}:null}/>}
+        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} perms={perms} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
         </div>
-        {showVerificaPanel&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
+        {showVerificaPanel&&perms.useVerifica&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
       </div>
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
@@ -527,9 +536,9 @@ function App({user}){
       {isCalendar&&dragWarn&&<div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:300,display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderRadius:"var(--radius-md)",background:"var(--warning-soft)",border:"1px solid var(--warning)",boxShadow:"var(--shadow-lg)",fontSize:13,color:"var(--fg)",maxWidth:520}}><Icon name="alert" size={15} color="var(--warning)"/><span style={{flex:1}}>{dragWarn}</span><button onClick={()=>setDragWarn(null)} style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",display:"flex",flexShrink:0}}><Icon name="x" size={13} color="var(--fg-muted)"/></button></div>}
     </div>
 
-    {showInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
+    {showInsights&&perms.useInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
-    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} isAdmin={isAdmin} userEmail={user.email}/>}
+    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
   </div>);
 }
 
