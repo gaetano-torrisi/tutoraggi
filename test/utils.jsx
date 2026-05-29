@@ -101,7 +101,21 @@ async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tut
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAna(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaAv").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaAv").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsClearAll(){showSaving();for(const c of["avvisi","tutors","tutEvents","settings","anagraficaAv","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
-async function fsLog(userEmail,type,detail){try{await db.collection("activityLog").add({userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){console.error(e);}}
+function fmtDateIT(mk,day){const m=MONTHS.find(x=>x.key===mk);if(!m)return`${day} ${mk}`;return`${day} ${MONTH_ABBR_IT[m.month]} ${m.year}`;}
+function fmtSlotRange(start,end){return`${fmt(start)}–${fmt(end)} (${fmtDurata(end-start)})`;}
+// Build a [{label,from,to}] diff between two slot states. mk/mkNew = month keys.
+function diffSlotChanges(old,upd,{tutorOld,tutorNew,mk,mkNew}={}){
+  const ch=[];
+  if(upd.name!==undefined&&upd.name!==old.name)ch.push({label:"Avviso",from:old.name||"—",to:upd.name||"—"});
+  if(tutorOld!==undefined&&tutorNew!==undefined&&tutorOld!==tutorNew)ch.push({label:"Tutor",from:tutorOld||"—",to:tutorNew||"—"});
+  const oldDay=old.day,newDay=upd.day!==undefined?upd.day:old.day;
+  const oldMk=mk,newMk=mkNew||mk;
+  if(oldDay!==newDay||oldMk!==newMk)ch.push({label:"Giorno",from:fmtDateIT(oldMk,oldDay),to:fmtDateIT(newMk,newDay)});
+  const oS=old.start,oE=old.end,nS=upd.start!==undefined?upd.start:old.start,nE=upd.end!==undefined?upd.end:old.end;
+  if(oS!==nS||oE!==nE)ch.push({label:"Orario",from:fmtSlotRange(oS,oE),to:fmtSlotRange(nS,nE)});
+  return ch;
+}
+async function fsLog(userEmail,type,detail,changes){try{const doc={userEmail,type,detail,timestamp:firebase.firestore.FieldValue.serverTimestamp()};if(changes&&changes.length>0)doc.changes=changes;await db.collection("activityLog").add(doc);}catch(e){console.error(e);}}
 async function fsLoadLog(){try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();return s.docs.map(d=>{const x=d.data();return{...x,id:d.id,ts:x.timestamp?.toDate()||new Date(0)};});}catch(e){return[];}}
 async function fsCreateBackup(avvisi,tutors,tutEvents,anagraficaAv,settings){let userProfiles={},authorizedEmails={},activityLog=[];try{const s=await db.collection("activityLog").orderBy("timestamp","desc").limit(500).get();activityLog=s.docs.map(d=>({...d.data(),id:d.id}));}catch(e){}try{const s=await db.collection("userProfiles").get();s.docs.forEach(d=>{userProfiles[d.id]=d.data();});}catch(e){}try{const s=await db.collection("authorizedEmails").get();s.docs.forEach(d=>{authorizedEmails[d.id]=d.data();});}catch(e){}const json=makeJSONBlob(avvisi,tutors,tutEvents,anagraficaAv,settings||{},userProfiles,authorizedEmails,activityLog);const size=new Blob([json]).size;const ref=await db.collection("backups").add({createdAt:firebase.firestore.FieldValue.serverTimestamp(),data:json,size,version:5});return ref.id;}
 async function fsListBackups(){try{const s=await db.collection("backups").orderBy("createdAt","desc").get();return s.docs.map(d=>({id:d.id,size:d.data().size||0,created:d.data().createdAt?.toDate()||new Date(0),data:d.data().data}));}catch(e){return[];}}

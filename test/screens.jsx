@@ -769,6 +769,32 @@ function BackupPanel({avvisi,tutors,tutEvents,anagraficaAv,settings={},isSuperAd
   </div>);
 }
 
+function LogRow({r}){
+  const[open,setOpen]=useState(false);
+  const changes=r.changes||[];
+  const hasDetail=changes.length>0;
+  return(<>
+    <tr style={hasDetail?{cursor:"pointer"}:undefined} onClick={()=>hasDetail&&setOpen(o=>!o)}>
+      <td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td>
+      <td style={{maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:"var(--fg-muted)"}}>{r.userEmail}</td>
+      <td style={{whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td>
+      <td style={{color:"var(--fg-muted)",lineHeight:1.4}}>
+        <div style={{display:"flex",alignItems:"center",gap:7}}>
+          <span style={{flex:1}}>{r.detail}</span>
+          {hasDetail&&<span className="badge" style={{flexShrink:0,gap:4}}><Icon name={open?"chevDown":"chevRight"} size={11} color="var(--fg-subtle)"/>{changes.length} {changes.length===1?"modifica":"modifiche"}</span>}
+        </div>
+        {hasDetail&&open&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5,paddingLeft:2}}>
+          {changes.map((c,j)=><div key={j} style={{display:"flex",alignItems:"center",gap:8,fontSize:11.5,flexWrap:"wrap"}}>
+            <span style={{fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".04em",fontSize:10,minWidth:54}}>{c.label}</span>
+            <span style={{color:"var(--fg-muted)",textDecoration:"line-through",opacity:.7}}>{c.from}</span>
+            <Icon name="arrowRight" size={11} color="var(--accent)"/>
+            <span style={{color:"var(--fg)",fontWeight:600}}>{c.to}</span>
+          </div>)}
+        </div>}
+      </td>
+    </tr>
+  </>);
+}
 function LogPanel(){
   const[rows,setRows]=useState([]);const[loading,setLoading]=useState(true);const[filterUser,setFilterUser]=useState("");
   useEffect(()=>{fsLoadLog().then(r=>{setRows(r);setLoading(false);});},[]);
@@ -784,7 +810,7 @@ function LogPanel(){
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",overflow:"hidden",boxShadow:"var(--shadow-xs)"}}>
       {loading?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Icon name="loader" size={14} color="var(--fg-subtle)"/>Caricamento...</p>
       :filtered.length===0?<p style={{padding:24,color:"var(--fg-subtle)",fontSize:13,fontStyle:"italic",textAlign:"center"}}>Nessuna attività registrata.</p>
-      :<table className="data-table"><thead><tr><th>Data e ora</th><th>Utente</th><th>Tipo</th><th>Dettaglio</th></tr></thead><tbody>{filtered.map((r,i)=>(<tr key={r.id}><td style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,whiteSpace:"nowrap"}}>{fmtTs(r.ts)}</td><td style={{maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:"var(--fg-muted)"}}>{r.userEmail}</td><td style={{whiteSpace:"nowrap"}}>{LOG_TYPE_LABELS[r.type]||r.type}</td><td style={{color:"var(--fg-muted)",lineHeight:1.4}}>{r.detail}</td></tr>))}</tbody></table>}
+      :<table className="data-table"><thead><tr><th>Data e ora</th><th>Utente</th><th>Tipo</th><th>Dettaglio</th></tr></thead><tbody>{filtered.map((r,i)=><LogRow key={r.id} r={r}/>)}</tbody></table>}
     </div>
   </div>);
 }
