@@ -338,7 +338,19 @@ function App({user}){
     anaRef.current=newList;setAnagraficaAv(newList);await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);await fsSaveSettings(m);}
 
-  if(loading)return<div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--fg-muted)",background:"var(--bg)",gap:10}}><Icon name="loader" size={20} color="var(--fg-muted)"/>Caricamento...</div>;
+  if(loading)return(<div className="app-shell">
+    <div className="sidebar"><div className="sidebar-logo"><div className="skeleton" style={{width:32,height:32,borderRadius:8}}/><div style={{flex:1}}><div className="skeleton skeleton-text" style={{width:"60%"}}/><div className="skeleton skeleton-text" style={{width:"85%",height:8}}/></div></div>
+      <div className="sidebar-nav">{[0,1,2].map(g=><div key={g} className="sidebar-group">{[0,1,2,3].map(i=><div key={i} className="skeleton" style={{height:32,marginBottom:6,opacity:1-g*0.18}}/>)}</div>)}</div>
+    </div>
+    <div className="main-area">
+      <div className="topbar"><div className="skeleton" style={{width:160,height:32}}/><div className="topbar-divider"/><div className="skeleton" style={{width:200,height:32}}/><div style={{flex:1}}/><div className="skeleton" style={{width:32,height:32,borderRadius:999}}/></div>
+      <div style={{flex:1,padding:32,display:"flex",flexDirection:"column",gap:14}}>
+        <div className="skeleton" style={{width:260,height:36}}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>{[0,1,2,3].map(i=><div key={i} className="skeleton skeleton-card"/>)}</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginTop:8}}>{Array.from({length:21}).map((_,i)=><div key={i} className="skeleton" style={{height:64,opacity:1-Math.floor(i/7)*0.2}}/>)}</div>
+      </div>
+    </div>
+  </div>);
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
