@@ -1,5 +1,5 @@
 /* eslint-disable */
-const {useState,useEffect,useRef}=React;
+const {useState,useEffect,useRef,useMemo}=React;
 const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=20;
 const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const MONTHS=[
