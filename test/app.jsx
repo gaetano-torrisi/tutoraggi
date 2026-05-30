@@ -253,6 +253,8 @@ function App({user}){
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
+  const[isMobile,setIsMobile]=useState(()=>typeof window!=="undefined"&&window.innerWidth<=768);
+  useEffect(()=>{function h(){setIsMobile(window.innerWidth<=768);}window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
   const[appSubtitle,setAppSubtitle]=useState("Gestionale tutoraggi");
   const undoStack=useRef([]);const redoStack=useRef([]);const[undoCount,setUndoCount]=useState(0);const[redoCount,setRedoCount]=useState(0);
   const monthPickerRef=useRef();
@@ -418,6 +420,8 @@ function App({user}){
     anaCorsiRef.current=newList;setAnagraficaCorsi(newList);if(action==="delete"&&item)await fsDeleteAnaCorsoDoc(item.id);else if(item)await fsSaveAnaCorsoDoc(item);else await fsSaveAnaCorsi(newList);if(action==="add")fsLog(user.email,"add_corso_ana",`Aggiunto corso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_corso_ana",`Modificato corso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_corso_ana",`Eliminato corso "${item.nome}"`);}
   async function handleSaveAvviso(newList,op,item){setAvvisi(newList);avvisoRef.current=newList;if(op==="delete")await fsDeleteAvviso(item.id);else await fsSaveAvviso(item);await fsLog(user?.email,op==="delete"?"delete_avviso_ana":op==="add"?"add_avviso_ana":"edit_avviso_ana",item.nome||"");}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);await fsSaveSettings(m);}
+
+  if(isMobile)return(<MobileApp loading={loading} user={user} role={role} perms={perms} theme={theme} setTheme={setTheme} corsi={corsi} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} settings={settings} monthIdx={monthIdx} setMonthIdx={setMonthIdx}/>);
 
   if(loading)return(<div className="app-shell">
     <div className="sidebar"><div className="sidebar-logo"><div className="skeleton" style={{width:32,height:32,borderRadius:8}}/><div style={{flex:1}}><div className="skeleton skeleton-text" style={{width:"60%"}}/><div className="skeleton skeleton-text" style={{width:"85%",height:8}}/></div></div>
