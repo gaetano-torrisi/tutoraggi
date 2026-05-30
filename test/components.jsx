@@ -103,7 +103,7 @@ function MonthPicker({monthIdx,onChange,onClose}){
 
 function ColorPicker({value,onChange,usedColors=[]}){
   return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
-    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c} style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",opacity:used?.3:1}}/>);})}
+    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c} style={{position:"relative",width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",overflow:"hidden",flexShrink:0}}>{used&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(0,0,0,0.55)" strokeWidth="2.5"/><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/></svg>}</div>);})}
   </div>);
 }
 

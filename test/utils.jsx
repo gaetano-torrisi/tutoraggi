@@ -60,7 +60,7 @@ const NAV_GROUPS=[
   {group:"Anagrafiche",items:[
     {id:"ana-tutors",label:"Anagrafica Tutor",icon:"users"},
     {id:"ana-corsi",label:"Anagrafica Corsi",icon:"graduationCap"},
-    {id:"ana-avvisi",label:"Avvisi",icon:"briefcase"},
+    {id:"ana-avvisi",label:"Anagrafica Avvisi/Progetti",icon:"briefcase"},
   ]},
   {group:"Strumenti",items:[
     {id:"ai",label:"AI Import",icon:"sparkles"},
