@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light" data-density="cozy">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Mockup — Insights Avvisi/Progetti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS ── */
+:root {
+  --brand-orange:#EC7A26; --brand-orange-light:#F5A35A; --brand-orange-soft:#FFEFE0;
+  --bg:#FAF8F4; --bg-elev:#FFFFFF; --bg-sunken:#F2EFE9; --bg-hover:#F0EBE2;
+  --border:#E6E1D6; --border-strong:#D8D1C2;
+  --divider:#EDEAD5;
+  --fg:#1A1F2E; --fg-muted:#5B5F70; --fg-subtle:#8A8E9E; --fg-faint:#B5B7C3;
+  --accent:#EC7A26; --accent-fg:#fff; --accent-soft:#FFEFE0; --accent-strong:#D5651A;
+  --success:#2F8F5B; --success-soft:#E4F3EA;
+  --warning:#C58B1B; --warning-soft:#FBF1D9;
+  --danger:#C0392B; --danger-soft:#FBE7E3;
+  --info:#3E6FB8; --info-soft:#E6EEFA;
+  --shadow-xs:0 1px 2px rgba(26,31,77,.06);
+  --shadow-sm:0 1px 3px rgba(26,31,77,.08),0 1px 2px rgba(26,31,77,.04);
+  --shadow-md:0 4px 12px rgba(26,31,77,.08),0 2px 4px rgba(26,31,77,.04);
+  --shadow-lg:0 16px 40px rgba(26,31,77,.14),0 4px 8px rgba(26,31,77,.06);
+  --radius-sm:6px; --radius:8px; --radius-md:10px; --radius-lg:14px;
+  --row-h:40px; --pad-sm:8px; --pad:14px; --pad-lg:20px; --gap:12px;
+  --font-base:14px; --font-sm:12.5px; --font-xs:11px; --progress-h:8px;
+  --font-display:"Fraunces",Georgia,serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--fg); font-family:"Inter Tight",sans-serif;
+       font-size:var(--font-base); line-height:1.5; min-height:100vh;
+       display:flex; align-items:center; justify-content:center; }
+
+/* ── BADGE ── */
+.badge { display:inline-flex; align-items:center; padding:2px 7px; border-radius:100px;
+         font-size:10.5px; font-weight:700; border:1px solid transparent; white-space:nowrap; }
+.badge[data-tone="success"] { background:var(--success-soft); color:var(--success); }
+.badge[data-tone="warning"] { background:var(--warning-soft); color:var(--warning); }
+.badge[data-tone="danger"]  { background:var(--danger-soft);  color:var(--danger); }
+.badge[data-tone="info"]    { background:var(--info-soft);    color:var(--info); }
+.badge[data-tone="accent"]  { background:var(--accent-soft);  color:var(--accent-strong); }
+
+/* ── TAB STRIP ── */
+.tab-strip { display:inline-flex; gap:2px; padding:3px; background:var(--bg-sunken);
+             border-radius:var(--radius); border:1px solid var(--border); }
+.tab-strip-btn { padding:6px 14px; border-radius:6px; font-size:var(--font-xs); font-weight:600;
+                 color:var(--fg-muted); cursor:pointer; background:transparent; border:none;
+                 display:flex; align-items:center; gap:6px; transition:all .12s; }
+.tab-strip-btn.active { background:var(--bg-elev); color:var(--fg); box-shadow:var(--shadow-xs); }
+.tab-strip-btn:not(.active):hover { color:var(--fg); }
+
+/* ── BTN ── */
+.btn { height:var(--row-h); padding:0 14px; border-radius:var(--radius); border:1px solid var(--border);
+       background:var(--bg-elev); color:var(--fg); font-size:var(--font-sm); font-weight:600;
+       cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all .1s; }
+.btn:hover { background:var(--bg-hover); }
+.btn[data-variant="ghost"] { background:transparent; border-color:transparent; color:var(--fg-muted); }
+.btn[data-variant="ghost"]:hover { background:var(--bg-hover); color:var(--fg); }
+.btn[data-size="icon-sm"] { width:28px; height:28px; padding:0; justify-content:center; }
+
+/* ── SELECT ── */
+.select { height:var(--row-h); padding:0 10px; border-radius:var(--radius); border:1px solid var(--border);
+          background:var(--bg-elev); color:var(--fg); font-size:var(--font-sm); cursor:pointer; }
+
+/* ── PROGRESS BAR ── */
+.pb-track { height:var(--progress-h,8px); background:var(--bg-sunken); border-radius:999px; overflow:hidden; position:relative; }
+.pb-fill   { height:100%; border-radius:999px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ── ACCORDION ROW ── */
+.acc-row { margin-bottom:8px; border-radius:var(--radius-md); border:1px solid var(--border);
+           overflow:hidden; background:var(--bg-elev); }
+.acc-btn { width:100%; display:flex; align-items:center; gap:10px; padding:10px 14px;
+           background:none; border:none; cursor:pointer; text-align:left; }
+.acc-btn:hover { background:var(--bg-hover); }
+.acc-body { padding:8px 14px; border-top:1px solid var(--divider); background:var(--bg); }
+
+.acc-row2 { margin-bottom:6px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.acc-btn2 { width:100%; display:flex; align-items:center; gap:8px; padding:7px 12px;
+            background:none; border:none; cursor:pointer; text-align:left; }
+.acc-btn2:hover { background:var(--bg-hover); }
+.acc-body2 { padding:6px 12px; border-top:1px solid var(--divider); display:flex; flex-wrap:wrap; gap:4px; }
+
+/* ── SLOT CHIP ── */
+.slot-chip { font-size:10px; padding:2px 8px; border-radius:100px; background:var(--bg-sunken);
+             border:1px solid var(--border); color:var(--fg-muted);
+             font-family:"JetBrains Mono",monospace; cursor:pointer; }
+.slot-chip:hover { border-color:var(--border-strong); color:var(--fg); }
+
+/* ── AVATAR ── */
+.avatar { border-radius:999px; color:#fff; font-weight:700; display:flex;
+          align-items:center; justify-content:center; flex-shrink:0; }
+
+/* ── DRAWER SHELL ── */
+.drawer { width:88%; max-width:900px; background:var(--bg-elev); border-left:1px solid var(--border);
+          box-shadow:var(--shadow-lg); display:flex; flex-direction:column;
+          height:96vh; border-radius:var(--radius-lg) 0 0 var(--radius-lg); overflow:hidden; }
+
+/* ── KPI CARD ── */
+.kpi-card { background:var(--bg-sunken); border-radius:var(--radius-md); padding:10px 14px;
+            border:1px solid var(--border); }
+
+/* ── CHART BAR ── */
+.chart-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.chart-label { font-size:10px; color:var(--fg-muted); width:140px; text-align:right;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+.chart-bar-track { flex:1; height:20px; background:var(--bg-sunken); border-radius:4px; overflow:hidden; }
+.chart-bar-fill { height:100%; border-radius:4px; display:flex; align-items:center; padding-left:6px;
+                  font-size:9.5px; font-weight:700; color:rgba(255,255,255,.9);
+                  font-family:"JetBrains Mono",monospace; min-width:40px; white-space:nowrap; }
+.chart-val { font-size:10px; font-family:"JetBrains Mono",monospace; font-weight:700;
+             color:var(--fg-muted); width:44px; text-align:right; flex-shrink:0; }
+
+/* ── PERIOD LABEL ── */
+.period-section-label { font-size:10px; font-weight:700; color:var(--fg-subtle);
+                        text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<div class="drawer">
+
+  <!-- HEADER -->
+  <div style="padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--bg-elev)">
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:18px;color:var(--fg)">Insights &amp; Riepiloghi</div>
+      <div style="font-size:11px;color:var(--fg-subtle);margin-top:2px">Anno 2026</div>
+    </div>
+    <button class="btn" data-variant="ghost" data-size="icon-sm">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div style="padding:10px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0;background:var(--bg-elev);flex-wrap:wrap">
+    <div class="tab-strip">
+      <button class="tab-strip-btn" onclick="setTab('tutor')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Per tutor
+      </button>
+      <button class="tab-strip-btn" onclick="setTab('corso')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Per corso
+      </button>
+      <button class="tab-strip-btn active" onclick="setTab('avviso')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Per avviso/progetto
+      </button>
+    </div>
+    <!-- period nav -->
+    <button class="btn" data-variant="ghost" data-size="icon-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div style="padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elev);font-size:var(--font-xs);font-weight:600;color:var(--fg);cursor:pointer">
+      Anno 2026
+    </div>
+    <button class="btn" data-variant="ghost" data-size="icon-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <!-- filter by stato -->
+    <select class="select" style="min-width:150px">
+      <option value="">Tutti gli avvisi</option>
+      <option>In corso</option>
+      <option>Completato</option>
+      <option>Sospeso</option>
+    </select>
+    <div style="flex:1"></div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 24px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div class="kpi-card">
+      <div style="font-size:20px;font-weight:700;color:var(--fg);font-family:'JetBrains Mono',monospace;line-height:1">3</div>
+      <div style="font-size:10px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;gap:5px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Avvisi attivi
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:20px;font-weight:700;color:var(--fg);font-family:'JetBrains Mono',monospace;line-height:1">284h</div>
+      <div style="font-size:10px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;gap:5px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Ore pianificate
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:20px;font-weight:700;color:var(--fg);font-family:'JetBrains Mono',monospace;line-height:1">6</div>
+      <div style="font-size:10px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;gap:5px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Corsi collegati
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size:20px;font-weight:700;color:var(--fg);font-family:'JetBrains Mono',monospace;line-height:1">5</div>
+      <div style="font-size:10px;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;display:flex;align-items:center;gap:5px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Tutor coinvolti
+      </div>
+    </div>
+  </div>
+
+  <!-- BAR CHART -->
+  <div style="padding:12px 24px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div class="period-section-label">ORE PIANIFICATE PER AVVISO/PROGETTO — Anno 2026</div>
+    <div class="chart-row">
+      <div class="chart-label">PNRR — Competenze Digit.</div>
+      <div class="chart-bar-track">
+        <div class="chart-bar-fill" style="width:76%;background:linear-gradient(90deg,#4f86c6,#6a9fd8)">112h</div>
+      </div>
+      <div class="chart-val">112h</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">FESR — Formazione PMI</div>
+      <div class="chart-bar-track">
+        <div class="chart-bar-fill" style="width:62%;background:linear-gradient(90deg,#58B383,#72c99b)">92h</div>
+      </div>
+      <div class="chart-val">92h</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">PON Metro — STEM</div>
+      <div class="chart-bar-track">
+        <div class="chart-bar-fill" style="width:54%;background:linear-gradient(90deg,#EC7A26,#F5A35A)">80h</div>
+      </div>
+      <div class="chart-val">80h</div>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div style="flex:1;overflow-y:auto;padding:16px 24px;background:var(--bg)" id="list-avvisi">
+
+    <!-- ═══ AVVISO 1 — espanso ═══ -->
+    <div class="acc-row">
+      <button class="acc-btn" onclick="toggle('av1')">
+        <!-- color swatch -->
+        <span style="width:12px;height:12px;border-radius:4px;background:#4f86c6;flex-shrink:0;box-shadow:0 0 0 2px rgba(79,134,198,.25)"></span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--fg)">PNRR 2024 — Competenze Digitali</div>
+          <div style="font-size:11px;color:var(--fg-subtle)">MIMIT &nbsp;·&nbsp; 2 corsi &nbsp;·&nbsp; 3 tutor</div>
+        </div>
+        <span class="badge" data-tone="info">In corso</span>
+        <!-- % globale -->
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;margin-left:8px">
+          <span class="badge" data-tone="warning">56%</span>
+          <span style="font-size:9px;color:var(--fg-subtle)">avanz. globale</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--fg);margin-left:8px">112h</span>
+        <svg id="chev-av1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+
+      <div id="body-av1" class="acc-body">
+        <!-- progress section -->
+        <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--divider)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em">Ore totali pianificate</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--warning)">56% · 112h / 200h bando</span>
+          </div>
+          <div class="pb-track" style="margin-bottom:10px">
+            <div class="pb-fill" style="width:56%;background:linear-gradient(90deg,#4f86c6cc,#4f86c6)"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em">Ore corso nel periodo</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:9px;color:var(--fg-subtle);font-style:italic">Anno 2026</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">36% · 72h / 200h</span>
+            </div>
+          </div>
+          <div class="pb-track" style="margin-bottom:10px">
+            <div class="pb-fill" style="width:36%;background:linear-gradient(90deg,#4f86c688,#4f86c6bb)"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em">Ore tutor assegnati</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:9px;color:var(--fg-subtle);font-style:italic">Anno 2026</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">27% · 54h / 200h</span>
+            </div>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill" style="width:27%;background:linear-gradient(90deg,#4f86c644,#4f86c677)"></div>
+          </div>
+        </div>
+
+        <!-- corsi collegati -->
+        <div class="period-section-label">CORSI COLLEGATI</div>
+
+        <!-- corso 1 -->
+        <div class="acc-row2">
+          <button class="acc-btn2" onclick="toggle('co1')">
+            <span style="width:8px;height:8px;border-radius:2px;background:#4f86c6;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Python Base</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">2 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="success">80%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">64h</span>
+            <svg id="chev-co1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <div id="body-co1" style="padding:8px 12px;border-top:1px solid var(--divider)">
+            <!-- tutor row -->
+            <div class="acc-row2" style="margin-bottom:6px">
+              <button class="acc-btn2" onclick="toggle('tu1')">
+                <div class="avatar" style="width:22px;height:22px;background:#EC7A26;font-size:9px">RF</div>
+                <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Rossi Francesco</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">40h</span>
+                <svg id="chev-tu1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+            </div>
+            <div class="acc-row2">
+              <button class="acc-btn2" onclick="toggle('tu2')">
+                <div class="avatar" style="width:22px;height:22px;background:#2F8F5B;font-size:9px">FM</div>
+                <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Ferrari Marco</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">24h</span>
+                <svg id="chev-tu2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+              <div id="body-tu2" class="acc-body2">
+                <span class="slot-chip">08 gen · 09:00–12:00</span>
+                <span class="slot-chip">15 gen · 09:00–12:00</span>
+                <span class="slot-chip">22 gen · 09:00–12:00</span>
+                <span class="slot-chip">29 gen · 09:00–12:00</span>
+                <span class="slot-chip">05 feb · 09:00–12:00</span>
+                <span class="slot-chip">12 feb · 09:00–12:00</span>
+                <span class="slot-chip">19 feb · 09:00–12:00</span>
+                <span class="slot-chip">26 feb · 09:00–12:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- corso 2 -->
+        <div class="acc-row2">
+          <button class="acc-btn2" onclick="toggle('co2')">
+            <span style="width:8px;height:8px;border-radius:2px;background:#3E6FB8;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Data Science Avanzato</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">1 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="info">40%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">48h</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AVVISO 2 ═══ -->
+    <div class="acc-row">
+      <button class="acc-btn" onclick="toggle('av2')">
+        <span style="width:12px;height:12px;border-radius:4px;background:#58B383;flex-shrink:0;box-shadow:0 0 0 2px rgba(88,179,131,.25)"></span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--fg)">FESR 2023 — Formazione PMI</div>
+          <div style="font-size:11px;color:var(--fg-subtle)">Regione Lombardia &nbsp;·&nbsp; 2 corsi &nbsp;·&nbsp; 2 tutor</div>
+        </div>
+        <span class="badge" data-tone="info">In corso</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;margin-left:8px">
+          <span class="badge" data-tone="success">92%</span>
+          <span style="font-size:9px;color:var(--fg-subtle)">avanz. globale</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--fg);margin-left:8px">92h</span>
+        <svg id="chev-av2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <div id="body-av2" style="display:none" class="acc-body">
+        <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--divider)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em">Ore totali pianificate</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--success)">92% · 92h / 100h bando</span>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill" style="width:92%;background:linear-gradient(90deg,#58B383cc,#58B383)"></div>
+          </div>
+        </div>
+        <div class="period-section-label">CORSI COLLEGATI</div>
+        <div class="acc-row2">
+          <button class="acc-btn2">
+            <span style="width:8px;height:8px;border-radius:2px;background:#58B383;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Marketing Digitale</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">1 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="success">87%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">52h</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+        <div class="acc-row2">
+          <button class="acc-btn2">
+            <span style="width:8px;height:8px;border-radius:2px;background:#3BB57A;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Excel Avanzato</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">1 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="success">100%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">40h</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AVVISO 3 ═══ -->
+    <div class="acc-row">
+      <button class="acc-btn" onclick="toggle('av3')">
+        <span style="width:12px;height:12px;border-radius:4px;background:#EC7A26;flex-shrink:0;box-shadow:0 0 0 2px rgba(236,122,38,.25)"></span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;color:var(--fg)">PON Metro — STEM Academy</div>
+          <div style="font-size:11px;color:var(--fg-subtle)">MIUR &nbsp;·&nbsp; 2 corsi &nbsp;·&nbsp; 2 tutor</div>
+        </div>
+        <span class="badge" data-tone="success">Completato</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;margin-left:8px">
+          <span class="badge" data-tone="success">100%</span>
+          <span style="font-size:9px;color:var(--fg-subtle)">avanz. globale</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--fg);margin-left:8px">80h</span>
+        <svg id="chev-av3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <div id="body-av3" style="display:none" class="acc-body">
+        <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--divider)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:700;color:var(--fg-subtle);text-transform:uppercase;letter-spacing:.06em">Ore totali pianificate</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--success)">100% · 80h / 80h bando</span>
+          </div>
+          <div class="pb-track">
+            <div class="pb-fill" style="width:100%;background:linear-gradient(90deg,#EC7A26cc,#EC7A26)"></div>
+          </div>
+        </div>
+        <div class="period-section-label">CORSI COLLEGATI</div>
+        <div class="acc-row2">
+          <button class="acc-btn2">
+            <span style="width:8px;height:8px;border-radius:2px;background:#EC7A26;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Robotica Base</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">1 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="success">100%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">48h</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+        <div class="acc-row2">
+          <button class="acc-btn2">
+            <span style="width:8px;height:8px;border-radius:2px;background:#F5A35A;flex-shrink:0"></span>
+            <span style="flex:1;font-size:12px;font-weight:600;color:var(--fg)">Coding Junior</span>
+            <span style="font-size:10.5px;color:var(--fg-subtle)">1 tutor</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+              <span class="badge" data-tone="success">100%</span>
+              <span style="font-size:9px;color:var(--fg-subtle)">su bando</span>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--fg)">32h</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--fg-subtle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /list -->
+</div><!-- /drawer -->
+
+<script>
+const open = { av1:true, co1:true, tu2:true, av2:false, av3:false };
+
+function toggle(id){
+  open[id] = !open[id];
+  const body = document.getElementById('body-'+id);
+  const chev = document.getElementById('chev-'+id);
+  if(body) body.style.display = open[id] ? '' : 'none';
+  if(chev) chev.style.transform = open[id] ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+function setTab(t){
+  document.querySelectorAll('.tab-strip-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['tutor','corso','avviso'][i]===t);
+  });
+}
+
+// init chevrons
+['av1','av2','av3','co1','co2','tu1','tu2'].forEach(id=>{
+  const chev=document.getElementById('chev-'+id);
+  if(chev) chev.style.transform = open[id] ? 'rotate(180deg)' : 'rotate(0deg)';
+});
+</script>
+</body>
+</html>
