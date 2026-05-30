@@ -377,13 +377,15 @@ function AnaAvvisiScreen({avvisi=[],onSaveAvviso,canEdit}){
 }
 
 // ── INSIGHTS SCREEN ───────────────────────────────────────────────────────
-function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,onClose,onNavigate}){
+function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,currentMonthKey,onClose,onNavigate}){
   const[viewMode,setViewMode]=useState("tutor");
   const[selPeriod,setSelPeriod]=useState({mode:"single",monthKey:currentMonthKey,year:MONTHS.find(m=>m.key===currentMonthKey)?.year||2026});
   const[selAvFilter,setSelAvFilter]=useState("");
   const[selTutFilter,setSelTutFilter]=useState("");
   const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});
   const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});
+  const[selProgettoFilter,setSelProgettoFilter]=useState("");
+  const[expandedProg,setExpandedProg]=useState({});const[expandedProgCo,setExpandedProgCo]=useState({});
   const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
   function getMks(){if(selPeriod.mode==="single")return[selPeriod.monthKey];if(selPeriod.mode==="year")return MONTHS.filter(m=>m.year===selPeriod.year).map(m=>m.key);if(selPeriod.mode==="range"){const si=MONTHS.findIndex(m=>m.key===selPeriod.startKey),ei=MONTHS.findIndex(m=>m.key===selPeriod.endKey);if(si<0||ei<0)return[selPeriod.monthKey||currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
   const mks=useMemo(()=>getMks(),[selPeriod,currentMonthKey]);
@@ -397,6 +399,11 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
   function getTutsForAvPeriodo(avName){return[...tutors].filter(t=>mks.some(mk=>(tutEvents[t.id]?.[mk]||[]).some(e=>e.name===avName))).sort((a,b)=>a.cognome.localeCompare(b.cognome));}
   function getSlotsForTutAvMk(tId,avName,mk){return(tutEvents[tId]?.[mk]||[]).filter(e=>e.name===avName).sort((a,b)=>a.day-b.day||a.start-b.start);}
   function getSlotsForTutAvPeriodo(tId,avName){return mks.flatMap(mk=>getSlotsForTutAvMk(tId,avName,mk).map(sl=>({...sl,_mk:mk})));}
+  function getProgettoCorsi(avvId){return anagraficaCorsi.filter(a=>a.avvisoId===avvId);}
+  function getProgettoOrePeriodo(avvId){return getProgettoCorsi(avvId).reduce((s,a)=>s+getAvOrePeriodo(a.id),0);}
+  function getProgettoTotOre(avvId){return getProgettoCorsi(avvId).reduce((s,a)=>s+getAvTotOre(a.id),0);}
+  function getProgettoDurataOre(avvId){return getProgettoCorsi(avvId).reduce((s,a)=>s+(Number(a.durataOre)||0),0);}
+  function getProgettoTutors(avvId){const s=new Set();for(const ana of getProgettoCorsi(avvId))for(const t of getTutsForAvPeriodo(ana.nome))s.add(t.id);return tutors.filter(t=>s.has(t.id));}
   const pctBadge=(ore,max)=>{if(!max)return null;const p=ore/max*100;return<span className="badge" data-tone={p>100?"danger":p>=80?"success":"info"}>{fmtPct(ore,max)}</span>;};
   const allMonthKeys=useMemo(()=>MONTHS.filter(m=>{const mk=m.key;const hasTut=tutors.some(t=>(tutEvents[t.id]?.[mk]||[]).length>0);const hasAv=anagraficaCorsi.some(a=>(corsiById[a.id]?.events||[]).some(e=>e.month===mk));return hasTut||hasAv;}).map(m=>m.key),[tutors,tutEvents,anagraficaCorsi,corsiById]);
   const totTutOre=useMemo(()=>tutors.reduce((s,t)=>s+getTutOrePeriodo(t.id),0),[tutors,tutEvents,mks]);
@@ -404,16 +411,21 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
   const activeTutors=useMemo(()=>tutors.filter(t=>getTutOrePeriodo(t.id)>0),[tutors,tutEvents,mks]);
   const activeAvvisi=useMemo(()=>anagraficaCorsi.filter(a=>getAvOrePeriodo(a.id)>0),[anagraficaCorsi,corsiById,mks]);
   const totSlots=useMemo(()=>tutors.reduce((s,t)=>s+mks.reduce((s2,mk)=>s2+(tutEvents[t.id]?.[mk]||[]).length,0),0)+anagraficaCorsi.reduce((s,a)=>s+(corsiById[a.id]?.events||[]).filter(e=>mks.includes(e.month)).length,0),[tutors,anagraficaCorsi,tutEvents,corsiById,mks]);
+  const activeProgetti=useMemo(()=>avvisi.filter(av=>getProgettoOrePeriodo(av.id)>0),[avvisi,anagraficaCorsi,corsiById,mks]);
+  const totProgOre=useMemo(()=>avvisi.reduce((s,av)=>s+getProgettoOrePeriodo(av.id),0),[avvisi,anagraficaCorsi,corsiById,mks]);
   const RC=typeof window.Recharts!=="undefined"?window.Recharts:{};
   const safeColor=c=>(c&&c.startsWith("#"))?c:"#4f86c6";
   const chartDataTutor=useMemo(()=>[...tutors].filter(t=>getTutOrePeriodo(t.id)>0).sort((a,b)=>getTutOrePeriodo(b.id)-getTutOrePeriodo(a.id)).slice(0,8).map(t=>({name:`${t.cognome} ${t.nome[0]}.`,ore:getTutOrePeriodo(t.id),color:safeColor(t.color)})),[tutors,tutEvents,mks]);
   const chartDataAv=useMemo(()=>[...anagraficaCorsi].filter(a=>getAvOrePeriodo(a.id)>0).sort((a,b)=>getAvOrePeriodo(b.id)-getAvOrePeriodo(a.id)).slice(0,8).map(a=>({name:a.nome,ore:getAvOrePeriodo(a.id),color:safeColor(a.colore)})),[anagraficaCorsi,corsiById,mks]);
-  const chartData=viewMode==="tutor"?chartDataTutor:chartDataAv;
+  const chartDataProg=useMemo(()=>[...avvisi].filter(av=>getProgettoOrePeriodo(av.id)>0).sort((a,b)=>getProgettoOrePeriodo(b.id)-getProgettoOrePeriodo(a.id)).slice(0,8).map(av=>{const c=getProgettoCorsi(av.id)[0];return{name:av.nome,ore:getProgettoOrePeriodo(av.id),color:safeColor(c?.colore)};}),[avvisi,anagraficaCorsi,corsiById,mks]);
+  const chartData=viewMode==="tutor"?chartDataTutor:viewMode==="avviso"?chartDataAv:chartDataProg;
   function periodSubtitle(){if(selPeriod.mode==="year")return`Anno ${selPeriod.year}`;if(selPeriod.mode==="range"){const s=MONTHS.find(m=>m.key===selPeriod.startKey);const e=MONTHS.find(m=>m.key===selPeriod.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} → ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"";}return MONTHS.find(m=>m.key===selPeriod.monthKey)?.label||"";}
   function toggleTut(id){setExpandedTut(p=>({...p,[id]:!p[id]}))}
   function toggleTutAv(key){setExpandedTutAv(p=>({...p,[key]:!p[key]}))}
   function toggleAv(id){setExpandedAv(p=>({...p,[id]:!p[id]}))}
   function toggleAvTut(key){setExpandedAvTut(p=>({...p,[key]:!p[key]}))}
+  function toggleProg(id){setExpandedProg(p=>({...p,[id]:!p[id]}))}
+  function toggleProgCo(key){setExpandedProgCo(p=>({...p,[key]:!p[key]}))}
   return(<div className="drawer-overlay">
     <div className="drawer-backdrop" onClick={onClose}/>
     <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
@@ -425,23 +437,26 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
         <div className="tab-strip">
           <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>{setViewMode("tutor");setSelTutFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
           <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>{setViewMode("avviso");setSelAvFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={12}/>Per corso</button>
+          <button className={`tab-strip-btn${viewMode==="progetto"?" active":""}`} onClick={()=>{setViewMode("progetto");setSelProgettoFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="file" size={12}/>Per avviso/progetto</button>
         </div>
         <button disabled={selPeriod.mode!=="single"} onClick={()=>{const idx=MONTHS.findIndex(m=>m.key===selPeriod.monthKey);if(idx>0)setSelPeriod({mode:"single",monthKey:MONTHS[idx-1].key,year:MONTHS[idx-1].year});}} className="btn" data-variant="ghost" data-size="icon-sm" title="Mese precedente"><Icon name="chevLeft" size={14}/></button>
         <MonthRangePicker value={selPeriod} onChange={setSelPeriod} months={allMonthKeys}/>
         <button disabled={selPeriod.mode!=="single"} onClick={()=>{const idx=MONTHS.findIndex(m=>m.key===selPeriod.monthKey);if(idx<MONTHS.length-1)setSelPeriod({mode:"single",monthKey:MONTHS[idx+1].key,year:MONTHS[idx+1].year});}} className="btn" data-variant="ghost" data-size="icon-sm" title="Mese successivo"><Icon name="chevRight" size={14}/></button>
         {viewMode==="tutor"
           ?<select className="select" value={selTutFilter} onChange={e=>setSelTutFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti i tutor</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select>
-          :<select className="select" value={selAvFilter} onChange={e=>setSelAvFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti i corsi</option>{anagraficaCorsi.map(a=><option key={a.id} value={a.nome}>{a.nome}</option>)}</select>}
+          :viewMode==="avviso"
+            ?<select className="select" value={selAvFilter} onChange={e=>setSelAvFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti i corsi</option>{anagraficaCorsi.map(a=><option key={a.id} value={a.nome}>{a.nome}</option>)}</select>
+            :<select className="select" value={selProgettoFilter} onChange={e=>setSelProgettoFilter(e.target.value)} style={{minWidth:180}}><option value="">Tutti gli avvisi/progetti</option>{[...avvisi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(av=><option key={av.id} value={av.id}>{av.nome}</option>)}</select>}
         <div style={{flex:1}}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,padding:"14px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-        {[{label:"TUTOR ATTIVI",val:activeTutors.length,icon:"users"},{label:"ORE PERIODO",val:fmtOreMin(viewMode==="tutor"?totTutOre:totAvOre),icon:"clock"},{label:"SLOT TOTALI",val:totSlots,icon:"mapPin"},{label:"AVVISI ATTIVI",val:activeAvvisi.length,icon:"briefcase"}].map(k=><div key={k.label} style={{background:"var(--bg-sunken)",borderRadius:"var(--radius-md)",padding:"10px 14px",border:"1px solid var(--border)"}}>
+        {[{label:"TUTOR ATTIVI",val:activeTutors.length,icon:"users"},{label:"ORE PERIODO",val:fmtOreMin(viewMode==="tutor"?totTutOre:viewMode==="avviso"?totAvOre:totProgOre),icon:"clock"},{label:"SLOT TOTALI",val:totSlots,icon:"mapPin"},{label:"AVVISI ATTIVI",val:activeAvvisi.length,icon:"briefcase"}].map(k=><div key={k.label} style={{background:"var(--bg-sunken)",borderRadius:"var(--radius-md)",padding:"10px 14px",border:"1px solid var(--border)"}}>
           <div style={{fontSize:20,fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',lineHeight:1}}>{k.val}</div>
           <div style={{fontSize:10,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginTop:4,display:"flex",alignItems:"center",gap:5}}><Icon name={k.icon} size={10} color="var(--fg-subtle)"/>{k.label}</div>
         </div>)}
       </div>
-      {RC.BarChart&&chartData.length>0&&<div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-        <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>ORE {viewMode==="tutor"?"PER TUTOR":"PER AVVISO"} — {periodSubtitle()}</div>
+      {RC.BarChart&&chartData.length>0&&(viewMode!=="progetto"||!selProgettoFilter)&&<div style={{padding:"12px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+        <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>ORE {viewMode==="tutor"?"PER TUTOR":viewMode==="avviso"?"PER CORSO":"PER AVVISO/PROGETTO"} — {periodSubtitle()}</div>
         <RC.ResponsiveContainer width="100%" height={Math.max(80,chartData.length*32)}>
           <RC.BarChart data={chartData} layout="vertical" margin={{top:0,right:60,bottom:0,left:100}}>
             <RC.XAxis type="number" tick={{fontSize:10}} tickFormatter={v=>fmtOreMin(v)} stroke="var(--border)"/>
@@ -518,6 +533,61 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
                     {getSlotsForTutAvPeriodo(t.id,ana.nome).map((sl,i)=>(
                       <button key={i} onClick={()=>onNavigate&&onNavigate(sl._mk||mks[0],sl.day)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,background:"var(--bg-sunken)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{fmtDayMonth(sl.day,sl._mk)} · {fmt(sl.start)}–{fmt(sl.end)}</button>
                     ))}
+                  </div>}
+                </div>);
+              })}
+            </div>}
+          </div>);
+        })}
+        {viewMode==="progetto"&&[...avvisi].filter(av=>!selProgettoFilter||av.id===selProgettoFilter).sort((a,b)=>a.nome.localeCompare(b.nome)).map(av=>{
+          const corsiAv=getProgettoCorsi(av.id);const oreAv=getProgettoOrePeriodo(av.id);const tutorsAv=getProgettoTutors(av.id);
+          if(!oreAv&&!tutorsAv.length)return null;
+          const totOre=getProgettoTotOre(av.id);const durataOre=getProgettoDurataOre(av.id);const pct=durataOre?Math.round(totOre/durataOre*100):null;
+          const exp=expandedProg[av.id];const firstColor=corsiAv[0]?.colore||"var(--accent)";
+          return(<div key={av.id} style={{marginBottom:8,borderRadius:"var(--radius-md)",border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg-elev)"}}>
+            <button onClick={()=>toggleProg(av.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+              <span style={{width:10,height:10,borderRadius:3,background:firstColor,flexShrink:0}}/>
+              <div style={{flex:1}}><div style={{fontWeight:700,fontSize:13,color:"var(--fg)"}}>{av.nome}</div><div style={{fontSize:11,color:"var(--fg-subtle)"}}>{corsiAv.length} corsi · {tutorsAv.length} tutor{av.ente?` · ${av.ente}`:""}</div></div>
+              {durataOre&&pct!=null?<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={pct>100?"danger":pct>=80?"success":"info"}>{pct}%</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>avanz. globale</span></div>:<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
+              <span style={{fontWeight:700,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace',fontSize:13,marginLeft:8}}>{fmtOreMin(oreAv)}</span>
+              <Icon name={exp?"chevUp":"chevDown"} size={14} color="var(--fg-subtle)"/>
+            </button>
+            {exp&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
+              {durataOre&&pct!=null&&(()=>{const tutOreAv=tutorsAv.reduce((s,t)=>s+corsiAv.reduce((s2,ana)=>s2+getTutOreAvPeriodo(t.id,ana.nome),0),0);const tutPct=Math.round(tutOreAv/durataOre*100);const avPct=Math.round(oreAv/durataOre*100);return(<div style={{marginBottom:10,paddingBottom:10,borderBottom:"1px solid var(--divider)"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Ore totali pianificate</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:pct>100?"var(--danger)":"var(--fg)"}}>{pct}% · {fmtOreMin(totOre)}/{fmtOreMin(durataOre)}</span></div>
+                <div className="progress-bar-track" style={{height:6,marginBottom:10}}><div className="progress-bar-fill" style={{width:`${Math.min(100,pct)}%`,background:`linear-gradient(90deg,${firstColor}bb,${firstColor})`}}/></div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Ore corso nel periodo</span><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,color:"var(--fg-subtle)",fontStyle:"italic"}}>{periodSubtitle()}</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:avPct>100?"var(--danger)":"var(--fg)"}}>{avPct}% · {fmtOreMin(oreAv)}/{fmtOreMin(durataOre)}</span></div></div>
+                <div className="progress-bar-track" style={{height:6,marginBottom:10}}><div className="progress-bar-fill" style={{width:`${Math.min(100,avPct)}%`,background:`linear-gradient(90deg,${firstColor}88,${firstColor}bb)`}}/></div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Ore tutor assegnati</span><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,color:"var(--fg-subtle)",fontStyle:"italic"}}>{periodSubtitle()}</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:tutPct>100?"var(--danger)":"var(--fg)"}}>{tutPct}% · {fmtOreMin(tutOreAv)}/{fmtOreMin(durataOre)}</span></div></div>
+                <div className="progress-bar-track" style={{height:6}}><div className="progress-bar-fill" style={{width:`${Math.min(100,tutPct)}%`,background:`linear-gradient(90deg,${firstColor}44,${firstColor}77)`}}/></div>
+              </div>);})()}
+              {corsiAv.map(ana=>{
+                const oreAnaCo=getAvOrePeriodo(ana.id);const totOreAnaCo=getAvTotOre(ana.id);const pctAnaCo=ana.durataOre?Math.round(totOreAnaCo/ana.durataOre*100):null;const tutsAnaCo=getTutsForAvPeriodo(ana.nome);const progCoKey=`${av.id}-${ana.id}`;const expCo=expandedProgCo[progCoKey];
+                return(<div key={ana.id} style={{marginBottom:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                  <button onClick={()=>toggleProgCo(progCoKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <span style={{width:8,height:8,borderRadius:2,background:ana.colore||"var(--accent)",flexShrink:0}}/>
+                    <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{ana.nome}</span>
+                    <span style={{fontSize:10.5,color:"var(--fg-subtle)",marginRight:6}}>{tutsAnaCo.length} tutor</span>
+                    {pctAnaCo!=null?<div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:1}}><span className="badge" data-tone={pctAnaCo>100?"danger":pctAnaCo>=80?"success":"info"}>{fmtPct(totOreAnaCo,ana.durataOre)}</span><span style={{fontSize:9,color:"var(--fg-subtle)"}}>su bando</span></div>:<span style={{fontSize:11,color:"var(--fg-subtle)"}}>—</span>}
+                    <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)",marginLeft:6}}>{fmtOreMin(oreAnaCo)}</span>
+                    <Icon name={expCo?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                  </button>
+                  {expCo&&<div style={{padding:"8px 14px",borderTop:"1px solid var(--divider)"}}>
+                    {tutsAnaCo.map(t=>{const oreT=getSlotsForTutAvPeriodo(t.id,ana.nome).reduce((s,e)=>s+e.ore,0);const tutKey=`${progCoKey}-${t.id}`;const expTut=expandedProgCo[tutKey];
+                      return(<div key={t.id} style={{marginBottom:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                        <button onClick={()=>toggleProgCo(tutKey)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                          <div style={{width:22,height:22,borderRadius:999,background:t.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(t.cognome[0]||"")+(t.nome[0]||"")}</div>
+                          <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>{t.cognome} {t.nome}</span>
+                          <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:"var(--fg)"}}>{fmtOreMin(oreT)}</span>
+                          <Icon name={expTut?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                        </button>
+                        {expTut&&<div style={{padding:"6px 12px",borderTop:"1px solid var(--divider)",display:"flex",flexWrap:"wrap",gap:4}}>
+                          {getSlotsForTutAvPeriodo(t.id,ana.nome).map((sl,i)=>(
+                            <button key={i} onClick={()=>onNavigate&&onNavigate(sl._mk||mks[0],sl.day)} style={{fontSize:10,padding:"2px 8px",borderRadius:100,background:"var(--bg-sunken)",border:"1px solid var(--border)",cursor:"pointer",color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{fmtDayMonth(sl.day,sl._mk)} · {fmt(sl.start)}–{fmt(sl.end)}</button>
+                          ))}
+                        </div>}
+                      </div>);
+                    })}
                   </div>}
                 </div>);
               })}
