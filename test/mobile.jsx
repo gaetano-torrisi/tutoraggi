@@ -178,8 +178,8 @@ function MCorsi({anagraficaCorsi,corsiById,avvisi,tutors,tutEvents}){
   const[sort,setSort]=useState("az");
   const[stato,setStato]=useState("all");
   const oreSched=id=>{const co=corsiById[id];return co?co.events.reduce((s,e)=>s+(e.ore||0),0):0;};
-  // Il codice può essere sul corso oppure (se vuoto) sull'avviso/progetto collegato
-  const codeOf=a=>a.codice||avvisi.find(av=>av.id===a.avvisoId)?.codice||"";
+  // Il codice appartiene all'avviso/progetto; il corso può non averne uno proprio (resta vuoto)
+  const codeOf=a=>a.codice||"";
   if(sel){
     const a=sel;const co=corsiById[a.id];const ore=oreSched(a.id);const nSess=co?co.events.length:0;
     const tone=STATO_TONES[a.stato]||"info";
