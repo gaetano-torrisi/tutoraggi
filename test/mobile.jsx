@@ -109,6 +109,7 @@ function MListToolbar({q,setQ,sort,setSort,placeholder}){
     <div className="m-search">
       <Icon name="search" size={15} color="var(--fg-faint)"/>
       <input value={q} onChange={e=>setQ(e.target.value)} placeholder={placeholder}/>
+      {q&&<button className="m-search-clear" onClick={()=>setQ("")} aria-label="Cancella ricerca"><Icon name="x" size={13} color="currentColor"/></button>}
     </div>
     <div className="m-toolbar-row">
       <div className="m-sort">
@@ -245,16 +246,19 @@ function MCorsi({anagraficaCorsi,corsiById,avvisi,tutors,tutEvents}){
 // ── Insights ──
 function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
   const[period,setPeriod]=useState("month"); // month | year | range
+  const[selMonth,setSelMonth]=useState(month.key);
+  const[selYear,setSelYear]=useState(month.year);
   const[rangeStart,setRangeStart]=useState(month.key);
   const[rangeEnd,setRangeEnd]=useState(month.key);
   const[rankMode,setRankMode]=useState("tutor"); // tutor | corso
+  const YEARS=useMemo(()=>[...new Set(MONTHS.map(m=>m.year))],[]);
   const mks=useMemo(()=>{
-    if(period==="month")return[month.key];
-    if(period==="year")return MONTHS.filter(m=>m.year===month.year).map(m=>m.key);
+    if(period==="month")return[selMonth];
+    if(period==="year")return MONTHS.filter(m=>m.year===selYear).map(m=>m.key);
     const si=MONTHS.findIndex(m=>m.key===rangeStart),ei=MONTHS.findIndex(m=>m.key===rangeEnd);
-    if(si<0||ei<0)return[month.key];
+    if(si<0||ei<0)return[selMonth];
     return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);
-  },[period,month,rangeStart,rangeEnd]);
+  },[period,selMonth,selYear,rangeStart,rangeEnd]);
   const tutOre=tId=>{let s=0;const td=tutEvents[tId]||{};for(const mk of mks)for(const e of(td[mk]||[]))s+=e.ore||0;return s;};
   const avOre=id=>{const co=corsiById[id];return co?co.events.filter(e=>mks.includes(e.month)).reduce((s,e)=>s+(e.ore||0),0):0;};
   const totOre=tutors.reduce((s,t)=>s+tutOre(t.id),0);
@@ -275,9 +279,15 @@ function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
   return(<>
     <div className="m-period">
       <button className={period==="month"?"on":""} onClick={()=>setPeriod("month")}>Mese</button>
-      <button className={period==="year"?"on":""} onClick={()=>setPeriod("year")}>Anno {month.year}</button>
+      <button className={period==="year"?"on":""} onClick={()=>setPeriod("year")}>Anno</button>
       <button className={period==="range"?"on":""} onClick={()=>setPeriod("range")}>Periodo</button>
     </div>
+    {period==="month"&&<div className="m-range">
+      <select value={selMonth} onChange={e=>setSelMonth(e.target.value)}>{MONTHS.map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select>
+    </div>}
+    {period==="year"&&<div className="m-range">
+      <select value={selYear} onChange={e=>setSelYear(Number(e.target.value))}>{YEARS.map(y=><option key={y} value={y}>Anno {y}</option>)}</select>
+    </div>}
     {period==="range"&&<div className="m-range">
       <select value={rangeStart} onChange={e=>setRangeStart(e.target.value)}>{MONTHS.map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select>
       <span className="m-range-sep">→</span>

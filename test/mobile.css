@@ -107,11 +107,17 @@
 .m-search{position:relative;}
 .m-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;}
 .m-search input{
-  width:100%;box-sizing:border-box;padding:11px 12px 11px 36px;
+  width:100%;box-sizing:border-box;padding:11px 40px 11px 36px;
   border-radius:12px;border:1px solid var(--border);background:var(--bg-elev);
   color:var(--fg);font-size:14.5px;font-family:inherit;
 }
 .m-search input::placeholder{color:var(--fg-faint);}
+.m-search-clear{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border:none;border-radius:50%;background:var(--bg-sunken);
+  color:var(--fg-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+}
+.m-search-clear:active{background:var(--bg-hover);}
 .m-toolbar-row{display:flex;gap:8px;align-items:center;}
 .m-sort{display:flex;gap:3px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:10px;padding:3px;}
 .m-sort button{
