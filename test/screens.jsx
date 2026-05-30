@@ -430,7 +430,7 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
     <div className="drawer-backdrop" onClick={onClose}/>
     <div style={{width:"88%",maxWidth:900,background:"var(--bg-elev)",borderLeft:"1px solid var(--border)",boxShadow:"var(--shadow-lg)",display:"flex",flexDirection:"column",height:"100%"}}>
       <div style={{padding:"16px 24px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12,flexShrink:0,background:"var(--bg-elev)"}}>
-        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:18,color:"var(--fg)"}}>Insights & Riepiloghi</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{periodSubtitle()}</div></div>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:18,color:"var(--fg)"}}>Insights</div><div style={{fontSize:11,color:"var(--fg-subtle)",marginTop:2}}>{periodSubtitle()}</div></div>
         <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="x" size={16}/></button>
       </div>
       <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"var(--bg-elev)"}}>
