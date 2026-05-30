@@ -102,8 +102,29 @@ function MonthPicker({monthIdx,onChange,onClose}){
 }
 
 function ColorPicker({value,onChange,usedColors=[]}){
-  return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
-    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c} style={{width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",opacity:used?.3:1}}/>);})}
+  const[hex,setHex]=useState(value||"#000000");
+  useEffect(()=>{setHex(value||"#000000");},[value]);
+  const isCustom=value&&!PALETTE.includes(value);
+  function applyHex(v){const c=v.startsWith("#")?v:"#"+v;if(/^#[0-9a-fA-F]{6}$/.test(c)){onChange(c);setHex(c);}}
+  return(<div style={{marginTop:4,marginBottom:10}}>
+    <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8}}>
+      {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;const sel=value===c;return(
+        <div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c}
+          style={{position:"relative",width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:sel?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",overflow:"hidden",flexShrink:0}}>
+          {used&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(0,0,0,0.55)" strokeWidth="2.5"/><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/></svg>}
+          {sel&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><path d="M4 11l5 5 9-9" stroke="rgba(255,255,255,0.95)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M4 11l5 5 9-9" stroke="rgba(0,0,0,0.25)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+        </div>
+      );})}
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <label title="Colore personalizzato" style={{position:"relative",width:22,height:22,flexShrink:0,cursor:"pointer",display:"block"}}>
+        <div style={{width:22,height:22,borderRadius:4,boxSizing:"border-box",overflow:"hidden",border:isCustom?"3px solid var(--fg)":"2px solid var(--border)",background:isCustom?value:"conic-gradient(red,yellow,lime,cyan,blue,magenta,red)",position:"relative"}}>
+          {isCustom&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><path d="M4 11l5 5 9-9" stroke="rgba(255,255,255,0.95)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+          <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(value||"")?value:"#3399ff"} onChange={e=>{onChange(e.target.value);setHex(e.target.value);}} style={{opacity:0,position:"absolute",inset:"-4px",width:"calc(100% + 8px)",height:"calc(100% + 8px)",cursor:"pointer",border:"none",padding:0}}/>
+        </div>
+      </label>
+      <input type="text" value={hex} onChange={e=>setHex(e.target.value)} onBlur={()=>applyHex(hex)} onKeyDown={e=>e.key==="Enter"&&applyHex(hex)} placeholder="#RRGGBB" className="input mono" style={{flex:1,height:26,fontSize:11,padding:"0 6px"}}/>
+    </div>
   </div>);
 }
 
@@ -184,9 +205,9 @@ function InlineCreateTutor({tutors,onSaveTutor,onCreated,onCancel,onAddMessage})
   );
 }
 
-// ── INLINE CREATE AVVISO ──────────────────────────────────────────────────
-function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMessage}){
-  const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1]});
+// ── INLINE CREATE CORSO ──────────────────────────────────────────────────
+function InlineCreateCorso({anagraficaCorsi,onSaveAnaCorso,onCreated,onCancel,onAddMessage,avvisoId=""}){
+  const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1],avvisoId});
   const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
   const presetColors=PALETTE.slice(0,8);
   async function handleCreate(){
@@ -194,15 +215,15 @@ function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMess
     if(!form.durataOre||isNaN(Number(form.durataOre))||Number(form.durataOre)<=0){setErr("Durata ore è obbligatoria.");return;}
     setSaving(true);setErr("");
     const newAv={...form,id:`av-${Date.now()}`,durataOre:Number(form.durataOre),dataInizio:"",dataFine:"",note:""};
-    const newList=[...anagraficaAv,newAv];
-    await onSaveAna(newList,"add",newAv);
-    onAddMessage&&onAddMessage(`Avviso "${newAv.nome}" creato e selezionato.`);
+    const newList=[...anagraficaCorsi,newAv];
+    await onSaveAnaCorso(newList,"add",newAv);
+    onAddMessage&&onAddMessage(`Corso "${newAv.nome}" creato e selezionato.`);
     onCreated(newAv);
     setSaving(false);
   }
   return(
     <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
-      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso</div>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo corso</div>
       <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
       <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Codice</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
@@ -218,6 +239,39 @@ function InlineCreateAvviso({anagraficaAv,onSaveAna,onCreated,onCancel,onAddMess
         <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
         <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
           {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea e seleziona</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineCreateAvviso({avvisi,onSaveAvviso,onCreated,onCancel,onAddMessage}){
+  const[form,setForm]=useState({nome:"",codice:"",ente:"",anno:new Date().getFullYear(),stato:"In corso"});
+  const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
+  async function handleCreate(){
+    if(!form.nome){setErr("Nome è obbligatorio.");return;}
+    setSaving(true);setErr("");
+    const newAv={...form,id:`avviso-${Date.now()}`,note:""};
+    const newList=[...avvisi,newAv];
+    await onSaveAvviso(newList,"add",newAv);
+    onAddMessage&&onAddMessage(`Avviso/progetto "${newAv.nome}" creato.`);
+    onCreated(newAv);
+    setSaving(false);
+  }
+  return(
+    <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso/progetto</div>
+      <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
+        <div><label className="label" style={{fontSize:10}}>Codice</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+        <div><label className="label" style={{fontSize:10}}>Anno</label><input className="input mono" type="number" value={form.anno} onChange={e=>setForm(f=>({...f,anno:Number(e.target.value)||new Date().getFullYear()}))} style={{height:28,fontSize:12}}/></div>
+      </div>
+      <div style={{marginBottom:8}}><label className="label" style={{fontSize:10}}>Ente</label><input className="input" value={form.ente} onChange={e=>setForm(f=>({...f,ente:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      {err&&<div style={{fontSize:11,color:"var(--danger)",marginBottom:6}}>{err}</div>}
+      <div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
+        <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
+        <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
+          {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea</>}
         </button>
       </div>
     </div>

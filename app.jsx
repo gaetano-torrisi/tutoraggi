@@ -32,20 +32,21 @@ function ProfileModal({user,onClose}){
 }
 
 // ── AI PANEL ──────────────────────────────────────────────────────────────
-function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddAv,onSaveTutor,onSaveAna,onOpenAnaTutors,onOpenAnaAvvisi,onClose}){
+function AiPanel({tutors,anagraficaCorsi,avvisi=[],settings,user,isSuperAdmin,onAddTut,onAddCorso,onSaveTutor,onSaveAnaCorso,onSaveAvviso,onOpenAnaTutors,onOpenAnaCorsi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
   const[showInlineTutor,setShowInlineTutor]=useState(false);const[showInlineAvviso,setShowInlineAvviso]=useState(false);
+  const[selAvvisoProjId,setSelAvvisoProjId]=useState("");const[showInlineAvvisoProj,setShowInlineAvvisoProj]=useState(false);
   const PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quante riunioni di oggi potevano essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?","Quante volte hai riscritto la stessa email oggi?","Quale riunione ricorrente potresti cancellare senza che nessuno se ne accorga?","Stai ottimizzando qualcosa che potevi eliminare direttamente?","Quanti tab hai aperti in questo momento?","Quale collega ti ha mandato un \"ok\" invece di leggere tutto il documento?","Cosa hai rimandato a lunedì tre lunedì fa?","Hai mai pensato che questo calendario potrebbe gestirsi da solo?","Quanti \"urgente\" hai ricevuto oggi che non erano urgenti?","Quale norma regionale hai riletto tre volte senza capirla?","Cosa faresti con un'ora in più al giorno? Perché non me la deleghi?"];
   const phrase=useRef(PHRASES[Math.floor(Math.random()*PHRASES.length)]).current;
-  const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Avviso/Progetto",icon:"briefcase",value:"avviso"}]}]);
+  const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Corsi",icon:"briefcase",value:"avviso"}]}]);
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){setStep("selTutor");addMsg({role:"ai",text:"Nessun tutor ancora. Creane uno per procedere:",showTutorSel:true});setShowInlineTutor(true);return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaAv.length){setStep("selAv");addMsg({role:"ai",text:"Nessun avviso ancora. Creane uno per procedere:",showAvSel:true});setShowInlineAvviso(true);return;}addMsg({role:"ai",text:"Hai già inserito l'Avviso/Progetto in anagrafica?",showAvCheck:true});}}
-  function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e avviso, poi carica il documento o incolla il testo.",showTutorSel:true});}
-  function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona l'avviso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
-  async function processSource(file,text){if(file)addMsg({role:"user",text:file.name,icon:"paperclip"});else addMsg({role:"user",text:`Testo incollato (${text.length} caratteri)`,icon:"clipboard"});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){setStep("selTutor");addMsg({role:"ai",text:"Nessun tutor ancora. Creane uno per procedere:",showTutorSel:true});setShowInlineTutor(true);return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaCorsi.length){setStep("addCorso");addMsg({role:"ai",text:"Nessun corso registrato. Prima seleziona o crea l'avviso/progetto a cui appartiene:",showAddCorsoFlow:true});return;}addMsg({role:"ai",text:"Hai già inserito il corso in anagrafica?",showAvCheck:true});}}
+  function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e corso, poi carica il documento o incolla il testo.",showTutorSel:true});}
+  function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona il corso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
+  async function processSource(file,text){if(file)addMsg({role:"user",text:file.name,icon:"paperclip"});else addMsg({role:"user",text:`Testo incollato (${text.length} caratteri)`,icon:"clipboard"});setLoading(true);const _prov=settings.aiProvider||"openai";const _model=_prov==="gemini"?"gemini-2.5-flash":"gpt-4o-mini";addMsg({role:"ai",text:`Analisi in corso con ${_model}…`,isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
   async function processPaste(){if(!pasteText.trim()){addMsg({role:"ai",text:"Testo vuoto."});return;}if(!looksLikeCalendar(pasteText)){addMsg({role:"ai",text:"Il testo non sembra contenere date o orari."});setPasteText("");setShowPaste(false);return;}setShowPaste(false);const t=pasteText;setPasteText("");await processSource(null,t);}
   function handleResult(res){setMessages(p=>p.filter(m=>!m.isLoading));if(res.ambiguities?.length>0){setAmbig(res.ambiguities);setPending(res.events||[]);setStep("ambiguity");addMsg({role:"ai",text:`${res.events?.length||0} appuntamenti, chiarimenti necessari:`,showAmbiguities:res.ambiguities});}else if(res.events?.length>0){setPending(res.events);setStep("preview");addMsg({role:"ai",text:`${res.events.length} appuntamenti trovati. Confermi?`,showPreview:res.events});}else addMsg({role:"ai",text:"Nessun appuntamento trovato.",showUpload:true});}
   async function analyzeDoc(file,text){const prov=settings.aiProvider||"openai";const prompt=`Estrai appuntamenti da questo documento/testo. Rispondi SOLO con JSON:\n{"events":[{"day":8,"month":"mag-26","start":9.5,"end":13.5,"ore":4,"name":"nome"}],"ambiguities":[]}\nRegole: month=mmm-yy, start/end decimali, ore=durata.`;
@@ -54,8 +55,8 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
   }
   function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(",")[1]);r.onerror=rej;r.readAsDataURL(file);});}
   function parseR(t){try{return JSON.parse(t.replace(/```json|```/g,"").trim());}catch{const m=t.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);throw new Error("Risposta AI non valida");}}
-  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"Seleziona prima tutor e avviso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"Seleziona prima un avviso/progetto."});return;}await processSource(file,null);}
-  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaAv.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddAv({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`Importati ${pending.length} appuntamenti.`,icon:"checkCircle"});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
+  async function onFile(e){const file=e.target.files[0];if(!file)return;e.target.value="";if(importType==="tutoraggio"&&(!selTutor||!selAv)){addMsg({role:"ai",text:"Seleziona prima tutor e corso."});return;}if(importType==="avviso"&&!selAv){addMsg({role:"ai",text:"Seleziona prima un corso/progetto."});return;}await processSource(file,null);}
+  async function onConfirm(){setLoading(true);try{if(importType==="tutoraggio"){const avName=anagraficaCorsi.find(a=>a.id===selAv)?.nome||"";for(const ev of pending)await onAddTut({day:ev.day,name:avName,start:ev.start,end:ev.end,ore:ev.ore,tutorId:selTutor},ev.month);}else{const events=pending.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));await onAddCorso({id:selAv,events});}setStep("done");addMsg({role:"ai",text:`Importati ${pending.length} appuntamenti.`,icon:"checkCircle"});}catch(err){addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
   const uploadButtons=()=>(<div style={{display:"flex",gap:6,flexDirection:"column",width:"100%",marginTop:6}}>
     <button onClick={()=>fileRef.current.click()} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--accent)",color:"var(--accent)",display:"flex",alignItems:"center",gap:7}}><Icon name="paperclip" size={13} color="var(--accent)"/>Carica documento</button>
     <button onClick={()=>setShowPaste(s=>!s)} className="btn" data-variant="outline" style={{width:"100%",justifyContent:"center",borderStyle:"dashed",borderColor:"var(--success)",color:"var(--success)",display:"flex",alignItems:"center",gap:7}}><Icon name="clipboard" size={13} color="var(--success)"/>Incolla testo</button>
@@ -69,35 +70,69 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
       </div>
       {msg.buttons&&<div style={{display:"flex",gap:8,marginTop:6,flexWrap:"wrap"}}>{msg.buttons.map(b=><button key={b.value} onClick={()=>{addMsg({role:"user",text:b.label,icon:b.icon});startImport(b.value);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}>{b.icon&&<Icon name={b.icon} size={13} color="var(--accent)"/>}{b.label}</button>)}</div>}
       {msg.showOpenTutor&&<button onClick={onOpenAnaTutors} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13}/>Apri Anagrafica Tutor</button>}
-      {msg.showOpenAv&&<button onClick={onOpenAnaAvvisi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Avvisi</button>}
+      {msg.showOpenAv&&<button onClick={onOpenAnaCorsi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Corsi</button>}
       {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedTutor();setShowInlineTutor(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
-      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedAv();setShowInlineAvviso(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{setStep("addCorso");addMsg({role:"ai",text:"A quale avviso/progetto appartiene il nuovo corso?",showAddCorsoFlow:true});}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
       {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:4}}>
-          <option value="">— Seleziona tutor —</option>
-          {[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}
-        </select>
-        {!showInlineTutor
-          ?<button onClick={()=>setShowInlineTutor(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo tutor</button>
-          :<InlineCreateTutor tutors={tutors} onSaveTutor={onSaveTutor} onCreated={t=>{setSelTutor(t.id);setShowInlineTutor(false);}} onCancel={()=>setShowInlineTutor(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginTop:4,marginBottom:4}}>
-          <option value="">— Seleziona avviso —</option>
-          {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-        </select>
-        {!showInlineAvviso
-          ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo avviso</button>
-          :<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
-        {(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona tutor e avviso per procedere.</div>:uploadButtons()}
+        {selTutor?(
+          <div style={{fontSize:11,color:"var(--success)",marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon name="user" size={11} color="var(--success)"/><strong>{(()=>{const t=tutors.find(x=>x.id===selTutor);return t?`${t.cognome} ${t.nome}`:selTutor;})()}</strong><button onClick={()=>{setSelTutor("");setShowInlineTutor(false);}} style={{marginLeft:4,background:"none",border:"none",cursor:"pointer",color:"var(--fg-subtle)",fontSize:10,padding:0}}>Cambia</button></div>
+        ):(
+          <>
+            {showInlineTutor
+              ?<InlineCreateTutor tutors={tutors} onSaveTutor={onSaveTutor} onCreated={t=>{setSelTutor(t.id);setShowInlineTutor(false);}} onCancel={()=>setShowInlineTutor(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>
+              :<><select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:4}}><option value="">— Seleziona tutor —</option>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}</select><button onClick={()=>setShowInlineTutor(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo tutor</button></>}
+          </>
+        )}
+        {selAv?(
+          <div style={{fontSize:11,color:"var(--success)",marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon name="graduationCap" size={11} color="var(--success)"/><strong>{anagraficaCorsi.find(a=>a.id===selAv)?.nome||selAv}</strong><button onClick={()=>{setSelAv("");setShowInlineAvviso(false);}} style={{marginLeft:4,background:"none",border:"none",cursor:"pointer",color:"var(--fg-subtle)",fontSize:10,padding:0}}>Cambia</button></div>
+        ):(
+          <>
+            <select value={selAv} onChange={e=>{setSelAv(e.target.value);setShowInlineAvviso(false);}} className="select" style={{marginTop:selTutor?4:0,marginBottom:4}}>
+              <option value="">— Seleziona corso —</option>
+              {[...anagraficaCorsi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+            {!showInlineAvviso
+              ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo corso</button>
+              :<InlineCreateCorso anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={onSaveAnaCorso} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+          </>
+        )}
+        {(!selTutor||!selAv)?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona tutor e corso per procedere.</div>:uploadButtons()}
       </div>}
       {msg.showAvSel&&step==="selAv"&&<div style={{marginTop:8,width:"100%"}}>
-        <select value={selAv} onChange={e=>setSelAv(e.target.value)} className="select" style={{marginBottom:4}}>
-          <option value="">— Seleziona avviso —</option>
-          {[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
-        </select>
-        {!showInlineAvviso
-          ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo avviso</button>
-          :<InlineCreateAvviso anagraficaAv={anagraficaAv} onSaveAna={onSaveAna} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
-        {!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona un avviso per procedere.</div>:uploadButtons()}
+        {selAv?(
+          <div style={{fontSize:11,color:"var(--success)",marginBottom:8,display:"flex",alignItems:"center",gap:5}}><Icon name="graduationCap" size={11} color="var(--success)"/><strong>{anagraficaCorsi.find(a=>a.id===selAv)?.nome||selAv}</strong><button onClick={()=>{setSelAv("");setShowInlineAvviso(false);}} style={{marginLeft:4,background:"none",border:"none",cursor:"pointer",color:"var(--fg-subtle)",fontSize:10,padding:0}}>Cambia</button></div>
+        ):(
+          <>
+            <select value={selAv} onChange={e=>{setSelAv(e.target.value);setShowInlineAvviso(false);}} className="select" style={{marginBottom:4}}>
+              <option value="">— Seleziona corso —</option>
+              {[...anagraficaCorsi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+            {!showInlineAvviso
+              ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo corso</button>
+              :<InlineCreateCorso anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={onSaveAnaCorso} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+          </>
+        )}
+        {!selAv&&<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona un corso per procedere.</div>}
+        {selAv&&uploadButtons()}
+      </div>}
+      {msg.showAddCorsoFlow&&step==="addCorso"&&<div style={{marginTop:8,width:"100%"}}>
+        {!selAvvisoProjId?(
+          <div>
+            <div style={{fontSize:11,color:"var(--fg-subtle)",marginBottom:6}}>Seleziona l'avviso/progetto a cui appartiene il corso:</div>
+            {avvisi.length>0&&<select value={selAvvisoProjId} onChange={e=>{setSelAvvisoProjId(e.target.value);setShowInlineAvvisoProj(false);}} className="select" style={{marginBottom:4}}>
+              <option value="">— Seleziona avviso/progetto —</option>
+              {[...avvisi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(av=><option key={av.id} value={av.id}>{av.nome}</option>)}
+            </select>}
+            {!showInlineAvvisoProj
+              ?<button onClick={()=>setShowInlineAvvisoProj(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>{avvisi.length>0?"Nuovo avviso/progetto":"Crea avviso/progetto"}</button>
+              :<InlineCreateAvviso avvisi={avvisi} onSaveAvviso={onSaveAvviso} onCreated={av=>{setSelAvvisoProjId(av.id);setShowInlineAvvisoProj(false);}} onCancel={()=>setShowInlineAvvisoProj(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+          </div>
+        ):(
+          <div>
+            <div style={{fontSize:11,color:"var(--success)",marginBottom:8,display:"flex",alignItems:"center",gap:5}}><Icon name="briefcase" size={11} color="var(--success)"/><strong>{avvisi.find(av=>av.id===selAvvisoProjId)?.nome}</strong><button onClick={()=>{setSelAvvisoProjId("");setShowInlineAvvisoProj(false);}} style={{marginLeft:4,background:"none",border:"none",cursor:"pointer",color:"var(--fg-subtle)",fontSize:10}}>Cambia</button></div>
+            <InlineCreateCorso anagraficaCorsi={anagraficaCorsi} avvisoId={selAvvisoProjId} onSaveAnaCorso={onSaveAnaCorso} onCreated={a=>{setSelAv(a.id);setStep("selAv");addMsg({role:"ai",text:`Corso creato. Ora carica il documento o incolla il testo.`,showUpload:true});}} onCancel={()=>setSelAvvisoProjId("")} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>
+          </div>
+        )}
       </div>}
       {msg.showUpload&&uploadButtons()}
       {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center",display:"flex",alignItems:"center",gap:6}}>{loading?<><Icon name="loader" size={13} color="#fff"/>Importazione...</>:<><Icon name="check" size={13} color="#fff"/>Conferma tutto</>}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline"><Icon name="x" size={13}/></button></div>}</div>}
@@ -116,23 +151,23 @@ function AiPanel({tutors,anagraficaAv,settings,user,isSuperAdmin,onAddTut,onAddA
 }
 
 // ── ADD/EDIT MODAL ────────────────────────────────────────────────────────
-function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddAv,onEditAv,onDeleteAv,onClose,onOpenAnaTutors,onOpenAnaAvvisi,isAdmin,userEmail,canVerify,canDelete}){
+function AddModal({mode,prefill,currentMonthIdx,corsi,anagraficaCorsi,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddCorso,onEditCorso,onDeleteCorso,onClose,onOpenAnaTutors,onOpenAnaCorsi,isAdmin,userEmail,canVerify,canDelete}){
   const isEdit=!!editTarget;
   const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
   const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
-  const[tutAvId,setTutAvId]=useState(()=>{if(isEdit&&editTarget.type==="tutoraggio"){const a=anagraficaAv.find(x=>x.nome===editTarget.ev.name);return a?.id||"";}return anagraficaAv[0]?.id||"";});
+  const[tutAvId,setTutAvId]=useState(()=>{if(isEdit&&editTarget.type==="tutoraggio"){const a=anagraficaCorsi.find(x=>x.nome===editTarget.ev.name);return a?.id||"";}return anagraficaCorsi[0]?.id||"";});
   const[tutDay,setTutDay]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.day:(prefill?.day||1));
   const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
   const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
   const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
   const[tutVerified,setTutVerified]=useState(!!(isEdit&&editTarget.type==="tutoraggio"&&editTarget.ev.verified));
-  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(anagraficaAv[0]?.id||""));
+  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(anagraficaCorsi[0]?.id||""));
   const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
   const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
   const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
   const[avEnd,setAvEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.end:(prefill?.end||13)));
   const[avVerified,setAvVerified]=useState(!!(isEdit&&editTarget.type==="avviso"&&editTarget.ev.verified));
-  const selT=tutors.find(t=>t.id===tutTutor);const selAnaT=anagraficaAv.find(a=>a.id===tutAvId);const selAnaAv=anagraficaAv.find(a=>a.id===avId);
+  const selT=tutors.find(t=>t.id===tutTutor);const selAnaT=anagraficaCorsi.find(a=>a.id===tutAvId);const selAnaAv=anagraficaCorsi.find(a=>a.id===avId);
   return(<div className="add-modal-backdrop">
     <div className="add-modal-box">
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -144,16 +179,16 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
       </div>
       {!isEdit&&<div className="tab-strip" style={{marginBottom:16,display:"flex"}}>
         <button className={`tab-strip-btn${tab==="tutoraggio"?" active":""}`} onClick={()=>setTab("tutoraggio")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon name="mapPin" size={12}/>Tutoraggio</button>
-        <button className={`tab-strip-btn${tab==="avviso"?" active":""}`} onClick={()=>setTab("avviso")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon name="briefcase" size={12}/>Avviso/Progetto</button>
+        <button className={`tab-strip-btn${tab==="avviso"?" active":""}`} onClick={()=>setTab("avviso")} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon name="briefcase" size={12}/>Corso/Progetto</button>
       </div>}
       {tab==="tutoraggio"&&(<>
         <label className="label">Tutor</label>
         {tutors.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun tutor. <button onClick={()=>{onClose();onOpenAnaTutors();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
         :<select value={tutTutor} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaTutors();}else setTutTutor(e.target.value);}} className="select" style={{marginBottom:10}}>{[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=><option key={t.id} value={t.id}>{t.cognome} {t.nome}</option>)}<option value="__open__">+ Apri Anagrafica Tutor...</option></select>}
         {selT&&<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:"var(--radius)",background:hexToRgba(selT.color||"#4f86c6",.1)}}><div style={{width:14,height:14,borderRadius:3,background:selT.color||"var(--accent)"}}/><span style={{fontSize:12,color:"var(--fg-muted)"}}>Colore identificativo tutor</span></div>}
-        <label className="label">Avviso/Progetto</label>
-        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
-        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaAvvisi();}else setTutAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        <label className="label">Corso/Progetto</label>
+        {anagraficaCorsi.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun corso. <button onClick={()=>{onClose();onOpenAnaCorsi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
+        :<select value={tutAvId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaCorsi();}else setTutAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaCorsi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Corsi...</option></select>}
         {selAnaT&&<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:hexToRgba(selAnaT.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaT.colore||"#4f86c6",.3)}`}}><div style={{fontSize:12,fontWeight:600,color:"var(--fg)"}}>{selAnaT.nome}</div><div style={{display:"flex",gap:6,marginTop:4}}>{selAnaT.durataOre&&<span className="badge" data-tone="info">{selAnaT.durataOre}h</span>}{selAnaT.stato&&<span className="badge">{selAnaT.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={tutMonthIdx} value={tutDay} selectedMonthIdx={tutMonthIdx} onChange={(d,mIdx)=>{setTutDay(d);setTutMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:16}}><TimePicker label="Inizio" value={tutStart} onChange={setTutStart}/><TimePicker label="Fine" value={tutEnd} onChange={setTutEnd}/></div>
@@ -168,13 +203,13 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
-          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaAv.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;const vFields=isAdmin?{verified:tutVerified,verifiedBy:tutVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:tutVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor,...vFields},mk,{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?tutVerified:!!editTarget.ev.verified});else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
+          <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaCorsi.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;const vFields=isAdmin?{verified:tutVerified,verifiedBy:tutVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:tutVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor,...vFields},mk,{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?tutVerified:!!editTarget.ev.verified});else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
       {tab==="avviso"&&(<>
-        <label className="label">Avviso/Progetto</label>
-        {anagraficaAv.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun avviso. <button onClick={()=>{onClose();onOpenAnaAvvisi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
-        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaAvvisi();}else setAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaAv].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Avvisi...</option></select>}
+        <label className="label">Corso/Progetto</label>
+        {anagraficaCorsi.length===0?<div style={{marginBottom:10,padding:"8px 10px",borderRadius:"var(--radius)",background:"var(--warning-soft)",border:"1px solid var(--warning)",fontSize:12,color:"var(--warning)",display:"flex",alignItems:"center",gap:7}}><Icon name="alert" size={13} color="var(--warning)"/>Nessun corso. <button onClick={()=>{onClose();onOpenAnaCorsi();}} style={{background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontWeight:700,textDecoration:"underline"}}>Aggiungi</button></div>
+        :<select value={avId} onChange={e=>{if(e.target.value==="__open__"){onClose();onOpenAnaCorsi();}else setAvId(e.target.value);}} className="select" style={{marginBottom:10}}>{[...anagraficaCorsi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}<option value="__open__">+ Apri Anagrafica Corsi...</option></select>}
         {selAnaAv&&<div style={{marginBottom:10,padding:"10px 12px",borderRadius:"var(--radius)",background:hexToRgba(selAnaAv.colore||"#4f86c6",.08),border:`1px solid ${hexToRgba(selAnaAv.colore||"#4f86c6",.3)}`}}><div style={{fontSize:13,fontWeight:700,color:"var(--fg)"}}>{selAnaAv.nome}</div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}>{selAnaAv.durataOre&&<span className="badge" data-tone="info">{selAnaAv.durataOre}h da bando</span>}{selAnaAv.stato&&<span className="badge">{selAnaAv.stato}</span>}</div></div>}
         <DayPicker initialMonthIdx={avMonthIdx} value={avDay} selectedMonthIdx={avMonthIdx} onChange={(d,mIdx)=>{setAvDay(d);setAvMonthIdx(mIdx);}}/>
         <div style={{display:"flex",gap:10,marginBottom:10}}><TimePicker label="Inizio" value={avStart} onChange={setAvStart}/><TimePicker label="Fine" value={avEnd} onChange={setAvEnd}/></div>
@@ -188,9 +223,9 @@ function AddModal({mode,prefill,currentMonthIdx,avvisi,anagraficaAv,tutors,editT
           {avVerified&&editTarget.ev.verifiedBy&&<span style={{fontSize:10.5,color:"var(--success)",marginLeft:"auto",opacity:.75}}>{editTarget.ev.verifiedBy}</span>}
         </label>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
-          {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteAv(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
+          {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteCorso(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
-          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaAv.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const vFields=isAdmin?{verified:avVerified,verifiedBy:avVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:avVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditAv(editTarget.avviso.id,editTarget.ev.id,{...evData,...vFields},{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?avVerified:!!editTarget.ev.verified});else onAddAv({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
+          <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaCorsi.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const vFields=isAdmin?{verified:avVerified,verifiedBy:avVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:avVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit)onEditCorso(editTarget.avviso.id,editTarget.ev.id,{...evData,...vFields},{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?avVerified:!!editTarget.ev.verified});else onAddCorso({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
       </>)}
     </div>
@@ -205,8 +240,8 @@ function App({user}){
   const[view,setView]=useState("tutoraggio");
   const[editMode,setEditMode]=useState(false);
   const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(()=>{const now=new Date();const idx=MONTHS.findIndex(m=>m.year===now.getFullYear()&&m.month===now.getMonth());return idx>=0?idx:0;});
-  const[avvisi,setAvvisi]=useState([]);const[anagraficaAv,setAnagraficaAv]=useState([]);const[activeAvvisi,setActiveAvvisi]=useState(new Set());const[tutEvents,setTutEvents]=useState({});
-  const tutEvRef=useRef({});const avRef=useRef([]);const anaRef=useRef([]);
+  const[corsi,setCorsi]=useState([]);const[anagraficaCorsi,setAnagraficaCorsi]=useState([]);const[activeCorsi,setActiveCorsi]=useState(new Set());const[avvisi,setAvvisi]=useState([]);const[tutEvents,setTutEvents]=useState({});
+  const tutEvRef=useRef({});const corsiRef=useRef([]);const anaCorsiRef=useRef([]);const avvisoRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
   const[showInsights,setShowInsights]=useState(false);const[highlightEvId,setHighlightEvId]=useState(null);
@@ -238,17 +273,17 @@ function App({user}){
     }
   },[theme]);
 
-  function pushUndo(snapTE,snapAv){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:structuredClone(snapTE),avvisi:structuredClone(snapAv)},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
-  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:structuredClone(tutEvRef.current),avvisi:structuredClone(avRef.current)},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
-  async function handleRedo(){if(!redoStack.current.length)return;const snap=redoStack.current[0];redoStack.current=redoStack.current.slice(1);setRedoCount(redoStack.current.length);undoStack.current=[{tutEvents:structuredClone(tutEvRef.current),avvisi:structuredClone(avRef.current)},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);await applySnap(snap);}
+  function pushUndo(snapTE,snapCorsi){redoStack.current=[];setRedoCount(0);undoStack.current=[{tutEvents:structuredClone(snapTE),corsi:structuredClone(snapCorsi)},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);}
+  async function handleUndo(){if(!undoStack.current.length)return;const snap=undoStack.current[0];undoStack.current=undoStack.current.slice(1);setUndoCount(undoStack.current.length);redoStack.current=[{tutEvents:structuredClone(tutEvRef.current),corsi:structuredClone(corsiRef.current)},...redoStack.current].slice(0,UNDO_LIMIT);setRedoCount(redoStack.current.length);await applySnap(snap);}
+  async function handleRedo(){if(!redoStack.current.length)return;const snap=redoStack.current[0];redoStack.current=redoStack.current.slice(1);setRedoCount(redoStack.current.length);undoStack.current=[{tutEvents:structuredClone(tutEvRef.current),corsi:structuredClone(corsiRef.current)},...undoStack.current].slice(0,UNDO_LIMIT);setUndoCount(undoStack.current.length);await applySnap(snap);}
   // Restore a snapshot writing ONLY the documents that actually changed (diff against current refs)
   async function applySnap(snap){
-    const prevAv=avRef.current,prevTE=tutEvRef.current;
-    tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);avRef.current=snap.avvisi;setAvvisi(snap.avvisi);
-    const prevAvById={};prevAv.forEach(a=>prevAvById[a.id]=a);
-    const snapIds=new Set(snap.avvisi.map(a=>a.id));
-    for(const av of snap.avvisi){if(JSON.stringify(prevAvById[av.id])!==JSON.stringify(av))await fsSaveAvviso(av);}
-    for(const a of prevAv){if(!snapIds.has(a.id))await fsDeleteAvviso(a.id);}
+    const prevCorsi=corsiRef.current,prevTE=tutEvRef.current;
+    tutEvRef.current=snap.tutEvents;setTutEvents(snap.tutEvents);corsiRef.current=snap.corsi;setCorsi(snap.corsi);
+    const prevCorsiById={};prevCorsi.forEach(a=>prevCorsiById[a.id]=a);
+    const snapIds=new Set(snap.corsi.map(a=>a.id));
+    for(const co of snap.corsi){if(JSON.stringify(prevCorsiById[co.id])!==JSON.stringify(co))await fsSaveCorso(co);}
+    for(const a of prevCorsi){if(!snapIds.has(a.id))await fsDeleteCorso(a.id);}
     const teKeys=new Set();
     for(const[tId,ms]of Object.entries(prevTE))for(const mk of Object.keys(ms))teKeys.add(tId+"|"+mk);
     for(const[tId,ms]of Object.entries(snap.tutEvents))for(const mk of Object.keys(ms))teKeys.add(tId+"|"+mk);
@@ -256,7 +291,7 @@ function App({user}){
   }
 
   useEffect(()=>{
-    fsLoad().then(({avvisi:a,tutors:t,tutEvents:te,settings:s,anagraficaAv:an})=>{setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveAvvisi(new Set(a.map(x=>x.id)));
+    fsLoad().then(({corsi:c,tutors:t,tutEvents:te,settings:s,anagraficaCorsi:an,avvisi:av})=>{setCorsi(c);corsiRef.current=c;setAnagraficaCorsi(an);anaCorsiRef.current=an;setAvvisi(av);avvisoRef.current=av;setTutors(t);setTutEvents(te);tutEvRef.current=te;setSettings(s);setActiveCorsi(new Set(c.map(x=>x.id)));
       if(s.theme)setTheme(s.theme);
       if(s.accentColor&&/^#[0-9A-Fa-f]{6}$/.test(s.accentColor)){document.documentElement.style.setProperty("--accent",s.accentColor);document.documentElement.style.setProperty("--accent-strong",darkenHex(s.accentColor,.15));document.documentElement.style.setProperty("--accent-soft",hexToRgba(s.accentColor,.12));}
       if(s.brandNavy&&/^#[0-9A-Fa-f]{6}$/.test(s.brandNavy))document.documentElement.style.setProperty("--brand-navy",s.brandNavy);
@@ -277,21 +312,22 @@ function App({user}){
 
   window.__restoreBackup=async(data)=>{
     const v=data.version||0;
-    if(v>5)console.warn(`Backup v${v} più recente di v5 — ripristino base.`);
-    const a=data.avvisi||[],t=data.tutors||[],te=data.tutEvents||{},an=data.anagraficaAv||[];
-    setAvvisi(a);avRef.current=a;setAnagraficaAv(an);anaRef.current=an;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(a.map(x=>x.id)));setActiveTutorIds(null);
-    await fsSaveAvvisi(a);await fsSaveTutors(t);await fsSaveAna(an);
+    if(v>6)console.warn(`Backup v${v} più recente di v6 — ripristino base.`);
+    const c=v<6?(data.avvisi||[]):(data.corsi||[]),t=data.tutors||[],te=data.tutEvents||{},an=v<6?(data.anagraficaAv||[]):(data.anagraficaCorsi||[]),av=v>=6?(data.avvisi||[]):[];
+    setCorsi(c);corsiRef.current=c;setAnagraficaCorsi(an);anaCorsiRef.current=an;setAvvisi(av);avvisoRef.current=av;setTutors(t);setTutEvents(te);tutEvRef.current=te;setActiveCorsi(new Set(c.map(x=>x.id)));setActiveTutorIds(null);
+    await fsSaveCorsi(c);await fsSaveTutors(t);await fsSaveAnaCorsi(an);if(av.length)await fsSaveAvvisi(av);
     for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
     if(data.settings&&typeof data.settings==="object"){const s={...settings,...data.settings};setSettings(s);await fsSaveSettings(s);}
     if(isSuperAdmin&&data.authorizedEmails&&typeof data.authorizedEmails==="object"){const b=db.batch();for(const[email,rd]of Object.entries(data.authorizedEmails))b.set(db.collection("authorizedEmails").doc(email),rd,{merge:true});await b.commit();}
     if((isSuperAdmin||isAdmin)&&data.userProfiles&&typeof data.userProfiles==="object"){const b=db.batch();for(const[uid,p]of Object.entries(data.userProfiles))b.set(db.collection("userProfiles").doc(uid),p,{merge:true});await b.commit();}
   };
   window.__loadDemo=async()=>{
-    const nT=Math.max(tutors.length,3),nA=Math.max(anagraficaAv.length,3);
+    const nT=Math.max(tutors.length,3),nA=Math.max(anagraficaCorsi.length,3);
     const DC=["#EC7A26","#3E6FB8","#2F8F5B","#9B59B6","#E74C3C","#1ABC9C","#F39C12","#34495E"];
     const DN=[["Mario","Rossi"],["Laura","Bianchi"],["Giuseppe","Verdi"],["Anna","Ferrari"],["Luca","Esposito"],["Sara","Romano"],["Marco","Colombo"],["Elena","Ricci"]];
     const T=Array.from({length:nT},(_,i)=>({id:`td${i}`,nome:DN[i%DN.length][0],cognome:DN[i%DN.length][1],cf:"",azienda:"Ente Demo Srl",color:DC[i%DC.length]}));
-    const AN=Array.from({length:nA},(_,i)=>({id:`avd${i}`,nome:`Avviso ${i+1}`,codice:`DDG ${String(i+1).padStart(3,"0")}/2026`,colore:DC[(i+2)%DC.length],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"31/12/2026",note:""}));
+    const AN=Array.from({length:nA},(_,i)=>({id:`avd${i}`,nome:`Corso ${i+1}`,codice:`DDG ${String(i+1).padStart(3,"0")}/2026`,colore:DC[(i+2)%DC.length],durataOre:400,stato:"In corso",dataInizio:"01/01/2026",dataFine:"31/12/2026",note:"",avvisoId:"avv-demo-1"}));
+    const AV_ENTITA=[{id:"avv-demo-1",nome:"Avviso pubblico 1/2026",codice:"DDG 001/2026",ente:"Regione Siciliana",anno:2026,stato:"In corso",note:""}];
     const WD=[6,13,20,27];
     const SLOTS=[[9,13],[14,18]];
     const allMks=MONTHS.filter(m=>m.year===2026).map(m=>m.key);
@@ -327,12 +363,12 @@ function App({user}){
         });
       });
     });
-    setTutors(T);setAnagraficaAv(AN);anaRef.current=AN;setAvvisi(AV);avRef.current=AV;setTutEvents(te);tutEvRef.current=te;setActiveAvvisi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
-    await fsSaveTutors(T);await fsSaveAna(AN);await fsSaveAvvisi(AV);
+    setTutors(T);setAnagraficaCorsi(AN);anaCorsiRef.current=AN;setCorsi(AV);corsiRef.current=AV;setAvvisi(AV_ENTITA);avvisoRef.current=AV_ENTITA;setTutEvents(te);tutEvRef.current=te;setActiveCorsi(new Set(AV.map(x=>x.id)));setActiveTutorIds(null);
+    await fsSaveTutors(T);await fsSaveAnaCorsi(AN);await fsSaveCorsi(AV);await fsSaveAvvisi(AV_ENTITA);
     for(const[tId,ms]of Object.entries(te))for(const[mk,evs]of Object.entries(ms))await fsSaveTutEvents(tId,mk,evs);
   };
   window.__clearDb=async()=>{
-    setTutors([]);setAvvisi([]);avRef.current=[];setAnagraficaAv([]);anaRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveAvvisi(new Set());setActiveTutorIds(null);
+    setTutors([]);setCorsi([]);corsiRef.current=[];setAnagraficaCorsi([]);anaCorsiRef.current=[];setAvvisi([]);avvisoRef.current=[];setTutEvents({});tutEvRef.current={};setSettings({});setActiveCorsi(new Set());setActiveTutorIds(null);
     await fsClearAll();
     try{const s=await db.collection("activityLog").get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}catch(e){}
   };
@@ -345,41 +381,42 @@ function App({user}){
   const allTEvs=useMemo(()=>tutors.flatMap(t=>(tutEvents[t.id]?.[monthKey])||[]),[tutors,tutEvents,monthKey]);
   const visTEvs=useMemo(()=>activeTutorIds===null?allTEvs:allTEvs.filter(e=>activeTutorIds.has(e.tutorId)),[allTEvs,activeTutorIds]);
   const avNamesInMonth=useMemo(()=>new Set(allTEvs.map(e=>e.name)),[allTEvs]);
-  const avForBar=useMemo(()=>anagraficaAv.filter(a=>avNamesInMonth.has(a.nome)),[anagraficaAv,avNamesInMonth]);
+  const corsiForBar=useMemo(()=>anagraficaCorsi.filter(a=>avNamesInMonth.has(a.nome)),[anagraficaCorsi,avNamesInMonth]);
   const dayTOre=useMemo(()=>{const o={};for(const ev of visTEvs)o[ev.day]=(o[ev.day]||0)+ev.ore;return o;},[visTEvs]);
   const totTOre=useMemo(()=>visTEvs.reduce((a,e)=>a+e.ore,0),[visTEvs]);
-  const avById2=useMemo(()=>{const o={};avvisi.forEach(av=>o[av.id]=av);return o;},[avvisi]);
-  const avEvs=useMemo(()=>anagraficaAv.flatMap(ana=>{const av=avById2[ana.id];if(!av)return[];return av.events.filter(e=>e.month===monthKey).map(e=>({...e,avvisoId:ana.id,avvisoName:ana.nome,avColor:ana.colore||"var(--accent)"}));}),[anagraficaAv,avById2,monthKey]);
-  const avThisMonth=useMemo(()=>anagraficaAv.filter(a=>{const av=avById2[a.id];return av&&av.events.some(e=>e.month===monthKey);}),[anagraficaAv,avById2,monthKey]);
-  const visAvEvs=useMemo(()=>avEvs.filter(e=>activeAvvisi.has(e.avvisoId)),[avEvs,activeAvvisi]);
-  const totAvOre=useMemo(()=>visAvEvs.reduce((a,e)=>a+e.ore,0),[visAvEvs]);
+  const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
+  const corsiEvs=useMemo(()=>anagraficaCorsi.flatMap(ana=>{const co=corsiById[ana.id];if(!co)return[];return co.events.filter(e=>e.month===monthKey).map(e=>({...e,corsoId:ana.id,corsoName:ana.nome,avColor:ana.colore||"var(--accent)"}));}),[anagraficaCorsi,corsiById,monthKey]);
+  const corsiThisMonth=useMemo(()=>anagraficaCorsi.filter(a=>{const co=corsiById[a.id];return co&&co.events.some(e=>e.month===monthKey);}),[anagraficaCorsi,corsiById,monthKey]);
+  const visCorsiEvs=useMemo(()=>corsiEvs.filter(e=>activeCorsi.has(e.corsoId)),[corsiEvs,activeCorsi]);
+  const totAvOre=useMemo(()=>visCorsiEvs.reduce((a,e)=>a+e.ore,0),[visCorsiEvs]);
 
   const getTCol=id=>tutors.find(x=>x.id===id)?.color||"var(--accent)";
   const getTLbl=id=>{const t=tutors.find(x=>x.id===id);return t?`${t.cognome} ${t.nome}`.trim():"";};
   const tByDay=useMemo(()=>{const b={};for(const ev of visTEvs){const editAllowed=editMode&&perms.editSlot&&(!ev.verified||perms.editVerified);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId),_tutorLabel:getTLbl(ev.tutorId),_onEdit:editAllowed?()=>setModal({type:"edit-tut",ev,monthKey}):null,_onClick:null});}return b;},[visTEvs,editMode,perms.editSlot,perms.editVerified,monthKey,tutors]);
-  const ovByDay=useMemo(()=>{const b={};for(const ev of avEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;},[avEvs]);
-  const avByDay=useMemo(()=>{const b={};for(const ev of visAvEvs){const editAllowed=editMode&&perms.editSlot&&(!ev.verified||perms.editVerified);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:editAllowed?()=>{const av=avRef.current.find(a=>a.id===ev.avvisoId);setModal({type:"edit-av",avviso:av||{id:ev.avvisoId},ev,monthKey});}:null});}return b;},[visAvEvs,editMode,perms.editSlot,perms.editVerified,monthKey]);
+  const ovByDay=useMemo(()=>{const b={};for(const ev of corsiEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;},[corsiEvs]);
+  const corsiByDay=useMemo(()=>{const b={};for(const ev of visCorsiEvs){const editAllowed=editMode&&perms.editSlot&&(!ev.verified||perms.editVerified);if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_onEdit:editAllowed?()=>{const co=corsiRef.current.find(a=>a.id===ev.corsoId);setModal({type:"edit-av",avviso:co||{id:ev.corsoId},ev,monthKey});}:null});}return b;},[visCorsiEvs,editMode,perms.editSlot,perms.editVerified,monthKey]);
   const mTByDay=useMemo(()=>{const b={};for(const ev of visTEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push({...ev,_color:getTCol(ev.tutorId)});}return b;},[visTEvs,tutors]);
-  const mAvByDay=useMemo(()=>{const b={};for(const ev of visAvEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;},[visAvEvs]);
+  const mAvByDay=useMemo(()=>{const b={};for(const ev of visCorsiEvs){if(!b[ev.day])b[ev.day]=[];b[ev.day].push(ev);}return b;},[visCorsiEvs]);
 
   function handleGridClick(d,e){if(!editMode||!perms.addSlot)return;const rect=e.currentTarget.getBoundingClientRect();const s=Math.min(Math.max(Math.round((8+(e.clientY-rect.top)/slotH)*4)/4,8),19.75);setModal({type:"add",mode:view,prefill:{day:d,start:s,end:Math.min(s+1,20)}});}
   // Track the single warned column so drag-move can clear/set it in O(1) instead of scanning the whole document each mousemove
   const dragWarnColRef=useRef(null);
-  function handleTutDragMove(ev,dd){const prev=dragWarnColRef.current;if(prev){prev.classList.remove('day-col-drop-warning');dragWarnColRef.current=null;}if(dd!==0){const targetDay=ev.day+dd;const hasAvviso=avEvs.some(a=>a.avvisoName===ev.name&&a.day===targetDay);if(!hasAvviso){const col=document.getElementById(`day-col-${targetDay}`);if(col){col.classList.add('day-col-drop-warning');dragWarnColRef.current=col;}}}}
-  function toggleAv(id){setActiveAvvisi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
+  function handleTutDragMove(ev,dd){const prev=dragWarnColRef.current;if(prev){prev.classList.remove('day-col-drop-warning');dragWarnColRef.current=null;}if(dd!==0){const targetDay=ev.day+dd;const hasCorso=corsiEvs.some(a=>a.corsoName===ev.name&&a.day===targetDay);if(!hasCorso){const col=document.getElementById(`day-col-${targetDay}`);if(col){col.classList.add('day-col-drop-warning');dragWarnColRef.current=col;}}}}
+  function toggleAv(id){setActiveCorsi(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});}
   function toggleTut(id){setActiveTutorIds(p=>{const all=new Set(tutors.map(t=>t.id));const base=p===null?new Set(all):new Set(p);base.has(id)?base.delete(id):base.add(id);return base.size===all.size?null:base;});}
 
-  async function addTutoraggio(ev,monthKey){pushUndo(tutEvRef.current,avRef.current);const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot tutoraggio · ${ev.name} · ${getTLbl(tId)} · ${fmtDateIT(mk,ev.day)} · ${fmtSlotRange(ev.start,ev.end)}`);}
-  async function editTutoraggio(evId,updated,_mk,verifyInfo){pushUndo(tutEvRef.current,avRef.current);const cur=structuredClone(tutEvRef.current);for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];const merged={...old,...updated};for(const k of Object.keys(merged))if(k.startsWith("_"))delete merged[k];cur[tid][mk][idx]=merged;tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);const newTId=updated.tutorId||old.tutorId;const desc=`${updated.name||old.name} · ${getTLbl(newTId)} · ${fmtDateIT(mk,updated.day??old.day)} · ${fmtSlotRange(updated.start??old.start,updated.end??old.end)}`;const changes=diffSlotChanges(old,updated,{tutorOld:getTLbl(old.tutorId),tutorNew:getTLbl(newTId),mk,mkNew:mk});if(verifyInfo&&verifyInfo.wasVerified!==verifyInfo.nowVerified){const logType=verifyInfo.nowVerified?"verify_tut":"unverify_tut";fsLog(user.email,logType,`${verifyInfo.nowVerified?"Verificato":"Verifica rimossa"} · ${desc}`,changes);}else{fsLog(user.email,"edit_tut",`Modificato slot tutoraggio · ${desc}`,changes);}return;}}}}
-  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,avRef.current);const cur=structuredClone(tutEvRef.current);for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot tutoraggio · ${ev.name} · ${getTLbl(ev.tutorId)} · ${fmtDateIT(mk,ev.day)} · ${fmtSlotRange(ev.start,ev.end)}`);return;}}}}
-  async function addAvviso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,avRef.current);const avId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=avRef.current.find(a=>a.id===avId);const upd=existing?avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,...events]}:a):[...avRef.current,{id:avId,events}];avRef.current=upd;setAvvisi(upd);setActiveAvvisi(p=>new Set([...p,avId]));await fsSaveAvviso(upd.find(a=>a.id===avId));fsLog(user.email,"add_av",`Importati ${events.length} slot`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=avRef.current.find(a=>a.id===avId);let upd;if(existing)upd=avRef.current.map(a=>a.id===avId?{...a,events:[...a.events,evData]}:a);else{upd=[...avRef.current,{id:avId,events:[evData]}];setActiveAvvisi(p=>new Set([...p,avId]));}avRef.current=upd;setAvvisi(upd);await fsSaveAvviso(upd.find(a=>a.id===avId));fsLog(user.email,"add_av",`Aggiunto slot avviso · ${name||avId} · ${fmtDateIT(mk,day)} · ${fmtSlotRange(start,end)}`);}
-  async function editAvviso(avId,evId,evData,verifyInfo){pushUndo(tutEvRef.current,avRef.current);const oldEv=avRef.current.find(av=>av.id===avId)?.events.find(e=>e.id===evId);const avName=anaRef.current.find(a=>a.id===avId)?.nome||avId;const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.map(e=>e.id===evId?{...e,...evData}:e)});avRef.current=upd;setAvvisi(upd);await fsSaveAvviso(upd.find(a=>a.id===avId));const oMk=oldEv?.month,nMk=evData.month||oMk;const desc=`${avName} · ${fmtDateIT(nMk,evData.day??oldEv?.day)} · ${fmtSlotRange(evData.start??oldEv?.start,evData.end??oldEv?.end)}`;const changes=oldEv?diffSlotChanges(oldEv,evData,{mk:oMk,mkNew:nMk}):[];if(verifyInfo&&verifyInfo.wasVerified!==verifyInfo.nowVerified){const logType=verifyInfo.nowVerified?"verify_av":"unverify_av";fsLog(user.email,logType,`${verifyInfo.nowVerified?"Verificato":"Verifica rimossa"} · ${desc}`,changes);}else{fsLog(user.email,"edit_av",`Modificato slot avviso · ${desc}`,changes);}}
-  async function deleteAvviso(avId,evId){pushUndo(tutEvRef.current,avRef.current);const oldEv=avRef.current.find(av=>av.id===avId)?.events.find(e=>e.id===evId);const avName=anaRef.current.find(a=>a.id===avId)?.nome||avId;const upd=avRef.current.map(av=>av.id!==avId?av:{...av,events:av.events.filter(e=>e.id!==evId)});avRef.current=upd;setAvvisi(upd);await fsSaveAvviso(upd.find(a=>a.id===avId));fsLog(user.email,"delete_av",oldEv?`Eliminato slot avviso · ${avName} · ${fmtDateIT(oldEv.month,oldEv.day)} · ${fmtSlotRange(oldEv.start,oldEv.end)}`:"Eliminato slot avviso");}
+  async function addTutoraggio(ev,monthKey){pushUndo(tutEvRef.current,corsiRef.current);const mk=monthKey||month.key,id=`tut-${Date.now()}`,tId=ev.tutorId;const cur=tutEvRef.current;const upd={...cur,[tId]:{...(cur[tId]||{}),[mk]:[...((cur[tId]||{})[mk]||[]),{...ev,id}]}};tutEvRef.current=upd;setTutEvents(upd);await fsSaveTutEvents(tId,mk,upd[tId][mk]);fsLog(user.email,"add_tut",`Aggiunto slot tutoraggio · ${ev.name} · ${getTLbl(tId)} · ${fmtDateIT(mk,ev.day)} · ${fmtSlotRange(ev.start,ev.end)}`);}
+  async function editTutoraggio(evId,updated,_mk,verifyInfo){pushUndo(tutEvRef.current,corsiRef.current);const cur=structuredClone(tutEvRef.current);for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const idx=evs.findIndex(e=>e.id===evId);if(idx>=0){const old=evs[idx];const merged={...old,...updated};for(const k of Object.keys(merged))if(k.startsWith("_"))delete merged[k];cur[tid][mk][idx]=merged;tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);const newTId=updated.tutorId||old.tutorId;const desc=`${updated.name||old.name} · ${getTLbl(newTId)} · ${fmtDateIT(mk,updated.day??old.day)} · ${fmtSlotRange(updated.start??old.start,updated.end??old.end)}`;const changes=diffSlotChanges(old,updated,{tutorOld:getTLbl(old.tutorId),tutorNew:getTLbl(newTId),mk,mkNew:mk});if(verifyInfo&&verifyInfo.wasVerified!==verifyInfo.nowVerified){const logType=verifyInfo.nowVerified?"verify_tut":"unverify_tut";fsLog(user.email,logType,`${verifyInfo.nowVerified?"Verificato":"Verifica rimossa"} · ${desc}`,changes);}else{fsLog(user.email,"edit_tut",`Modificato slot tutoraggio · ${desc}`,changes);}return;}}}}
+  async function deleteTutoraggio(evId){pushUndo(tutEvRef.current,corsiRef.current);const cur=structuredClone(tutEvRef.current);for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){const ev=evs.find(e=>e.id===evId);if(ev){cur[tid][mk]=evs.filter(e=>e.id!==evId);tutEvRef.current=cur;setTutEvents(cur);await fsSaveTutEvents(tid,mk,cur[tid][mk]);fsLog(user.email,"delete_tut",`Eliminato slot tutoraggio · ${ev.name} · ${getTLbl(ev.tutorId)} · ${fmtDateIT(mk,ev.day)} · ${fmtSlotRange(ev.start,ev.end)}`);return;}}}}
+  async function addCorso({existingId,name,color,month:mk,day,start,end,ore,events,id:newId}){pushUndo(tutEvRef.current,corsiRef.current);const coId=existingId||newId||`av-${Date.now()}`;if(events&&events.length>0){const existing=corsiRef.current.find(a=>a.id===coId);const upd=existing?corsiRef.current.map(a=>a.id===coId?{...a,events:[...a.events,...events]}:a):[...corsiRef.current,{id:coId,events}];corsiRef.current=upd;setCorsi(upd);setActiveCorsi(p=>new Set([...p,coId]));await fsSaveCorso(upd.find(a=>a.id===coId));fsLog(user.email,"add_corso",`Importati ${events.length} slot`);return;}const evData={id:`ave-${Date.now()}`,month:mk,day,start,end,ore};const existing=corsiRef.current.find(a=>a.id===coId);let upd;if(existing)upd=corsiRef.current.map(a=>a.id===coId?{...a,events:[...a.events,evData]}:a);else{upd=[...corsiRef.current,{id:coId,events:[evData]}];setActiveCorsi(p=>new Set([...p,coId]));}corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(a=>a.id===coId));fsLog(user.email,"add_corso",`Aggiunto slot corso · ${name||coId} · ${fmtDateIT(mk,day)} · ${fmtSlotRange(start,end)}`);}
+  async function editCorso(coId,evId,evData,verifyInfo){pushUndo(tutEvRef.current,corsiRef.current);const oldEv=corsiRef.current.find(co=>co.id===coId)?.events.find(e=>e.id===evId);const coName=anaCorsiRef.current.find(a=>a.id===coId)?.nome||coId;const upd=corsiRef.current.map(co=>co.id!==coId?co:{...co,events:co.events.map(e=>e.id===evId?{...e,...evData}:e)});corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(a=>a.id===coId));const oMk=oldEv?.month,nMk=evData.month||oMk;const desc=`${coName} · ${fmtDateIT(nMk,evData.day??oldEv?.day)} · ${fmtSlotRange(evData.start??oldEv?.start,evData.end??oldEv?.end)}`;const changes=oldEv?diffSlotChanges(oldEv,evData,{mk:oMk,mkNew:nMk}):[];if(verifyInfo&&verifyInfo.wasVerified!==verifyInfo.nowVerified){const logType=verifyInfo.nowVerified?"verify_corso":"unverify_corso";fsLog(user.email,logType,`${verifyInfo.nowVerified?"Verificato":"Verifica rimossa"} · ${desc}`,changes);}else{fsLog(user.email,"edit_corso",`Modificato slot corso · ${desc}`,changes);}}
+  async function deleteCorso(coId,evId){pushUndo(tutEvRef.current,corsiRef.current);const oldEv=corsiRef.current.find(co=>co.id===coId)?.events.find(e=>e.id===evId);const coName=anaCorsiRef.current.find(a=>a.id===coId)?.nome||coId;const upd=corsiRef.current.map(co=>co.id!==coId?co:{...co,events:co.events.filter(e=>e.id!==evId)});corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(a=>a.id===coId));fsLog(user.email,"delete_corso",oldEv?`Eliminato slot corso · ${coName} · ${fmtDateIT(oldEv.month,oldEv.day)} · ${fmtSlotRange(oldEv.start,oldEv.end)}`:"Eliminato slot corso");}
 
   async function handleSaveTutor(newList,action,tutor){setTutors(newList);setActiveTutorIds(null);if(action==="delete"&&tutor)await fsDeleteTutorDoc(tutor.id);else if(tutor)await fsSaveTutorDoc(tutor);else await fsSaveTutors(newList);if(action==="add")fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="edit")fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="delete")fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${tutor.cognome} ${tutor.nome}"`);}
-  async function handleSaveAna(newList,action,item){
-    if(action==="edit"){const old=anaRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=structuredClone(tutEvRef.current);let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
-    anaRef.current=newList;setAnagraficaAv(newList);if(action==="delete"&&item)await fsDeleteAnaDoc(item.id);else if(item)await fsSaveAnaDoc(item);else await fsSaveAna(newList);if(action==="add")fsLog(user.email,"add_av_ana",`Aggiunto avviso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_av_ana",`Modificato avviso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_av_ana",`Eliminato avviso "${item.nome}"`);}
+  async function handleSaveAnaCorso(newList,action,item){
+    if(action==="edit"){const old=anaCorsiRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=structuredClone(tutEvRef.current);let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
+    anaCorsiRef.current=newList;setAnagraficaCorsi(newList);if(action==="delete"&&item)await fsDeleteAnaCorsoDoc(item.id);else if(item)await fsSaveAnaCorsoDoc(item);else await fsSaveAnaCorsi(newList);if(action==="add")fsLog(user.email,"add_corso_ana",`Aggiunto corso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_corso_ana",`Modificato corso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_corso_ana",`Eliminato corso "${item.nome}"`);}
+  async function handleSaveAvviso(newList,op,item){setAvvisi(newList);avvisoRef.current=newList;if(op==="delete")await fsDeleteAvviso(item.id);else await fsSaveAvviso(item);await fsLog(user?.email,op==="delete"?"delete_avviso_ana":op==="add"?"add_avviso_ana":"edit_avviso_ana",item.nome||"");}
   async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);await fsSaveSettings(m);}
 
   if(loading)return(<div className="app-shell">
@@ -422,10 +459,10 @@ function App({user}){
           <div key={group} className="sidebar-group">
             {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
             {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
-              <button key={item.id} className={`sidebar-item${activeScreen===item.id?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
-                {activeScreen===item.id&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
-                <Icon name={item.icon} size={16} color={activeScreen===item.id?"var(--accent)":"var(--fg-subtle)"}/>
-                {!sidebarCollapsed&&<span style={{color:activeScreen===item.id?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
+              <button key={item.id} className={`sidebar-item${(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
+                {(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
+                <Icon name={item.icon} size={16} color={(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--accent)":"var(--fg-subtle)"}/>
+                {!sidebarCollapsed&&<span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
               </button>
             ))}
           </div>
@@ -444,14 +481,14 @@ function App({user}){
         </button>
       </div>
     </aside>
-    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaAv={anagraficaAv} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddAv={addAvviso} onSaveTutor={handleSaveTutor} onSaveAna={handleSaveAna} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} onClose={()=>setShowAi(false)}/>}
+    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddCorso={addCorso} onSaveTutor={handleSaveTutor} onSaveAnaCorso={handleSaveAnaCorso} onSaveAvviso={handleSaveAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} onClose={()=>setShowAi(false)}/>}
     </div>
 
     <div className="main-area">
       {isCalendar&&(<div className="topbar">
         <div className="module-switch">
           <button className={`module-btn${view==="tutoraggio"?" active":""}`} onClick={()=>setView("tutoraggio")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13} color={view==="tutoraggio"?"var(--accent)":"currentColor"}/>Tutoraggi</button>
-          <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Avvisi/Progetti</button>
+          <button className={`module-btn${view==="avviso"?" active":""}`} onClick={()=>setView("avviso")} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13} color={view==="avviso"?"var(--accent)":"currentColor"}/>Corsi</button>
         </div>
         <div className="month-nav">
           <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevLeft" size={14}/></button>
@@ -525,26 +562,27 @@ function App({user}){
         {tutors.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"var(--accent)";const hex=col.startsWith("#")?col:"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} className="tutor-chip" style={{border:`1px solid ${active?col:"var(--border)"}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)",opacity:active?1:.5}}><span className="tutor-chip-dot" style={{background:active?col:"var(--bg-sunken)"}}>{t.cognome[0]||""}</span>{t.cognome||t.nome}</button>;})}
         <div className="filterbar-divider"/>
         <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
-          <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi avvisi":"Mostra avvisi"}
+          <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi corsi":"Mostra corsi"}
         </button>
-        {avForBar.length>0&&<><div className="filterbar-divider"/><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>{avForBar.map(a=>{const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<span key={a.id} className="avviso-chip" style={{background:hexToRgba(hex,.12),border:`1px solid ${hexToRgba(hex,.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>;})}</>}
+        {corsiForBar.length>0&&<><div className="filterbar-divider"/><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Corsi</span>{corsiForBar.map(a=>{const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<span key={a.id} className="avviso-chip" style={{background:hexToRgba(hex,.12),border:`1px solid ${hexToRgba(hex,.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>;})}</>}
       </div>)}
       {isCalendar&&view==="avviso"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totAvOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
-        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avvisi</span>
-        {avThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:avThisMonth.map(a=>{const active=activeAvvisi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
+        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Corsi</span>
+        {corsiThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:corsiThisMonth.map(a=>{const active=activeCorsi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
       </div>)}
 
       <div className="screen-area" style={showVerificaPanel?{flexDirection:"row"}:{}}>
-        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden",minHeight:0}}>
+        <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflowX:"hidden",overflowY:"auto",minHeight:0}}>
         {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?mTByDay:null} avByDay={view==="avviso"?mAvByDay:null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
-        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?tByDay:null} avOverlayByDay={view==="tutoraggio"?ovByDay:null} avByDay={view==="avviso"?avByDay:null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editTutoraggio(evId,u);if(origEv){const avName=origEv.name;const newDay=u.day??origEv.day;const avDay=avEvs.find(a=>a.avvisoName===avName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!avDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if(avDay&&((u.start??origEv.start)<avDay.start||(u.end??origEv.end)>avDay.end))warn=`Fuori orario: "${avName}" è ${fmt(avDay.start)}–${fmt(avDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(avId,evId,u)=>{const origEv=visAvEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editAvviso(avId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}:null} highlightEvId={highlightEvId} onTutDragMove={canEdit?handleTutDragMove:null}/>}
-        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveTutor={handleSaveTutor} canEdit={perms.editAnagrafica}/>}
-        {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} anagraficaAv={anagraficaAv} onSaveAna={handleSaveAna} canEdit={perms.editAnagrafica}/>}
-        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} perms={perms} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
+        {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?tByDay:null} avOverlayByDay={view==="tutoraggio"?ovByDay:null} avByDay={view==="avviso"?corsiByDay:null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editTutoraggio(evId,u);if(origEv){const coName=origEv.name;const newDay=u.day??origEv.day;const coDay=corsiEvs.find(a=>a.corsoName===coName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!coDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if(coDay&&((u.start??origEv.start)<coDay.start||(u.end??origEv.end)>coDay.end))warn=`Fuori orario: "${coName}" è ${fmt(coDay.start)}–${fmt(coDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(coId,evId,u)=>{const origEv=visCorsiEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editCorso(coId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}:null} highlightEvId={highlightEvId} onTutDragMove={canEdit?handleTutDragMove:null}/>}
+        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onSaveTutor={handleSaveTutor} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="ana-corsi"&&<AnaCorsiScreen corsi={corsi} anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={handleSaveAnaCorso} avvisiEntita={avvisi} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} onSaveAvviso={handleSaveAvviso} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} corsi={corsi} tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} perms={perms} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
         </div>
-        {showVerificaPanel&&perms.useVerifica&&<VerificaScreen avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} anagraficaAv={anagraficaAv} onNavigateToError={navigateToError}/>}
+        {showVerificaPanel&&perms.useVerifica&&<VerificaScreen corsi={corsi} tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onNavigateToError={navigateToError}/>}
       </div>
 
       {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
@@ -552,9 +590,9 @@ function App({user}){
       {isCalendar&&dragWarn&&<div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:300,display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderRadius:"var(--radius-md)",background:"var(--warning-soft)",border:"1px solid var(--warning)",boxShadow:"var(--shadow-lg)",fontSize:13,color:"var(--fg)",maxWidth:520}}><Icon name="alert" size={15} color="var(--warning)"/><span style={{flex:1}}>{dragWarn}</span><button onClick={()=>setDragWarn(null)} style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",display:"flex",flexShrink:0}}><Icon name="x" size={13} color="var(--fg-muted)"/></button></div>}
     </div>
 
-    {showInsights&&perms.useInsights&&<InsightsScreen avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
+    {showInsights&&perms.useInsights&&<InsightsScreen corsi={corsi} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
-    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} avvisi={avvisi} anagraficaAv={anagraficaAv} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddAv={addAvviso} onEditAv={editAvviso} onDeleteAv={deleteAvviso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaAvvisi={()=>setActiveScreen("ana-avvisi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
+    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} corsi={corsi} anagraficaCorsi={anagraficaCorsi} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddCorso={addCorso} onEditCorso={editCorso} onDeleteCorso={deleteCorso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
   </div>);
 }
 
