@@ -103,9 +103,27 @@ function MCalendar({month,monthIdx,setMonthIdx,monthTutEvents,monthCorsoEvents,t
   </>);
 }
 
+// ── Toolbar riutilizzabile: ricerca + ordinamento ──
+function MListToolbar({q,setQ,sort,setSort,placeholder}){
+  return(<div className="m-toolbar">
+    <div className="m-search">
+      <Icon name="search" size={15} color="var(--fg-faint)"/>
+      <input value={q} onChange={e=>setQ(e.target.value)} placeholder={placeholder}/>
+    </div>
+    <div className="m-toolbar-row">
+      <div className="m-sort">
+        <button className={sort==="az"?"on":""} onClick={()=>setSort("az")}>A–Z</button>
+        <button className={sort==="ore"?"on":""} onClick={()=>setSort("ore")}><Icon name="clock" size={12} color="currentColor"/>Ore</button>
+      </div>
+    </div>
+  </div>);
+}
+
 // ── Tutor (lista + dettaglio) ──
 function MTutors({tutors,tutEvents}){
   const[sel,setSel]=useState(null);
+  const[q,setQ]=useState("");
+  const[sort,setSort]=useState("az");
   const tutTot=useMemo(()=>{const o={};tutors.forEach(t=>{let s=0;const td=tutEvents[t.id]||{};for(const evs of Object.values(td))for(const e of evs)s+=e.ore||0;o[t.id]=s;});return o;},[tutors,tutEvents]);
   if(sel){
     const t=sel;const td=tutEvents[t.id]||{};
@@ -129,25 +147,39 @@ function MTutors({tutors,tutEvents}){
         ))}</div>}
     </>);
   }
-  const sorted=[...tutors].sort((a,b)=>(a.cognome||"").localeCompare(b.cognome||""));
-  if(sorted.length===0)return<div className="m-empty"><div className="m-empty-ic"><Icon name="users" size={24} color="var(--fg-subtle)"/></div><div className="m-empty-txt">Nessun tutor in anagrafica</div></div>;
-  return(<>{sorted.map(t=>(
-    <button key={t.id} className="m-row" onClick={()=>setSel(t)}>
-      <div className="m-row-avatar" style={{background:mSafeColor(t.color)}}>{mInitials(t)}</div>
-      <div className="m-row-body">
-        <div className="m-row-title">{mTutLabel(t)}</div>
-        <div className="m-row-sub">{t.azienda||"—"}</div>
-      </div>
-      <div className="m-row-val">{fmtOreMin(tutTot[t.id]||0)}</div>
-      <Icon name="chevRight" size={16} color="var(--fg-subtle)"/>
-    </button>
-  ))}</>);
+  const ql=q.trim().toLowerCase();
+  const sorted=[...tutors]
+    .filter(t=>!ql||`${t.cognome||""} ${t.nome||""} ${t.azienda||""}`.toLowerCase().includes(ql))
+    .sort((a,b)=>sort==="ore"?((tutTot[b.id]||0)-(tutTot[a.id]||0)):(a.cognome||"").localeCompare(b.cognome||""));
+  return(<>
+    <MListToolbar q={q} setQ={setQ} sort={sort} setSort={setSort} placeholder="Cerca tutor o azienda…"/>
+    {tutors.length===0
+      ?<div className="m-empty"><div className="m-empty-ic"><Icon name="users" size={24} color="var(--fg-subtle)"/></div><div className="m-empty-txt">Nessun tutor in anagrafica</div></div>
+      :sorted.length===0
+        ?<div className="m-empty"><div className="m-empty-txt">Nessun tutor trovato</div></div>
+        :sorted.map(t=>(
+          <button key={t.id} className="m-row" onClick={()=>setSel(t)}>
+            <div className="m-row-avatar" style={{background:mSafeColor(t.color)}}>{mInitials(t)}</div>
+            <div className="m-row-body">
+              <div className="m-row-title">{mTutLabel(t)}</div>
+              <div className="m-row-sub">{t.azienda||"—"}</div>
+            </div>
+            <div className="m-row-val">{fmtOreMin(tutTot[t.id]||0)}</div>
+            <Icon name="chevRight" size={16} color="var(--fg-subtle)"/>
+          </button>
+        ))}
+  </>);
 }
 
 // ── Corsi (lista + dettaglio) ──
 function MCorsi({anagraficaCorsi,corsiById,avvisi,tutors,tutEvents}){
   const[sel,setSel]=useState(null);
+  const[q,setQ]=useState("");
+  const[sort,setSort]=useState("az");
+  const[stato,setStato]=useState("all");
   const oreSched=id=>{const co=corsiById[id];return co?co.events.reduce((s,e)=>s+(e.ore||0),0):0;};
+  // Il codice può essere sul corso oppure (se vuoto) sull'avviso/progetto collegato
+  const codeOf=a=>a.codice||avvisi.find(av=>av.id===a.avvisoId)?.codice||"";
   if(sel){
     const a=sel;const co=corsiById[a.id];const ore=oreSched(a.id);const nSess=co?co.events.length:0;
     const tone=STATO_TONES[a.stato]||"info";
@@ -159,7 +191,7 @@ function MCorsi({anagraficaCorsi,corsiById,avvisi,tutors,tutEvents}){
         <div className="m-detail-title">{a.nome}</div>
       </div>
       <div className="m-card">
-        <div className="m-kv"><span className="m-kv-k">Codice</span><span className="m-kv-v">{a.codice||"—"}</span></div>
+        <div className="m-kv"><span className="m-kv-k">Codice</span><span className="m-kv-v">{codeOf(a)||"—"}</span></div>
         <div className="m-kv"><span className="m-kv-k">Stato</span><span className="m-kv-v"><span className={`m-badge ${tone}`}>{a.stato||"—"}</span></span></div>
         {avviso&&<div className="m-kv"><span className="m-kv-k">Avviso/Progetto</span><span className="m-kv-v">{avviso.nome}</span></div>}
         <div className="m-kv"><span className="m-kv-k">Periodo</span><span className="m-kv-v">{a.dataInizio||"—"} → {a.dataFine||"—"}</span></div>
@@ -179,28 +211,50 @@ function MCorsi({anagraficaCorsi,corsiById,avvisi,tutors,tutEvents}){
         ))}
     </>);
   }
-  const sorted=[...anagraficaCorsi].sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
-  if(sorted.length===0)return<div className="m-empty"><div className="m-empty-ic"><Icon name="graduationCap" size={24} color="var(--fg-subtle)"/></div><div className="m-empty-txt">Nessun corso in anagrafica</div></div>;
-  return(<>{sorted.map(a=>{
-    const tone=STATO_TONES[a.stato]||"info";
-    return(<button key={a.id} className="m-row" onClick={()=>setSel(a)}>
-      <div className="m-row-swatch" style={{background:mSafeColor(a.colore)}}/>
-      <div className="m-row-body">
-        <div className="m-row-title">{a.nome}</div>
-        <div className="m-row-sub">{a.codice||"—"}</div>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
-        <span className="m-row-val">{fmtOreMin(oreSched(a.id))}</span>
-        {a.stato&&<span className={`m-badge ${tone}`}>{a.stato}</span>}
-      </div>
-    </button>);
-  })}</>);
+  const ql=q.trim().toLowerCase();
+  const sorted=[...anagraficaCorsi]
+    .filter(a=>(stato==="all"||a.stato===stato)&&(!ql||`${a.nome||""} ${codeOf(a)}`.toLowerCase().includes(ql)))
+    .sort((a,b)=>sort==="ore"?(oreSched(b.id)-oreSched(a.id)):(a.nome||"").localeCompare(b.nome||""));
+  return(<>
+    <MListToolbar q={q} setQ={setQ} sort={sort} setSort={setSort} placeholder="Cerca corso o codice…"/>
+    <div className="m-chips" style={{marginBottom:12}}>
+      <button className={`m-chip${stato==="all"?" on":""}`} onClick={()=>setStato("all")}>Tutti</button>
+      {AV_STATI.map(s=><button key={s} className={`m-chip${stato===s?" on":""}`} onClick={()=>setStato(s)}>{s}</button>)}
+    </div>
+    {anagraficaCorsi.length===0
+      ?<div className="m-empty"><div className="m-empty-ic"><Icon name="graduationCap" size={24} color="var(--fg-subtle)"/></div><div className="m-empty-txt">Nessun corso in anagrafica</div></div>
+      :sorted.length===0
+        ?<div className="m-empty"><div className="m-empty-txt">Nessun corso trovato</div></div>
+        :sorted.map(a=>{
+          const tone=STATO_TONES[a.stato]||"info";
+          return(<button key={a.id} className="m-row" onClick={()=>setSel(a)}>
+            <div className="m-row-swatch" style={{background:mSafeColor(a.colore)}}/>
+            <div className="m-row-body">
+              <div className="m-row-title">{a.nome}</div>
+              <div className="m-row-sub">{codeOf(a)||"—"}</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}>
+              <span className="m-row-val">{fmtOreMin(oreSched(a.id))}</span>
+              {a.stato&&<span className={`m-badge ${tone}`}>{a.stato}</span>}
+            </div>
+          </button>);
+        })}
+  </>);
 }
 
 // ── Insights ──
 function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
-  const[period,setPeriod]=useState("month");
-  const mks=useMemo(()=>period==="month"?[month.key]:MONTHS.filter(m=>m.year===month.year).map(m=>m.key),[period,month]);
+  const[period,setPeriod]=useState("month"); // month | year | range
+  const[rangeStart,setRangeStart]=useState(month.key);
+  const[rangeEnd,setRangeEnd]=useState(month.key);
+  const[rankMode,setRankMode]=useState("tutor"); // tutor | corso
+  const mks=useMemo(()=>{
+    if(period==="month")return[month.key];
+    if(period==="year")return MONTHS.filter(m=>m.year===month.year).map(m=>m.key);
+    const si=MONTHS.findIndex(m=>m.key===rangeStart),ei=MONTHS.findIndex(m=>m.key===rangeEnd);
+    if(si<0||ei<0)return[month.key];
+    return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);
+  },[period,month,rangeStart,rangeEnd]);
   const tutOre=tId=>{let s=0;const td=tutEvents[tId]||{};for(const mk of mks)for(const e of(td[mk]||[]))s+=e.ore||0;return s;};
   const avOre=id=>{const co=corsiById[id];return co?co.events.filter(e=>mks.includes(e.month)).reduce((s,e)=>s+(e.ore||0),0):0;};
   const totOre=tutors.reduce((s,t)=>s+tutOre(t.id),0);
@@ -208,7 +262,9 @@ function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
     +anagraficaCorsi.reduce((s,a)=>s+((corsiById[a.id]?.events)||[]).filter(e=>mks.includes(e.month)).length,0);
   const activeTutors=tutors.filter(t=>tutOre(t.id)>0).length;
   const activeCorsi=anagraficaCorsi.filter(a=>avOre(a.id)>0).length;
-  const rank=[...tutors].map(t=>({t,ore:tutOre(t.id)})).filter(x=>x.ore>0).sort((a,b)=>b.ore-a.ore).slice(0,8);
+  const rankTut=[...tutors].map(t=>({id:t.id,label:mTutLabel(t),ore:tutOre(t.id),color:t.color})).filter(x=>x.ore>0).sort((a,b)=>b.ore-a.ore).slice(0,8);
+  const rankCorso=[...anagraficaCorsi].map(a=>({id:a.id,label:a.nome,ore:avOre(a.id),color:a.colore})).filter(x=>x.ore>0).sort((a,b)=>b.ore-a.ore).slice(0,8);
+  const rank=rankMode==="tutor"?rankTut:rankCorso;
   const maxOre=rank.length?rank[0].ore:0;
   const KPIS=[
     {lbl:"Ore pianificate",val:fmtOreMin(totOre),ic:"clock",bg:"var(--accent-soft)",fg:"var(--accent-strong)"},
@@ -218,9 +274,15 @@ function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
   ];
   return(<>
     <div className="m-period">
-      <button className={period==="month"?"on":""} onClick={()=>setPeriod("month")}>{month.label}</button>
+      <button className={period==="month"?"on":""} onClick={()=>setPeriod("month")}>Mese</button>
       <button className={period==="year"?"on":""} onClick={()=>setPeriod("year")}>Anno {month.year}</button>
+      <button className={period==="range"?"on":""} onClick={()=>setPeriod("range")}>Periodo</button>
     </div>
+    {period==="range"&&<div className="m-range">
+      <select value={rangeStart} onChange={e=>setRangeStart(e.target.value)}>{MONTHS.map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select>
+      <span className="m-range-sep">→</span>
+      <select value={rangeEnd} onChange={e=>setRangeEnd(e.target.value)}>{MONTHS.map(m=><option key={m.key} value={m.key}>{m.label}</option>)}</select>
+    </div>}
     <div className="m-kpi-grid">
       {KPIS.map(k=>(<div key={k.lbl} className="m-kpi">
         <div className="m-kpi-ic" style={{background:k.bg,color:k.fg}}><Icon name={k.ic} size={17} color={k.fg}/></div>
@@ -228,20 +290,23 @@ function MInsights({month,anagraficaCorsi,corsiById,tutors,tutEvents}){
         <div className="m-kpi-val">{k.val}</div>
       </div>))}
     </div>
-    <div className="m-section-h">Top tutor per ore</div>
+    <div className="m-period" style={{marginBottom:12}}>
+      <button className={rankMode==="tutor"?"on":""} onClick={()=>setRankMode("tutor")}>Tutor</button>
+      <button className={rankMode==="corso"?"on":""} onClick={()=>setRankMode("corso")}>Corsi</button>
+    </div>
+    <div className="m-section-h">{rankMode==="tutor"?"Top tutor per ore":"Top corsi per ore"}</div>
     {rank.length===0
       ?<div className="m-empty"><div className="m-empty-txt">Nessun dato nel periodo</div></div>
-      :<div className="m-card">{rank.map(({t,ore},i)=>(
-        <div key={t.id} className="m-rank-row">
+      :<div className="m-card">{rank.map((r,i)=>(
+        <div key={r.id} className="m-rank-row">
           <div className="m-rank-n">{i+1}</div>
           <div className="m-rank-bar-wrap">
-            <div className="m-rank-name">{mTutLabel(t)}</div>
-            <div className="m-rank-bar-bg"><div className="m-rank-bar-fill" style={{width:`${maxOre?Math.max(6,ore/maxOre*100):0}%`,background:mSafeColor(t.color)}}/></div>
+            <div className="m-rank-name">{r.label}</div>
+            <div className="m-rank-bar-bg"><div className="m-rank-bar-fill" style={{width:`${maxOre?Math.max(6,r.ore/maxOre*100):0}%`,background:mSafeColor(r.color)}}/></div>
           </div>
-          <div className="m-rank-val">{fmtOreMin(ore)}</div>
+          <div className="m-rank-val">{fmtOreMin(r.ore)}</div>
         </div>
       ))}</div>}
-    <div className="m-note">Disponibili solo da desktop: <b>Verifica coerenza</b>, <b>AI Import</b>, impostazioni avanzate e l'editing del calendario (creazione, modifica e trascinamento delle sessioni).</div>
   </>);
 }
 

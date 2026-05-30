@@ -6,6 +6,7 @@
    ════════════════════════════════════════════════════════════════════ */
 
 .m-app{
+  position:fixed;inset:0;               /* ancorata al viewport: tab bar sempre visibile */
   display:flex;flex-direction:column;height:100%;width:100%;
   background:var(--bg);color:var(--fg);
   font-family:var(--font-base,"Inter Tight",system-ui,sans-serif);
@@ -100,6 +101,39 @@
 .m-session-meta{font-size:12.5px;color:var(--fg-muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px;}
 .m-session-time{font-size:13px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;}
 .m-session-dur{font-size:11px;font-weight:600;color:var(--fg-subtle);margin-top:2px;}
+
+/* ── List toolbar (search + sort + filtri) ── */
+.m-toolbar{display:flex;flex-direction:column;gap:9px;margin-bottom:11px;}
+.m-search{position:relative;}
+.m-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;}
+.m-search input{
+  width:100%;box-sizing:border-box;padding:11px 12px 11px 36px;
+  border-radius:12px;border:1px solid var(--border);background:var(--bg-elev);
+  color:var(--fg);font-size:14.5px;font-family:inherit;
+}
+.m-search input::placeholder{color:var(--fg-faint);}
+.m-toolbar-row{display:flex;gap:8px;align-items:center;}
+.m-sort{display:flex;gap:3px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:10px;padding:3px;}
+.m-sort button{
+  padding:7px 12px;border:none;border-radius:8px;background:none;color:var(--fg-muted);
+  font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;
+}
+.m-sort button.on{background:var(--bg-elev);color:var(--fg);box-shadow:var(--shadow-xs,0 1px 2px rgba(0,0,0,.08));}
+.m-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
+.m-chips::-webkit-scrollbar{display:none;}
+.m-chip{
+  flex-shrink:0;padding:7px 13px;border-radius:999px;border:1px solid var(--border);
+  background:var(--bg-elev);color:var(--fg-muted);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+}
+.m-chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);}
+
+/* ── Insights period range ── */
+.m-range{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.m-range select{
+  flex:1;min-width:0;padding:10px;border-radius:11px;border:1px solid var(--border);
+  background:var(--bg-elev);color:var(--fg);font-size:13.5px;font-family:inherit;
+}
+.m-range-sep{color:var(--fg-subtle);font-size:13px;flex-shrink:0;}
 
 /* ── Generic list rows (tutor / corsi) ── */
 .m-row{
