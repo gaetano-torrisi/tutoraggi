@@ -98,13 +98,13 @@ function cleanObj(obj){if(Array.isArray(obj))return obj.map(cleanObj);if(obj&&ty
 function makeJSONBlob(corsi,tutors,tutEvents,anagraficaCorsi,avvisi,settings,userProfiles,authorizedEmails,activityLog){return JSON.stringify({version:6,exportedAt:new Date().toISOString(),anagraficaCorsi,corsi,avvisi,tutors,tutEvents,settings,userProfiles,authorizedEmails,activityLog},null,2);}
 
 // ── FIRESTORE ─────────────────────────────────────────────────────────────
-async function fsLoad(){try{const[co,tu,te,se,an,av]=await Promise.all([db.collection("corsi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaCorsi").get(),db.collection("avvisi").get()]);const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});return{corsi:co.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaCorsi:an.docs.map(d=>d.data()),avvisi:av.docs.map(d=>d.data())};}catch(e){console.error(e);return{corsi:[],tutors:[],tutEvents:{},settings:{},anagraficaCorsi:[],avvisi:[]};}}
+async function fsLoad(){try{const[co,tu,te,se,an,av]=await Promise.all([db.collection("corsi").get(),db.collection("tutors").get(),db.collection("tutEvents").get(),db.collection("settings").doc("app").get(),db.collection("anagraficaCorsi").get(),db.collection("avvisi_progetti").get()]);const te2={};te.docs.forEach(d=>{te2[d.id]=d.data();});return{corsi:co.docs.map(d=>d.data()),tutors:tu.docs.map(d=>d.data()),tutEvents:te2,settings:se.exists?se.data():{},anagraficaCorsi:an.docs.map(d=>d.data()),avvisi:av.docs.map(d=>d.data())};}catch(e){console.error(e);return{corsi:[],tutors:[],tutEvents:{},settings:{},anagraficaCorsi:[],avvisi:[]};}}
 async function fsSaveCorsi(list){showSaving();const b=db.batch();const s=await db.collection("corsi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("corsi").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsSaveTutors(list){showSaving();const b=db.batch();const s=await db.collection("tutors").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("tutors").doc(x.id),cleanObj(x)));await b.commit();}
 async function fsSaveTutEvents(tId,mk,evs){showSaving();await db.collection("tutEvents").doc(tId).set({[mk]:cleanObj(evs)},{merge:true});}
 async function fsSaveSettings(s){await db.collection("settings").doc("app").set(s,{merge:true});}
 async function fsSaveAnaCorsi(list){showSaving();const b=db.batch();const s=await db.collection("anagraficaCorsi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("anagraficaCorsi").doc(x.id),cleanObj(x)));await b.commit();}
-async function fsSaveAvvisi(list){showSaving();const b=db.batch();const s=await db.collection("avvisi").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("avvisi").doc(x.id),cleanObj(x)));await b.commit();}
+async function fsSaveAvvisi(list){showSaving();const b=db.batch();const s=await db.collection("avvisi_progetti").get();s.docs.forEach(d=>b.delete(d.ref));list.forEach(x=>b.set(db.collection("avvisi_progetti").doc(x.id),cleanObj(x)));await b.commit();}
 // Targeted single-document writes
 async function fsSaveCorso(co){showSaving();await db.collection("corsi").doc(co.id).set(cleanObj(co));}
 async function fsDeleteCorso(id){showSaving();await db.collection("corsi").doc(id).delete();}
@@ -112,9 +112,9 @@ async function fsSaveTutorDoc(t){showSaving();await db.collection("tutors").doc(
 async function fsDeleteTutorDoc(id){showSaving();await db.collection("tutors").doc(id).delete();}
 async function fsSaveAnaCorsoDoc(a){showSaving();await db.collection("anagraficaCorsi").doc(a.id).set(cleanObj(a));}
 async function fsDeleteAnaCorsoDoc(id){showSaving();await db.collection("anagraficaCorsi").doc(id).delete();}
-async function fsSaveAvviso(av){showSaving();await db.collection("avvisi").doc(av.id).set(cleanObj(av));}
-async function fsDeleteAvviso(id){showSaving();await db.collection("avvisi").doc(id).delete();}
-async function fsClearAll(){showSaving();for(const c of["corsi","tutors","tutEvents","settings","anagraficaCorsi","avvisi","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
+async function fsSaveAvviso(av){showSaving();await db.collection("avvisi_progetti").doc(av.id).set(cleanObj(av));}
+async function fsDeleteAvviso(id){showSaving();await db.collection("avvisi_progetti").doc(id).delete();}
+async function fsClearAll(){showSaving();for(const c of["corsi","tutors","tutEvents","settings","anagraficaCorsi","avvisi_progetti","userProfiles"]){const s=await db.collection(c).get();const b=db.batch();s.docs.forEach(d=>b.delete(d.ref));await b.commit();}}
 function fmtDateIT(mk,day){const m=MONTHS.find(x=>x.key===mk);if(!m)return`${day} ${mk}`;return`${day} ${MONTH_ABBR_IT[m.month]} ${m.year}`;}
 function fmtSlotRange(start,end){return`${fmt(start)}–${fmt(end)} (${fmtDurata(end-start)})`;}
 // Build a [{label,from,to}] diff between two slot states. mk/mkNew = month keys.
