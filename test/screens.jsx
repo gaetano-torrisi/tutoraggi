@@ -19,7 +19,7 @@ function runVerifica(corsi,anagraficaCorsi,tutors,tutEvents){
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0||d===6)errors.push({type:"weekend",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${fmtDayMonth(ev.day,mk)}.`,detail:"Giorno festivo o weekend."});}}}
   // tutor_senza_slot
   const corsiNamesSet=new Set(anagraficaCorsi.map(a=>a.nome));
-  for(const t of tutors){let totalSlots=0,hasLinkedSlot=false;for(const{evs}of safeEvs(tutEvents[t.id]||{})){totalSlots+=evs.length;if(evs.some(ev=>corsiNamesSet.has(ev.name)))hasLinkedSlot=true;}if(totalSlots===0)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non è mai presente nel calendario.`,detail:"Tutor presente in anagrafica ma senza sessioni."});else if(!hasLinkedSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" presente ma non collegato ad alcun avviso in anagrafica.`,detail:"Tutti gli slot fanno riferimento ad avvisi non in anagrafica."});}
+  for(const t of tutors){let totalSlots=0,hasLinkedSlot=false;for(const{evs}of safeEvs(tutEvents[t.id]||{})){totalSlots+=evs.length;if(evs.some(ev=>corsiNamesSet.has(ev.name)))hasLinkedSlot=true;}if(totalSlots===0)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non è mai presente nel calendario.`,detail:"Tutor presente in anagrafica ma senza sessioni."});else if(!hasLinkedSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" presente ma non collegato ad alcun corso in anagrafica.`,detail:"Tutti gli slot fanno riferimento a corsi non in anagrafica."});}
   // avviso_senza_sessioni
   for(const ana of anagraficaCorsi){const co=corsiById[ana.id];if(!co||!(co.events||[]).length)errors.push({type:"corso_senza_sessioni",monthKey:null,msg:`Corso "${ana.nome}" non ha sessioni nel calendario.`,detail:"Nessuna data inserita per questo corso."});}
   return errors;
@@ -28,7 +28,7 @@ function runVerifica(corsi,anagraficaCorsi,tutors,tutEvents){
 const VERIFICA_CATS=[
   {type:"sovrapposizione",label:"Sovrapposizioni",icon:"zap",tone:"danger"},
   {type:"fuori_orario",label:"Fuori orario",icon:"clock",tone:"warning"},
-  {type:"fuori_avviso",label:"Avviso errato",icon:"arrowRight",tone:"warning"},
+  {type:"fuori_avviso",label:"Corso errato",icon:"arrowRight",tone:"warning"},
   {type:"fuori_sessione",label:"Fuori da ogni sessione",icon:"calendar",tone:"danger"},
   {type:"eccedenza",label:"Ore eccedenti",icon:"trending",tone:"warning"},
   {type:"durata",label:"Durata non corrispondente",icon:"clipboard",tone:"info"},
@@ -424,7 +424,7 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
       <div style={{padding:"10px 24px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,alignItems:"center",flexShrink:0,background:"var(--bg-elev)"}}>
         <div className="tab-strip">
           <button className={`tab-strip-btn${viewMode==="tutor"?" active":""}`} onClick={()=>{setViewMode("tutor");setSelTutFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="user" size={12}/>Per tutor</button>
-          <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>{setViewMode("avviso");setSelAvFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={12}/>Per avviso</button>
+          <button className={`tab-strip-btn${viewMode==="avviso"?" active":""}`} onClick={()=>{setViewMode("avviso");setSelAvFilter("");}} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={12}/>Per corso</button>
         </div>
         <button disabled={selPeriod.mode!=="single"} onClick={()=>{const idx=MONTHS.findIndex(m=>m.key===selPeriod.monthKey);if(idx>0)setSelPeriod({mode:"single",monthKey:MONTHS[idx-1].key,year:MONTHS[idx-1].year});}} className="btn" data-variant="ghost" data-size="icon-sm" title="Mese precedente"><Icon name="chevLeft" size={14}/></button>
         <MonthRangePicker value={selPeriod} onChange={setSelPeriod} months={allMonthKeys}/>
@@ -501,7 +501,7 @@ function InsightsScreen({corsi,anagraficaCorsi,tutors,tutEvents,currentMonthKey,
               {ana.durataOre&&pct!=null&&(()=>{const tutOreAv=tutors.reduce((s,t)=>s+getTutOreAvPeriodo(t.id,ana.nome),0);const tutPct=Math.round(tutOreAv/ana.durataOre*100);const avOrePeriodo=getAvOrePeriodo(ana.id);const avPeriodoPct=Math.round(avOrePeriodo/ana.durataOre*100);const periodLabel=periodSubtitle();return(<div style={{marginBottom:10,paddingBottom:10,borderBottom:"1px solid var(--divider)"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Ore pianificate</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:pct>100?"var(--danger)":"var(--fg)"}}>{pct}% · {fmtOreMin(totOre)}/{fmtOreMin(ana.durataOre)}</span></div>
                 <div className="progress-bar-track" style={{height:6,marginBottom:10}}><div className="progress-bar-fill" style={{width:`${Math.min(100,pct)}%`,background:`linear-gradient(90deg,${ana.colore||"var(--accent)"}bb,${ana.colore||"var(--accent)"})`}}/></div>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avanzamento ore avviso</span><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,color:"var(--fg-subtle)",fontStyle:"italic"}}>{periodLabel}</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:avPeriodoPct>100?"var(--danger)":"var(--fg)"}}>{avPeriodoPct}% · {fmtOreMin(avOrePeriodo)}/{fmtOreMin(ana.durataOre)}</span></div></div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Avanzamento ore corso</span><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,color:"var(--fg-subtle)",fontStyle:"italic"}}>{periodLabel}</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:avPeriodoPct>100?"var(--danger)":"var(--fg)"}}>{avPeriodoPct}% · {fmtOreMin(avOrePeriodo)}/{fmtOreMin(ana.durataOre)}</span></div></div>
                 <div className="progress-bar-track" style={{height:6,marginBottom:10}}><div className="progress-bar-fill" style={{width:`${Math.min(100,avPeriodoPct)}%`,background:`linear-gradient(90deg,${ana.colore||"var(--accent)"}88,${ana.colore||"var(--accent)"}bb)`}}/></div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Ore tutor assegnati</span><div style={{display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,color:"var(--fg-subtle)",fontStyle:"italic"}}>{periodLabel}</span><span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,color:tutPct>100?"var(--danger)":"var(--fg)"}}>{tutPct}% · {fmtOreMin(tutOreAv)}/{fmtOreMin(ana.durataOre)}</span></div></div>
                 <div className="progress-bar-track" style={{height:6}}><div className="progress-bar-fill" style={{width:`${Math.min(100,tutPct)}%`,background:`linear-gradient(90deg,${ana.colore||"var(--accent)"}44,${ana.colore||"var(--accent)"}77)`}}/></div>
@@ -645,8 +645,8 @@ function GestionePermessi({rolePermissions,onSave}){
   const[saving,setSaving]=useState(false);const[saved,setSaved]=useState(false);
   const GROUPS=[
     {label:"Calendario",icon:"calendar",items:[
-      {key:"addSlot",label:"Aggiunge slot",desc:"Crea nuovi slot tutoraggi e avvisi"},
-      {key:"editSlot",label:"Modifica slot non verificati",desc:"Modifica orari, tutor, avviso degli slot liberi"},
+      {key:"addSlot",label:"Aggiunge slot",desc:"Crea nuovi slot tutoraggi e corsi"},
+      {key:"editSlot",label:"Modifica slot non verificati",desc:"Modifica orari, tutor, corso degli slot liberi"},
       {key:"deleteSlot",label:"Elimina slot",desc:"Rimuove slot non verificati dal calendario"},
       {key:"editVerified",label:"Modifica slot verificati",desc:"Può toccare slot già verificati da un admin"},
       {key:"verifySlot",label:"Verifica / de-verifica slot",desc:"Mostra la checkbox di verifica nel modale di modifica"},
@@ -657,7 +657,7 @@ function GestionePermessi({rolePermissions,onSave}){
       {key:"useVerifica",label:"Verifica coerenza",desc:"Accesso al pannello di controllo e rilevamento anomalie"},
     ]},
     {label:"Anagrafica",icon:"users",items:[
-      {key:"editAnagrafica",label:"Modifica tutors e avvisi",desc:"Crea, modifica, elimina tutor e avvisi in anagrafica"},
+      {key:"editAnagrafica",label:"Modifica tutors, corsi e avvisi",desc:"Crea, modifica, elimina tutor, corsi e avvisi in anagrafica"},
     ]},
     {label:"Dati & Impostazioni",icon:"activity",items:[
       {key:"viewLog",label:"Visualizza log attività",desc:"Accesso allo storico delle modifiche"},
@@ -977,7 +977,7 @@ function DemoPanel({isSuperAdmin}){
         <div style={{width:48,height:48,borderRadius:12,background:"var(--accent-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <Icon name="dice" size={22} color="var(--accent)"/>
         </div>
-        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>5 tutor · 6 avvisi · ~620 slot distribuiti su tutto il 2026</p></div>
+        <div><h3 style={{fontSize:15,fontWeight:700,marginBottom:2,color:"var(--fg)"}}>Carica dati demo</h3><p style={{fontSize:12,color:"var(--fg-muted)"}}>5 tutor · 6 corsi · ~620 slot distribuiti su tutto il 2026</p></div>
       </div>
       <div style={{padding:12,background:"var(--warning-soft)",borderRadius:8,marginBottom:12,fontSize:11.5,color:"var(--fg)",lineHeight:1.6,display:"flex",alignItems:"flex-start",gap:8}}>
         <Icon name="alert" size={14} color="var(--warning)" style={{flexShrink:0,marginTop:1}}/>
