@@ -206,8 +206,8 @@ function InlineCreateTutor({tutors,onSaveTutor,onCreated,onCancel,onAddMessage})
 }
 
 // ── INLINE CREATE CORSO ──────────────────────────────────────────────────
-function InlineCreateCorso({anagraficaCorsi,onSaveAnaCorso,onCreated,onCancel,onAddMessage}){
-  const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1]});
+function InlineCreateCorso({anagraficaCorsi,onSaveAnaCorso,onCreated,onCancel,onAddMessage,avvisoId=""}){
+  const[form,setForm]=useState({nome:"",codice:"",durataOre:"",stato:"In corso",colore:PALETTE[1],avvisoId});
   const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
   const presetColors=PALETTE.slice(0,8);
   async function handleCreate(){
@@ -239,6 +239,39 @@ function InlineCreateCorso({anagraficaCorsi,onSaveAnaCorso,onCreated,onCancel,on
         <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
         <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
           {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea e seleziona</>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineCreateAvviso({avvisi,onSaveAvviso,onCreated,onCancel,onAddMessage}){
+  const[form,setForm]=useState({nome:"",codice:"",ente:"",anno:new Date().getFullYear(),stato:"In corso"});
+  const[saving,setSaving]=useState(false);const[err,setErr]=useState("");
+  async function handleCreate(){
+    if(!form.nome){setErr("Nome è obbligatorio.");return;}
+    setSaving(true);setErr("");
+    const newAv={...form,id:`avviso-${Date.now()}`,note:""};
+    const newList=[...avvisi,newAv];
+    await onSaveAvviso(newList,"add",newAv);
+    onAddMessage&&onAddMessage(`Avviso/progetto "${newAv.nome}" creato.`);
+    onCreated(newAv);
+    setSaving(false);
+  }
+  return(
+    <div style={{marginTop:6,padding:"10px 12px",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)"}}>
+      <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso/progetto</div>
+      <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
+        <div><label className="label" style={{fontSize:10}}>Codice DDG</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+        <div><label className="label" style={{fontSize:10}}>Anno</label><input className="input mono" type="number" value={form.anno} onChange={e=>setForm(f=>({...f,anno:Number(e.target.value)||new Date().getFullYear()}))} style={{height:28,fontSize:12}}/></div>
+      </div>
+      <div style={{marginBottom:8}}><label className="label" style={{fontSize:10}}>Ente</label><input className="input" value={form.ente} onChange={e=>setForm(f=>({...f,ente:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+      {err&&<div style={{fontSize:11,color:"var(--danger)",marginBottom:6}}>{err}</div>}
+      <div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
+        <button onClick={onCancel} className="btn" data-variant="ghost" data-size="sm">Annulla</button>
+        <button onClick={handleCreate} disabled={saving} className="btn" data-variant="accent" data-size="sm" style={{display:"flex",alignItems:"center",gap:4}}>
+          {saving?<><Icon name="loader" size={11} color="#fff"/>Creazione...</>:<><Icon name="check" size={11} color="#fff"/>Crea</>}
         </button>
       </div>
     </div>

@@ -32,17 +32,18 @@ function ProfileModal({user,onClose}){
 }
 
 // ── AI PANEL ──────────────────────────────────────────────────────────────
-function AiPanel({tutors,anagraficaCorsi,settings,user,isSuperAdmin,onAddTut,onAddCorso,onSaveTutor,onSaveAnaCorso,onOpenAnaTutors,onOpenAnaCorsi,onClose}){
+function AiPanel({tutors,anagraficaCorsi,avvisi=[],settings,user,isSuperAdmin,onAddTut,onAddCorso,onSaveTutor,onSaveAnaCorso,onSaveAvviso,onOpenAnaTutors,onOpenAnaCorsi,onClose}){
   const[step,setStep]=useState("start");const[importType,setImportType]=useState(null);const[selTutor,setSelTutor]=useState("");const[selAv,setSelAv]=useState("");const[pending,setPending]=useState([]);const[ambig,setAmbig]=useState([]);const[loading,setLoading]=useState(false);const[showPaste,setShowPaste]=useState(false);const[pasteText,setPasteText]=useState("");
   const[showInlineTutor,setShowInlineTutor]=useState(false);const[showInlineAvviso,setShowInlineAvviso]=useState(false);
+  const[selAvvisoProjId,setSelAvvisoProjId]=useState("");const[showInlineAvvisoProj,setShowInlineAvvisoProj]=useState(false);
   const PHRASES=["Cosa importiamo oggi nel calendario del dolore?","Quante riunioni di oggi potevano essere una email?","Quale documento ti ha rovinato la giornata?","Quale deadline ti ha svegliato stanotte?","Cosa ottimizziamo oggi per non farlo mai più manualmente?","Quale foglio Excel vorresti bruciare?","Cosa posso fare per renderti la giornata meno lunga?","Cosa ti manca per staccare prima delle 18?","Cosa vuoi fare oggi invece di goderti il sole?","Quale collega ti ha già scritto tre email oggi?","Quale procedura amministrativa vorresti semplificare per sempre?","Quante ore di riunioni avresti potuto evitare questa settimana?","Quale scadenza regionale ti tiene sveglio la notte?","Cosa vuoi delegare a me prima di andare a pranzo?","Quale modulo hai compilato tre volte perché il sistema era giù?","Cosa ti ha fatto perdere più tempo oggi, la burocrazia o la tecnologia?","Quale progetto giace abbandonato in una cartella del desktop?","Quanti allegati stai per inviare a qualcuno che non li leggerà mai?","Cosa sistemiamo oggi per non doverci pensare più?","Quale report hai rimandato abbastanza da renderlo urgente?","Quante volte hai riscritto la stessa email oggi?","Quale riunione ricorrente potresti cancellare senza che nessuno se ne accorga?","Stai ottimizzando qualcosa che potevi eliminare direttamente?","Quanti tab hai aperti in questo momento?","Quale collega ti ha mandato un \"ok\" invece di leggere tutto il documento?","Cosa hai rimandato a lunedì tre lunedì fa?","Hai mai pensato che questo calendario potrebbe gestirsi da solo?","Quanti \"urgente\" hai ricevuto oggi che non erano urgenti?","Quale norma regionale hai riletto tre volte senza capirla?","Cosa faresti con un'ora in più al giorno? Perché non me la deleghi?"];
   const phrase=useRef(PHRASES[Math.floor(Math.random()*PHRASES.length)]).current;
-  const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Corso/Progetto",icon:"briefcase",value:"avviso"}]}]);
+  const[messages,setMessages]=useState([{role:"ai",text:phrase,buttons:[{label:"Tutoraggi",icon:"mapPin",value:"tutoraggio"},{label:"Corso",icon:"briefcase",value:"avviso"}]}]);
   const fileRef=useRef(),btmRef=useRef();
   const uname=user?.email?.split("@")[0]||"utente";
   useEffect(()=>{btmRef.current?.scrollIntoView({behavior:"smooth"});},[messages]);
   const addMsg=m=>setMessages(p=>[...p,m]);
-  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){setStep("selTutor");addMsg({role:"ai",text:"Nessun tutor ancora. Creane uno per procedere:",showTutorSel:true});setShowInlineTutor(true);return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaCorsi.length){setStep("selAv");addMsg({role:"ai",text:"Nessun corso ancora. Creane uno per procedere:",showAvSel:true});setShowInlineAvviso(true);return;}addMsg({role:"ai",text:"Hai già inserito il Corso/Progetto in anagrafica?",showAvCheck:true});}}
+  function startImport(type){setImportType(type);if(type==="tutoraggio"){if(!tutors.length){setStep("selTutor");addMsg({role:"ai",text:"Nessun tutor ancora. Creane uno per procedere:",showTutorSel:true});setShowInlineTutor(true);return;}addMsg({role:"ai",text:"Hai già inserito il tutor in anagrafica?",showTutorCheck:true});}else{if(!anagraficaCorsi.length){setStep("addCorso");addMsg({role:"ai",text:"Nessun corso registrato. Prima seleziona o crea l'avviso/progetto a cui appartiene:",showAddCorsoFlow:true});return;}addMsg({role:"ai",text:"Hai già inserito il corso in anagrafica?",showAvCheck:true});}}
   function proceedTutor(){setStep("selTutor");addMsg({role:"ai",text:"Seleziona tutor e corso, poi carica il documento o incolla il testo.",showTutorSel:true});}
   function proceedAv(){setStep("selAv");addMsg({role:"ai",text:"Seleziona il corso/progetto, poi carica il documento o incolla il testo.",showAvSel:true});}
   async function processSource(file,text){if(file)addMsg({role:"user",text:file.name,icon:"paperclip"});else addMsg({role:"user",text:`Testo incollato (${text.length} caratteri)`,icon:"clipboard"});setLoading(true);addMsg({role:"ai",text:"Analisi in corso...",isLoading:true});try{const res=await analyzeDoc(file,text);handleResult(res);}catch(err){setMessages(p=>p.filter(m=>!m.isLoading));addMsg({role:"ai",text:`Errore: ${err.message}`});}setLoading(false);}
@@ -71,7 +72,7 @@ function AiPanel({tutors,anagraficaCorsi,settings,user,isSuperAdmin,onAddTut,onA
       {msg.showOpenTutor&&<button onClick={onOpenAnaTutors} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="users" size={13}/>Apri Anagrafica Tutor</button>}
       {msg.showOpenAv&&<button onClick={onOpenAnaCorsi} className="btn" data-variant="outline" style={{marginTop:6,display:"flex",alignItems:"center",gap:6}}><Icon name="briefcase" size={13}/>Apri Anagrafica Corsi</button>}
       {msg.showTutorCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedTutor} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedTutor();setShowInlineTutor(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
-      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{proceedAv();setShowInlineAvviso(true);}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
+      {msg.showAvCheck&&<div style={{display:"flex",gap:8,marginTop:6}}><button onClick={proceedAv} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="check" size={13} color="#fff"/>Sì, procedi</button><button onClick={()=>{setStep("addCorso");addMsg({role:"ai",text:"A quale avviso/progetto appartiene il nuovo corso?",showAddCorsoFlow:true});}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={13}/>No, aggiungi</button></div>}
       {msg.showTutorSel&&step==="selTutor"&&<div style={{marginTop:8,width:"100%"}}>
         <select value={selTutor} onChange={e=>setSelTutor(e.target.value)} className="select" style={{marginBottom:4}}>
           <option value="">— Seleziona tutor —</option>
@@ -98,6 +99,25 @@ function AiPanel({tutors,anagraficaCorsi,settings,user,isSuperAdmin,onAddTut,onA
           ?<button onClick={()=>setShowInlineAvviso(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>Nuovo corso</button>
           :<InlineCreateCorso anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={onSaveAnaCorso} onCreated={a=>{setSelAv(a.id);setShowInlineAvviso(false);}} onCancel={()=>setShowInlineAvviso(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
         {!selAv?<div style={{fontSize:11,color:"var(--fg-subtle)",fontStyle:"italic",marginTop:6}}>Seleziona un corso per procedere.</div>:uploadButtons()}
+      </div>}
+      {msg.showAddCorsoFlow&&step==="addCorso"&&<div style={{marginTop:8,width:"100%"}}>
+        {!selAvvisoProjId?(
+          <div>
+            <div style={{fontSize:11,color:"var(--fg-subtle)",marginBottom:6}}>Seleziona l'avviso/progetto a cui appartiene il corso:</div>
+            {avvisi.length>0&&<select value={selAvvisoProjId} onChange={e=>{setSelAvvisoProjId(e.target.value);setShowInlineAvvisoProj(false);}} className="select" style={{marginBottom:4}}>
+              <option value="">— Seleziona avviso/progetto —</option>
+              {[...avvisi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(av=><option key={av.id} value={av.id}>{av.nome}</option>)}
+            </select>}
+            {!showInlineAvvisoProj
+              ?<button onClick={()=>setShowInlineAvvisoProj(true)} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer",padding:"2px 0",marginBottom:6,display:"inline-flex",alignItems:"center",gap:4}}><Icon name="plus" size={11} color="var(--accent)"/>{avvisi.length>0?"Nuovo avviso/progetto":"Crea avviso/progetto"}</button>
+              :<InlineCreateAvviso avvisi={avvisi} onSaveAvviso={onSaveAvviso} onCreated={av=>{setSelAvvisoProjId(av.id);setShowInlineAvvisoProj(false);}} onCancel={()=>setShowInlineAvvisoProj(false)} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>}
+          </div>
+        ):(
+          <div>
+            <div style={{fontSize:11,color:"var(--success)",marginBottom:8,display:"flex",alignItems:"center",gap:5}}><Icon name="briefcase" size={11} color="var(--success)"/><strong>{avvisi.find(av=>av.id===selAvvisoProjId)?.nome}</strong><button onClick={()=>{setSelAvvisoProjId("");setShowInlineAvvisoProj(false);}} style={{marginLeft:4,background:"none",border:"none",cursor:"pointer",color:"var(--fg-subtle)",fontSize:10}}>Cambia</button></div>
+            <InlineCreateCorso anagraficaCorsi={anagraficaCorsi} avvisoId={selAvvisoProjId} onSaveAnaCorso={onSaveAnaCorso} onCreated={a=>{setSelAv(a.id);setStep("selAv");addMsg({role:"ai",text:`Corso creato. Ora carica il documento o incolla il testo.`,showUpload:true});}} onCancel={()=>setSelAvvisoProjId("")} onAddMessage={txt=>addMsg({role:"ai",text:txt})}/>
+          </div>
+        )}
       </div>}
       {msg.showUpload&&uploadButtons()}
       {msg.showPreview&&<div style={{marginTop:6,width:"100%"}}><div style={{maxHeight:130,overflowY:"auto",border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-elev)",marginBottom:8}}>{msg.showPreview.map((ev,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 10px",borderBottom:"1px solid var(--divider)",fontSize:11}}><span style={{color:"var(--fg-muted)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.day} {ev.month} — {fmt(ev.start)}–{fmt(ev.end)}</span><span style={{fontWeight:600,color:"var(--fg)",fontFamily:'"JetBrains Mono",monospace'}}>{ev.ore}h</span></div>)}</div>{step==="preview"&&<div style={{display:"flex",gap:6}}><button onClick={onConfirm} disabled={loading} className="btn" data-variant="accent" style={{flex:1,justifyContent:"center",display:"flex",alignItems:"center",gap:6}}>{loading?<><Icon name="loader" size={13} color="#fff"/>Importazione...</>:<><Icon name="check" size={13} color="#fff"/>Conferma tutto</>}</button><button onClick={()=>{setStep(importType==="tutoraggio"?"selTutor":"selAv");addMsg({role:"ai",text:"Ok, carica un altro file.",showUpload:true});}} className="btn" data-variant="outline"><Icon name="x" size={13}/></button></div>}</div>}
@@ -446,7 +466,7 @@ function App({user}){
         </button>
       </div>
     </aside>
-    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaCorsi={anagraficaCorsi} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddCorso={addCorso} onSaveTutor={handleSaveTutor} onSaveAnaCorso={handleSaveAnaCorso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} onClose={()=>setShowAi(false)}/>}
+    {showAi&&perms.useAiImport&&<AiPanel tutors={tutors} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} settings={settings} user={user} isSuperAdmin={isSuperAdmin} onAddTut={addTutoraggio} onAddCorso={addCorso} onSaveTutor={handleSaveTutor} onSaveAnaCorso={handleSaveAnaCorso} onSaveAvviso={handleSaveAvviso} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} onClose={()=>setShowAi(false)}/>}
     </div>
 
     <div className="main-area">
