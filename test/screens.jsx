@@ -714,7 +714,7 @@ function SettingsScreen({role,settings,corsi,tutors,tutEvents,anagraficaCorsi,on
     (perms?.editSettings!==false)&&{id:"personalizza",label:"Personalizza",icon:"palette",desc:"Tema, colori, densità e preferenze."},
     isAdmin&&{id:"users",label:"Utenti e permessi",icon:"key",desc:"Chi può accedere e cosa può fare."},
     isSuperAdmin&&{id:"permissions",label:"Gestione permessi",icon:"shield",desc:"Personalizza i permessi per ogni ruolo."},
-    isSuperAdmin&&{id:"api",label:"API & AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
+    isSuperAdmin&&{id:"api",label:"Gestione API AI",icon:"sparkles",desc:"Chiavi Gemini, OpenAI e provider attivo."},
     (perms?.viewBackup)&&{id:"backup",label:"Backup",icon:"save",desc:"Snapshot del database, import/export."},
     (perms?.viewLog)&&{id:"log",label:"Log attività",icon:"clock",desc:"Storico delle modifiche per utente."},
     (perms?.manageDemo)&&{id:"demo",label:"Dati demo",icon:"dice",desc:"Carica dati di esempio o resetta tutto."},
@@ -874,12 +874,12 @@ function ApiPanel({settings,onSave}){
   async function testGemini(){if(!geminiKey){setTestG({ok:false,msg:"Chiave non inserita"});return;}setTestG(null);try{const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`);if(r.ok){setTestG({ok:true,msg:"Connessione riuscita"});}else{let detail="";try{const j=await r.json();detail=j.error?.message||"";}catch{}setTestG({ok:false,msg:`Errore ${r.status}${detail?`: ${detail}`:""}`.trim()});}}catch{setTestG({ok:false,msg:"Errore di rete"});}setCdG(60);}
   async function testOpenai(){if(!openaiKey){setTestO({ok:false,msg:"Chiave non inserita"});return;}setTestO(null);try{const r=await fetch("https://api.openai.com/v1/models",{headers:{"Authorization":`Bearer ${openaiKey}`}});setTestO(r.ok?{ok:true,msg:"Connessione riuscita"}:r.status===429?{ok:false,msg:"Quota esaurita"}:r.status===401?{ok:false,msg:"Chiave non valida"}:{ok:false,msg:`Errore ${r.status}`});}catch{setTestO({ok:false,msg:"Errore di rete"});}setCdO(60);}
   return(<div style={{maxWidth:720}}>
-    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>API & AI</h2>
+    <h2 style={{fontSize:22,fontWeight:700,marginBottom:6,color:"var(--fg)"}}>Gestione API AI</h2>
     <p style={{fontSize:13,color:"var(--fg-muted)",marginBottom:22}}>Chiavi per l'assistente di import. Salvate cifrate su Firestore.</p>
     <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,marginBottom:14,boxShadow:"var(--shadow-xs)"}}>
       <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:12}}>Provider attivo</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-        {[{v:"gemini",label:"Google Gemini",icon:"sparkles",desc:"gemini-2.0-flash · veloce"},{v:"openai",label:"OpenAI",icon:"zap",desc:"gpt-4o-mini · ottima sui PDF"}].map(o=><button key={o.v} onClick={()=>setAiProvider(o.v)} style={{textAlign:"left",padding:14,borderRadius:"var(--radius)",cursor:"pointer",background:aiProvider===o.v?"var(--bg-sunken)":"var(--bg-elev)",border:`1.5px solid ${aiProvider===o.v?"var(--accent)":"var(--border)"}`}}>
+        {[{v:"gemini",label:"Google Gemini",icon:"sparkles",desc:"gemini-2.5-flash · veloce"},{v:"openai",label:"OpenAI",icon:"zap",desc:"gpt-4o-mini · ottima sui PDF"}].map(o=><button key={o.v} onClick={()=>setAiProvider(o.v)} style={{textAlign:"left",padding:14,borderRadius:"var(--radius)",cursor:"pointer",background:aiProvider===o.v?"var(--bg-sunken)":"var(--bg-elev)",border:`1.5px solid ${aiProvider===o.v?"var(--accent)":"var(--border)"}`}}>
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><Icon name={o.icon} size={15} color={aiProvider===o.v?"var(--accent)":"var(--fg-muted)"}/><div style={{fontSize:14,fontWeight:700,color:"var(--fg)"}}>{o.label}</div>{aiProvider===o.v&&<span className="badge" data-tone="accent" style={{marginLeft:"auto"}}>Attivo</span>}</div>
           <div style={{fontSize:12,color:"var(--fg-muted)"}}>{o.desc}</div>
         </button>)}
