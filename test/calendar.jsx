@@ -75,7 +75,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
   const HOURS=Array.from({length:13},(_,i)=>i+8);
   const isWE=d=>[0,6].includes(new Date(monthData.year,monthData.month,d).getDay());
   const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
-  return(<div style={{flex:1,overflowX:"auto",overflowY:"auto",background:"var(--bg)"}} className="cal-scroll">
+  return(<div style={{overflowX:"auto",overflowY:"clip",background:"var(--bg)"}} className="cal-scroll">
     <div style={{display:"flex",minWidth:TIME_W+days.length*colW,background:"var(--bg)"}}>
       <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:10,background:"var(--bg)"}}>
         <div style={{height:60,borderBottom:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
