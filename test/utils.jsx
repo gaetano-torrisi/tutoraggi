@@ -64,7 +64,7 @@ const NAV_GROUPS=[
   ]},
   {group:"Strumenti",items:[
     {id:"ai",label:"AI Import",icon:"sparkles"},
-    {id:"insights",label:"Insights & Riepiloghi",icon:"barchart"},
+    {id:"insights",label:"Insights",icon:"barchart"},
     {id:"verifica",label:"Verifica coerenza",icon:"shieldCheck"},
   ]},
   {group:"Sistema",items:[
