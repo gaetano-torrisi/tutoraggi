@@ -102,8 +102,29 @@ function MonthPicker({monthIdx,onChange,onClose}){
 }
 
 function ColorPicker({value,onChange,usedColors=[]}){
-  return(<div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:4,marginBottom:10}}>
-    {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;return(<div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c} style={{position:"relative",width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:value===c?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",overflow:"hidden",flexShrink:0}}>{used&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(0,0,0,0.55)" strokeWidth="2.5"/><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/></svg>}</div>);})}
+  const[hex,setHex]=useState(value||"#000000");
+  useEffect(()=>{setHex(value||"#000000");},[value]);
+  const isCustom=value&&!PALETTE.includes(value);
+  function applyHex(v){const c=v.startsWith("#")?v:"#"+v;if(/^#[0-9a-fA-F]{6}$/.test(c)){onChange(c);setHex(c);}}
+  return(<div style={{marginTop:4,marginBottom:10}}>
+    <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8}}>
+      {PALETTE.map(c=>{const used=usedColors.includes(c)&&c!==value;const sel=value===c;return(
+        <div key={c} onClick={()=>!used&&onChange(c)} title={used?"Già in uso":c}
+          style={{position:"relative",width:22,height:22,borderRadius:4,background:c,cursor:used?"not-allowed":"pointer",border:sel?"3px solid var(--fg)":"2px solid transparent",boxSizing:"border-box",overflow:"hidden",flexShrink:0}}>
+          {used&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(0,0,0,0.55)" strokeWidth="2.5"/><line x1="3" y1="3" x2="19" y2="19" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/></svg>}
+          {sel&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><path d="M4 11l5 5 9-9" stroke="rgba(255,255,255,0.95)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M4 11l5 5 9-9" stroke="rgba(0,0,0,0.25)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+        </div>
+      );})}
+    </div>
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <label title="Colore personalizzato" style={{position:"relative",width:22,height:22,flexShrink:0,cursor:"pointer",display:"block"}}>
+        <div style={{width:22,height:22,borderRadius:4,boxSizing:"border-box",overflow:"hidden",border:isCustom?"3px solid var(--fg)":"2px solid var(--border)",background:isCustom?value:"conic-gradient(red,yellow,lime,cyan,blue,magenta,red)",position:"relative"}}>
+          {isCustom&&<svg style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}} viewBox="0 0 22 22"><path d="M4 11l5 5 9-9" stroke="rgba(255,255,255,0.95)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>}
+          <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(value||"")?value:"#3399ff"} onChange={e=>{onChange(e.target.value);setHex(e.target.value);}} style={{opacity:0,position:"absolute",inset:"-4px",width:"calc(100% + 8px)",height:"calc(100% + 8px)",cursor:"pointer",border:"none",padding:0}}/>
+        </div>
+      </label>
+      <input type="text" value={hex} onChange={e=>setHex(e.target.value)} onBlur={()=>applyHex(hex)} onKeyDown={e=>e.key==="Enter"&&applyHex(hex)} placeholder="#RRGGBB" className="input mono" style={{flex:1,height:26,fontSize:11,padding:"0 6px"}}/>
+    </div>
   </div>);
 }
 
