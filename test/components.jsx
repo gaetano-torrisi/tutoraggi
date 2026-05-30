@@ -263,7 +263,7 @@ function InlineCreateAvviso({avvisi,onSaveAvviso,onCreated,onCancel,onAddMessage
       <div style={{fontSize:10,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Nuovo avviso/progetto</div>
       <div style={{marginBottom:6}}><label className="label" style={{fontSize:10}}>Nome *</label><input className="input" value={form.nome} onChange={e=>setForm(f=>({...f,nome:e.target.value}))} style={{height:28,fontSize:12}}/></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
-        <div><label className="label" style={{fontSize:10}}>Codice DDG</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
+        <div><label className="label" style={{fontSize:10}}>Codice</label><input className="input mono" value={form.codice} onChange={e=>setForm(f=>({...f,codice:e.target.value}))} style={{height:28,fontSize:12}}/></div>
         <div><label className="label" style={{fontSize:10}}>Anno</label><input className="input mono" type="number" value={form.anno} onChange={e=>setForm(f=>({...f,anno:Number(e.target.value)||new Date().getFullYear()}))} style={{height:28,fontSize:12}}/></div>
       </div>
       <div style={{marginBottom:8}}><label className="label" style={{fontSize:10}}>Ente</label><input className="input" value={form.ente} onChange={e=>setForm(f=>({...f,ente:e.target.value}))} style={{height:28,fontSize:12}}/></div>
