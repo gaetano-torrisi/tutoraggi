@@ -459,10 +459,10 @@ function App({user}){
           <div key={group} className="sidebar-group">
             {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
             {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
-              <button key={item.id} className={`sidebar-item${(activeScreen===item.id||(item.id==="ai"&&showAi))?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
-                {(activeScreen===item.id||(item.id==="ai"&&showAi))&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
-                <Icon name={item.icon} size={16} color={(activeScreen===item.id||(item.id==="ai"&&showAi))?"var(--accent)":"var(--fg-subtle)"}/>
-                {!sidebarCollapsed&&<span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi))?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
+              <button key={item.id} className={`sidebar-item${(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
+                {(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
+                <Icon name={item.icon} size={16} color={(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--accent)":"var(--fg-subtle)"}/>
+                {!sidebarCollapsed&&<span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
               </button>
             ))}
           </div>
