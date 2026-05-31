@@ -21,9 +21,11 @@
   background:var(--bg-elev);border-bottom:1px solid var(--border);
   min-height:54px;box-sizing:border-box;
 }
+.m-topbar-brand{display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .m-topbar-logo{width:30px;height:30px;border-radius:7px;flex-shrink:0;object-fit:cover;}
-.m-topbar-title{font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--fg);flex:1;min-width:0;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-topbar-appname{font-family:'Inter Tight',sans-serif;font-size:16px;font-weight:700;letter-spacing:-0.02em;color:var(--fg);white-space:nowrap;}
+.m-topbar-title{font-size:15px;font-weight:600;letter-spacing:-0.01em;color:var(--fg-muted);flex:1;min-width:0;
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .m-iconbtn{
   width:38px;height:38px;border-radius:10px;border:1px solid var(--border);
   background:var(--bg-elev);color:var(--fg-muted);
