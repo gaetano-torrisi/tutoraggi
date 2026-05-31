@@ -345,11 +345,11 @@ function MobileApp({loading,user,role,perms={},theme,setTheme,corsi=[],anagrafic
 
   return(<div className="m-app">
     <header className="m-topbar">
-      <div className="m-topbar-brand">
-        <img className="m-topbar-logo" src={settings.logoBase64||"assets/appmark-color.png"} alt="TutorIA"/>
-        <span className="m-topbar-appname"><span>Tutor</span><span style={{color:"var(--accent)"}}>IA</span></span>
+      <img className="m-topbar-logo" src={settings.logoBase64||"assets/appmark-color.png"} alt="TutorIA"/>
+      <div className="m-topbar-stack">
+        <div className="m-topbar-appname"><span>Tutor</span><span style={{color:"var(--accent)"}}>IA</span></div>
+        <div className="m-topbar-title">{TITLES[tab]}</div>
       </div>
-      <div className="m-topbar-title">{TITLES[tab]}</div>
       <button className="m-avatar" onClick={()=>setShowAccount(true)}>{initials}</button>
     </header>
 
