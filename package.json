@@ -1,0 +1,17 @@
+{
+  "name": "tutoria-test-build",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build tooling per la versione test/ di TutorIA: pre-transpila i JSX in app.bundle.js (vedi build.mjs).",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
