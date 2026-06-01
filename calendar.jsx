@@ -77,7 +77,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
   const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
   return(<div style={{overflowX:"auto",overflowY:"clip",background:"var(--bg)"}} className="cal-scroll">
     <div style={{display:"flex",minWidth:TIME_W+days.length*colW,background:"var(--bg)"}}>
-      <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:10,background:"var(--bg)"}}>
+      <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:30,background:"var(--bg)"}}>
         <div style={{height:60,borderBottom:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
         <div style={{position:"relative",height:12*slotH}}>{HOURS.map(h=><div key={h} className="cal-time-col" style={{position:"absolute",top:(h-8)*slotH,width:"100%",paddingRight:4,textAlign:"right",borderTop:"1px solid var(--divider)",height:slotH,boxSizing:"border-box"}}>{String(h).padStart(2,"0")}:00</div>)}</div>
         <div style={{height:40,background:"var(--bg-sunken)",borderTop:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:8}}><span style={{fontSize:9.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Tot</span></div>
@@ -89,7 +89,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
         const tLayout=layoutEvents(tEvs);
         const tutOvSub=new Map();{const byCorso={};for(const tev of tEvs){if(avPosMap[tev.name])(byCorso[tev.name]=byCorso[tev.name]||[]).push(tev);}for(const name in byCorso)layoutEvents(byCorso[name]).forEach(({ev,col,numCols})=>tutOvSub.set(ev,{subCol:col,subNumCols:numCols}));}
         return(<div key={d} id={`day-col-${d}`} style={{width:colW,flexShrink:0,borderRight:"1px solid var(--border-strong)",background:wk?"var(--bg-weekend)":"var(--bg-elev)"}}>
-          <div style={{height:60,background:wk?"var(--bg-weekend)":"var(--bg-elev)",borderBottom:`2px solid ${wk?"var(--border-strong)":"var(--border-strong)"}`,padding:"6px 10px",display:"flex",flexDirection:"column",justifyContent:"center",position:"sticky",top:0,zIndex:5}}>
+          <div style={{height:60,background:wk?"var(--bg-weekend)":"var(--bg-elev)",borderBottom:`2px solid ${wk?"var(--border-strong)":"var(--border-strong)"}`,padding:"6px 10px",display:"flex",flexDirection:"column",justifyContent:"center",position:"sticky",top:0,zIndex:25}}>
             <span style={{fontSize:10,color:wk?"var(--fg-muted)":"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",fontWeight:600}}>{getDN(d)}</span>
             <span style={{fontWeight:700,fontSize:17,color:wk?"var(--fg-muted)":"var(--fg)",letterSpacing:"-0.01em"}}>{d}</span>
           </div>
