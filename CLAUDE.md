@@ -130,6 +130,11 @@ isolato, prefisso `.m-`). Il desktop non viene toccato.
 
 ## Convenzioni
 
+- **Skill `frontend-design`**: per lavoro significativo su UI/aspetto visivo
+  (nuove schermate o componenti, redesign, scelte estetiche, layout) usare la
+  skill dedicata `frontend-design`, che garantisce qualità grafica alta ed evita
+  estetiche generiche. Per ritocchi minimi (un colore, un allineamento, una
+  label) non è necessaria.
 - **Regola degli hook**: l'early-return `if(isMobile) return <MobileApp .../>` in
   `app.jsx` deve stare **dopo tutti gli hook** (niente hook condizionali).
 - **CSS**: usare i token di `tokens.css`. Classi mobile sempre con prefisso `.m-`.
@@ -160,5 +165,5 @@ rischio minimo, serve disclosure UI + AI literacy. NIS 2: non applicabile.
 
 ---
 
-_Ultimo aggiornamento: 2026-06-01 — dopo il promote di bundle + service worker
-(mobile + desktop) su root._
+_Ultimo aggiornamento: 2026-06-01 — aggiunta convenzione skill `frontend-design`
+per il lavoro su UI; dopo il promote di bundle + service worker su root._
