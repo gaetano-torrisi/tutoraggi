@@ -388,7 +388,7 @@ function App({user}){
   const dayTOre=useMemo(()=>{const o={};for(const ev of visTEvs)o[ev.day]=(o[ev.day]||0)+ev.ore;return o;},[visTEvs]);
   const totTOre=useMemo(()=>visTEvs.reduce((a,e)=>a+e.ore,0),[visTEvs]);
   const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
-  const corsiEvs=useMemo(()=>anagraficaCorsi.flatMap(ana=>{const co=corsiById[ana.id];if(!co)return[];return co.events.filter(e=>e.month===monthKey).map(e=>({...e,corsoId:ana.id,corsoName:ana.nome,avColor:ana.colore||"var(--accent)"}));}),[anagraficaCorsi,corsiById,monthKey]);
+  const corsiEvs=useMemo(()=>anagraficaCorsi.flatMap(ana=>{const co=corsiById[ana.id];if(!co)return[];return co.events.filter(e=>e.month===monthKey).map(e=>({...e,corsoId:ana.id,corsoName:ana.nome,avColor:ana.colore||"var(--accent)",sede:ana.sede||""}));}),[anagraficaCorsi,corsiById,monthKey]);
   const corsiThisMonth=useMemo(()=>anagraficaCorsi.filter(a=>{const co=corsiById[a.id];return co&&co.events.some(e=>e.month===monthKey);}),[anagraficaCorsi,corsiById,monthKey]);
   const visCorsiEvs=useMemo(()=>corsiEvs.filter(e=>activeCorsi.has(e.corsoId)),[corsiEvs,activeCorsi]);
   const totAvOre=useMemo(()=>visCorsiEvs.reduce((a,e)=>a+e.ore,0),[visCorsiEvs]);
