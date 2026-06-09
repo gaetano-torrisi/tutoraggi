@@ -247,7 +247,7 @@ function App({user}){
   const[activeScreen,setActiveScreen]=useState("calendar");
   const[sidebarCollapsed,setSidebarCollapsed]=useState(false);
   const[theme,setTheme]=useState("light");
-  const[view,setView]=useState("tutoraggio");
+  const[view,setView]=useState("avviso");
   const[editMode,setEditMode]=useState(false);
   const[tutors,setTutors]=useState([]);const[activeTutorIds,setActiveTutorIds]=useState(null);const[monthIdx,setMonthIdx]=useState(()=>{const now=new Date();const idx=MONTHS.findIndex(m=>m.year===now.getFullYear()&&m.month===now.getMonth());return idx>=0?idx:0;});
   const[corsi,setCorsi]=useState([]);const[anagraficaCorsi,setAnagraficaCorsi]=useState([]);const[activeCorsi,setActiveCorsi]=useState(new Set());const[avvisi,setAvvisi]=useState([]);const[tutEvents,setTutEvents]=useState({});
@@ -319,7 +319,7 @@ function App({user}){
 
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   useEffect(()=>{const m=MONTHS[monthIdx];const now=new Date();if(m.year===now.getFullYear()&&m.month===now.getMonth()){const d=new Date(now);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));setWeekStart(d);}else{const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));}},[monthIdx]);
-  useEffect(()=>{if(activeScreen==="calendar")setView("tutoraggio");},[activeScreen]);
+  useEffect(()=>{if(activeScreen==="calendar")setView("avviso");},[activeScreen]);
   useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
   useEffect(()=>{if(!isCalendar||calView==="month"||loading)return;const now=new Date();const m=MONTHS[monthIdx];if(m.year!==now.getFullYear()||m.month!==now.getMonth())return;const today=now.getDate();const t=setTimeout(()=>{const el=document.getElementById(`day-col-${today}`);const sc=el?.closest(".cal-scroll");if(!el||!sc)return;const elR=el.getBoundingClientRect(),scR=sc.getBoundingClientRect();sc.scrollLeft+=elR.left-scR.left-TIME_W;},80);return()=>clearTimeout(t);},[activeScreen,calView,loading,monthIdx]);
 

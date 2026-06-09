@@ -52,7 +52,7 @@ function MAccountSheet({user,role,theme,setTheme,onClose}){
 
 // ── Calendario (agenda) ──
 function MCalendar({month,monthIdx,setMonthIdx,monthTutEvents,monthCorsoEvents,tutorsById}){
-  const[calMode,setCalMode]=useState("tutoraggio");
+  const[calMode,setCalMode]=useState("corso");
   const[day,setDay]=useState(1);
   const selDayRef=useRef(null);
   useEffect(()=>{const now=new Date();setDay(now.getFullYear()===month.year&&now.getMonth()===month.month?now.getDate():1);},[monthIdx]);
@@ -87,12 +87,13 @@ function MCalendar({month,monthIdx,setMonthIdx,monthTutEvents,monthCorsoEvents,t
       :dayEvs.map((e,i)=>{
         const color=calMode==="tutoraggio"?mSafeColor(tutorsById[e.tutorId]?.color):mSafeColor(e.color);
         const title=calMode==="tutoraggio"?(e.name||"—"):(e.corsoName||"—");
-        const sub=calMode==="tutoraggio"?(tutorsById[e.tutorId]?mTutLabel(tutorsById[e.tutorId]):""):"Corso";
+        const sub=calMode==="tutoraggio"?(tutorsById[e.tutorId]?mTutLabel(tutorsById[e.tutorId]):""):(e.sede||"");
+        const subIcon=calMode==="tutoraggio"?"user":(e.sede?"mapPin":"briefcase");
         return(<div key={i} className="m-session">
           <div className="m-session-bar" style={{background:color}}/>
           <div className="m-session-body">
             <div className="m-session-name">{e.verified&&<MVerified/>}{title}</div>
-            <div className="m-session-meta">{sub&&<span style={{display:"inline-flex",alignItems:"center",gap:4}}><Icon name={calMode==="tutoraggio"?"user":"briefcase"} size={12} color="var(--fg-subtle)"/>{sub}</span>}</div>
+            <div className="m-session-meta">{sub&&<span style={{display:"inline-flex",alignItems:"center",gap:4}}><Icon name={subIcon} size={12} color="var(--fg-subtle)"/>{sub}</span>}</div>
           </div>
           <div>
             <div className="m-session-time">{fmt(e.start)}–{fmt(e.end)}</div>
@@ -329,7 +330,7 @@ function MobileApp({loading,user,role,perms={},theme,setTheme,corsi=[],anagrafic
   const tutorsById=useMemo(()=>{const o={};tutors.forEach(t=>o[t.id]=t);return o;},[tutors]);
   const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
   const monthTutEvents=useMemo(()=>tutors.flatMap(t=>((tutEvents[t.id]||{})[monthKey]||[]).map(e=>({...e,tutorId:e.tutorId||t.id}))),[tutors,tutEvents,monthKey]);
-  const monthCorsoEvents=useMemo(()=>anagraficaCorsi.flatMap(a=>{const co=corsiById[a.id];if(!co)return[];return co.events.filter(e=>e.month===monthKey).map(e=>({...e,corsoName:a.nome,color:a.colore}));}),[anagraficaCorsi,corsiById,monthKey]);
+  const monthCorsoEvents=useMemo(()=>anagraficaCorsi.flatMap(a=>{const co=corsiById[a.id];if(!co)return[];return co.events.filter(e=>e.month===monthKey).map(e=>({...e,corsoName:a.nome,color:a.colore,sede:a.sede||""}));}),[anagraficaCorsi,corsiById,monthKey]);
 
   const showInsights=perms.useInsights!==false; // viewer/role senza insights → tab nascosta
   const TABS=[
