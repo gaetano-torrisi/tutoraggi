@@ -110,6 +110,7 @@ async function fsSaveCorso(co){showSaving();await db.collection("corsi").doc(co.
 async function fsDeleteCorso(id){showSaving();await db.collection("corsi").doc(id).delete();}
 async function fsSaveTutorDoc(t){showSaving();await db.collection("tutors").doc(t.id).set(cleanObj(t));}
 async function fsDeleteTutorDoc(id){showSaving();await db.collection("tutors").doc(id).delete();}
+async function fsDeleteTutEventsDoc(id){showSaving();await db.collection("tutEvents").doc(id).delete();}
 async function fsSaveAnaCorsoDoc(a){showSaving();await db.collection("anagraficaCorsi").doc(a.id).set(cleanObj(a));}
 async function fsDeleteAnaCorsoDoc(id){showSaving();await db.collection("anagraficaCorsi").doc(id).delete();}
 async function fsSaveAvviso(av){showSaving();await db.collection("avvisi_progetti").doc(av.id).set(cleanObj(av));}
