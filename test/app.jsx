@@ -603,7 +603,7 @@ function App({user}){
         {showVerificaPanel&&perms.useVerifica&&<VerificaScreen corsi={corsi} tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onNavigateToError={navigateToError}/>}
       </div>
 
-      {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)}/>}
+      {isCalendar&&<ZoomBar zoomIdx={zoomIdx} onZoomChange={setZoomIdx} onHelpOpen={()=>setShowHelp(o=>!o)} leftOffset={containerW+16}/>}
       {showHelp&&<HelpBot onClose={()=>setShowHelp(false)}/>}
       {isCalendar&&dragWarn&&<div style={{position:"fixed",bottom:72,left:"50%",transform:"translateX(-50%)",zIndex:300,display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderRadius:"var(--radius-md)",background:"var(--warning-soft)",border:"1px solid var(--warning)",boxShadow:"var(--shadow-lg)",fontSize:13,color:"var(--fg)",maxWidth:520}}><Icon name="alert" size={15} color="var(--warning)"/><span style={{flex:1}}>{dragWarn}</span><button onClick={()=>setDragWarn(null)} style={{background:"none",border:"none",cursor:"pointer",padding:"0 2px",display:"flex",flexShrink:0}}><Icon name="x" size={13} color="var(--fg-muted)"/></button></div>}
     </div>
