@@ -54,7 +54,7 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
   const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
   const ore=ev.end-ev.start;
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
-  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} title={`${ev.corsoName}\n${fmt(ev.start)}–${fmt(ev.end)}`} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
+  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} title={`${ev.corsoName}\n${fmt(ev.start)}–${fmt(ev.end)}${ev.sede?"\n"+ev.sede:""}`} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
         {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
@@ -65,7 +65,7 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
         <span style={{fontSize:9.5,fontWeight:700,background:"rgba(0,0,0,.15)",color:"var(--fg)",padding:"0 5px",borderRadius:999,lineHeight:"14px"}}>{fmtDurata(ore)}</span>
       </span>
     </div>
-    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}</div>
+    <div onMouseDown={onDragEnd?makeBody(ev,slotH,colW):null} style={{padding:"1px 5px",fontSize:10,fontWeight:400,color:"var(--fg-muted)",cursor:onDragEnd?"grab":"default",fontFamily:"inherit"}}>{fmt(ev.start)}–{fmt(ev.end)}{ev.sede?` · ${ev.sede}`:""}</div>
     {onDragEnd&&<div ref={resizeRef} onMouseDown={makeResize(ev,slotH)} style={{position:"absolute",bottom:0,left:0,right:0,height:8,cursor:"ns-resize",background:"rgba(0,0,0,.08)",borderRadius:"0 0 var(--radius-sm) var(--radius-sm)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{width:20,height:2,background:"rgba(0,0,0,.25)",borderRadius:1}}/></div>}
   </div>);
 }
@@ -75,7 +75,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
   const HOURS=Array.from({length:13},(_,i)=>i+8);
   const isWE=d=>[0,6].includes(new Date(monthData.year,monthData.month,d).getDay());
   const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
-  return(<div style={{overflow:"auto",background:"var(--bg)",flex:1,minHeight:0}} className="cal-scroll">
+  return(<div style={{overflow:"auto",background:"var(--bg)",flexShrink:1,minHeight:0}} className="cal-scroll">
     <div style={{display:"flex",minWidth:TIME_W+days.length*colW,background:"var(--bg)"}}>
       <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:30,background:"var(--bg)"}}>
         <div style={{height:60,borderBottom:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
