@@ -248,6 +248,7 @@ function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],ca
             </div>
             <div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,color:"var(--fg-subtle)",marginBottom:8}}>{a.codice}</div>
             <div style={{fontSize:11.5,color:"var(--fg-muted)",marginBottom:4}}>{a.dataInizio||"—"}{a.dataFine?` → ${a.dataFine}`:""}</div>
+            {a.sede&&<div style={{fontSize:11,color:"var(--fg-subtle)",display:"flex",alignItems:"center",gap:4}}><Icon name="mapPin" size={10} color="var(--fg-faint)"/>{a.sede}</div>}
           </button>);})}
         </div>
       </div>
