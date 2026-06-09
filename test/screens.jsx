@@ -615,6 +615,7 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   const[bgInput,setBgInput]=useState(settings.bgColor||"#F8F7F4");
   const[density,setDensityState]=useState(settings.density||"cozy");
   const[defaultCalView,setDefaultCalView]=useState(settings.defaultCalView||"day");
+  const[defaultCalMode,setDefaultCalMode]=useState(settings.defaultCalMode||"avviso");
   const[startHour,setStartHour]=useState(settings.startHour||8);
   const[defaultZoom,setDefaultZoom]=useState(settings.defaultZoom??2);
   const[saved,setSaved]=useState(false);
@@ -630,7 +631,7 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
   function handleLogoFile(e){const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert("File troppo grande (max 2 MB)");e.target.value="";return;}const r=new FileReader();r.onload=ev=>setLogoB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
   function handleLogoWhiteFile(e){const f=e.target.files[0];if(!f)return;if(f.size>2*1024*1024){alert("File troppo grande (max 2 MB)");e.target.value="";return;}const r=new FileReader();r.onload=ev=>setLogoWhiteB64(ev.target.result);r.readAsDataURL(f);e.target.value="";}
   async function handleSave(){
-    const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,startHour,defaultZoom,theme,logoBase64:logoB64,logoWhiteBase64:logoWhiteB64,appSubtitle};
+    const prefs={accentColor,brandNavy:primaryColor,bgColor,density,defaultCalView,defaultCalMode,startHour,defaultZoom,theme,logoBase64:logoB64,logoWhiteBase64:logoWhiteB64,appSubtitle};
     await onSaveSettings(prefs);applyAccent(accentColor);applyPrimary(primaryColor);if(bgColor)applyBg(bgColor);document.documentElement.setAttribute("data-density",density);setSaved(true);setTimeout(()=>setSaved(false),2000);
   }
   const isHex=v=>/^#[0-9A-Fa-f]{6}$/.test(v);
@@ -647,6 +648,7 @@ function CustomizePanel({settings,theme,setTheme,onSaveSettings}){
     {label:"Tema",desc:"Chiaro o scuro in tutta l'app",content:<div style={{display:"flex",gap:4,padding:3,background:"var(--bg-sunken)",borderRadius:"var(--radius)",border:"1px solid var(--border)"}}><button onClick={()=>setTheme("light")} className={`theme-btn${theme==="light"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Chiaro</button><button onClick={()=>setTheme("dark")} className={`theme-btn${theme==="dark"?" active":""}`} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Scuro</button></div>},
     {label:"Densità",desc:"Quantità di contenuto visibile",content:<div style={{display:"flex",gap:6}}>{[{v:"cozy",label:"Comodo"},{v:"compact",label:"Compatto"}].map(o=><button key={o.v} onClick={()=>setDensity(o.v)} style={{padding:"5px 12px",borderRadius:"var(--radius)",border:`1.5px solid ${density===o.v?"var(--accent)":"var(--border)"}`,background:density===o.v?"var(--accent-soft)":"transparent",color:density===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}</div>},
     {label:"Vista default",desc:"Vista all'apertura dell'app",content:<div style={{display:"flex",gap:6}}>{[{v:"month",label:"Mese"},{v:"week",label:"Sett."},{v:"day",label:"Giorno"}].map(o=><button key={o.v} onClick={()=>setDefaultCalView(o.v)} style={{padding:"5px 10px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalView===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalView===o.v?"var(--accent-soft)":"transparent",color:defaultCalView===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.v==="month"?"Mese":o.v==="week"?"Sett.":"Giorno"}</button>)}</div>},
+    {label:"Calendario default",desc:"Modalità attiva all'apertura del calendario",content:<div style={{display:"flex",gap:6}}>{[{v:"avviso",label:"Corsi"},{v:"tutoraggio",label:"Tutoraggi"}].map(o=><button key={o.v} onClick={()=>setDefaultCalMode(o.v)} style={{padding:"5px 12px",borderRadius:"var(--radius)",border:`1.5px solid ${defaultCalMode===o.v?"var(--accent)":"var(--border)"}`,background:defaultCalMode===o.v?"var(--accent-soft)":"transparent",color:defaultCalMode===o.v?"var(--accent-strong)":"var(--fg)",fontWeight:600,fontSize:12,cursor:"pointer"}}>{o.label}</button>)}</div>},
     {label:"Orario inizio",desc:"Prima ora visibile nel calendario",content:<select className="select" value={startHour} onChange={e=>setStartHour(Number(e.target.value))} style={{width:100}}>{[7,8,9].map(h=><option key={h} value={h}>{String(h).padStart(2,"0")}:00</option>)}</select>},
     {label:"Zoom default",desc:"Livello di zoom all'apertura",content:<select className="select" value={defaultZoom} onChange={e=>setDefaultZoom(Number(e.target.value))} style={{width:100}}>{ZOOM_LEVELS.map((z,i)=><option key={i} value={i}>{Math.round(z*100)}%</option>)}</select>},
   ];

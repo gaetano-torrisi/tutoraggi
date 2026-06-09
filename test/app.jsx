@@ -313,6 +313,7 @@ function App({user}){
       if(s.bgColor&&/^#[0-9A-Fa-f]{6}$/.test(s.bgColor)&&s.theme!=="dark")document.documentElement.style.setProperty("--bg",s.bgColor);
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
+      if(s.defaultCalMode)setView(s.defaultCalMode);
       if(s.density)document.documentElement.setAttribute("data-density",s.density);
       if(s.appSubtitle){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
       if(s.logoBase64){localStorage.setItem("logoBase64",s.logoBase64);applyFavicon(s.logoBase64);}
@@ -322,7 +323,7 @@ function App({user}){
 
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   useEffect(()=>{const m=MONTHS[monthIdx];const now=new Date();if(m.year===now.getFullYear()&&m.month===now.getMonth()){const d=new Date(now);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));setWeekStart(d);}else{const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));}},[monthIdx]);
-  useEffect(()=>{if(activeScreen==="calendar")setView("avviso");},[activeScreen]);
+  useEffect(()=>{if(activeScreen==="calendar")setView(settings.defaultCalMode||"avviso");},[activeScreen]);
   useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
   useEffect(()=>{if(!isCalendar||calView==="month"||loading)return;const now=new Date();const m=MONTHS[monthIdx];if(m.year!==now.getFullYear()||m.month!==now.getMonth())return;const today=now.getDate();const t=setTimeout(()=>{const el=document.getElementById(`day-col-${today}`);const sc=el?.closest(".cal-scroll");if(!el||!sc)return;const elR=el.getBoundingClientRect(),scR=sc.getBoundingClientRect();sc.scrollLeft+=elR.left-scR.left-TIME_W;},80);return()=>clearTimeout(t);},[activeScreen,calView,loading,monthIdx]);
 
@@ -435,7 +436,7 @@ function App({user}){
     if(action==="edit"){const old=anaCorsiRef.current.find(p=>p.id===item.id);if(old&&old.nome!==item.nome){const cur=structuredClone(tutEvRef.current);let changed=false;for(const[tid,months]of Object.entries(cur)){for(const[mk,evs]of Object.entries(months)){evs.forEach((ev,i)=>{if(ev.name===old.nome){cur[tid][mk][i]={...ev,name:item.nome};changed=true;}});}}if(changed){tutEvRef.current=cur;setTutEvents(cur);for(const[tid,months]of Object.entries(cur))for(const[mk,evs]of Object.entries(months))await fsSaveTutEvents(tid,mk,evs);}}}
     anaCorsiRef.current=newList;setAnagraficaCorsi(newList);if(action==="delete"&&item)await fsDeleteAnaCorsoDoc(item.id);else if(item)await fsSaveAnaCorsoDoc(item);else await fsSaveAnaCorsi(newList);if(action==="add")fsLog(user.email,"add_corso_ana",`Aggiunto corso "${item.nome}"`);else if(action==="edit")fsLog(user.email,"edit_corso_ana",`Modificato corso "${item.nome}"`);else if(action==="delete")fsLog(user.email,"delete_corso_ana",`Eliminato corso "${item.nome}"`);}
   async function handleSaveAvviso(newList,op,item){setAvvisi(newList);avvisoRef.current=newList;if(op==="delete")await fsDeleteAvviso(item.id);else await fsSaveAvviso(item);await fsLog(user?.email,op==="delete"?"delete_avviso_ana":op==="add"?"add_avviso_ana":"edit_avviso_ana",item.nome||"");}
-  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);await fsSaveSettings(m);}
+  async function handleSaveSettings(s){const m={...settings,...s};setSettings(m);if(s.appSubtitle!==undefined){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}if(s.logoBase64)applyFavicon(s.logoBase64);if(s.defaultCalMode!==undefined)setView(s.defaultCalMode);await fsSaveSettings(m);}
 
   if(isMobile)return(<MobileApp loading={loading} user={user} role={role} perms={perms} theme={theme} setTheme={setTheme} corsi={corsi} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} settings={settings} monthIdx={monthIdx} setMonthIdx={setMonthIdx}/>);
 
