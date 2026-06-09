@@ -353,7 +353,7 @@ function AnaAvvisiScreen({avvisi=[],onSaveAvviso,canEdit}){
           <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:18,boxShadow:"var(--shadow-xs)"}}>
             <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:14}}>Dettagli</div>
             <dl style={{display:"grid",gridTemplateColumns:"180px 1fr",gap:"10px 16px",margin:0,fontSize:13}}>
-              <dt style={{color:"var(--fg-subtle)"}}>Codice avviso</dt><dd style={{margin:0,fontFamily:'"JetBrains Mono",monospace',color:"var(--fg)"}}>{selected.codice||"—"}</dd>
+              <dt style={{color:"var(--fg-subtle)"}}>Codice/DDG</dt><dd style={{margin:0,fontFamily:'"JetBrains Mono",monospace',color:"var(--fg)"}}>{selected.codice||"—"}</dd>
               <dt style={{color:"var(--fg-subtle)"}}>Stato</dt><dd style={{margin:0}}><span className="badge" data-tone={STATO_TONES[selected.stato]||"info"}>{selected.stato}</span></dd>
               <dt style={{color:"var(--fg-subtle)"}}>Ente</dt><dd style={{margin:0,color:"var(--fg)"}}>{selected.ente||"—"}</dd>
               <dt style={{color:"var(--fg-subtle)"}}>Anno</dt><dd style={{margin:0,fontFamily:'"JetBrains Mono",monospace',color:"var(--fg)"}}>{selected.anno||"—"}</dd>
@@ -363,7 +363,7 @@ function AnaAvvisiScreen({avvisi=[],onSaveAvviso,canEdit}){
         ):(
           <div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",padding:24,boxShadow:"var(--shadow-xs)"}}>
             <div style={{fontSize:11,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",marginBottom:16}}>Modifica avviso/progetto</div>
-            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:14,marginBottom:14}}><div><label className="label">Nome *</label><input className="input" value={form.nome||""} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div><div><label className="label">Codice</label><input className="input mono" value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))}/></div></div>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:14,marginBottom:14}}><div><label className="label">Nome *</label><input className="input" value={form.nome||""} onChange={e=>setForm(f=>({...f,nome:e.target.value}))}/></div><div><label className="label">Codice/DDG</label><input className="input mono" value={form.codice||""} onChange={e=>setForm(f=>({...f,codice:e.target.value}))}/></div></div>
             <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:14,marginBottom:14}}><div><label className="label">Ente</label><input className="input" value={form.ente||""} onChange={e=>setForm(f=>({...f,ente:e.target.value}))}/></div><div><label className="label">Anno</label><input className="input mono" type="number" value={form.anno||""} onChange={e=>setForm(f=>({...f,anno:e.target.value===""?"":Number(e.target.value)}))}/></div></div>
             <div style={{marginBottom:14}}><label className="label">Stato</label><select className="select" value={form.stato||"In corso"} onChange={e=>setForm(f=>({...f,stato:e.target.value}))}>{AV_STATI.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
             <div style={{marginBottom:14}}><label className="label">Note</label><textarea className="textarea" value={form.note||""} onChange={e=>setForm(f=>({...f,note:e.target.value}))} rows={3}/></div>
