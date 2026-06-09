@@ -162,17 +162,17 @@ function AiPanel({tutors,anagraficaCorsi,avvisi=[],settings,user,isSuperAdmin,tu
 }
 
 // ── ADD/EDIT MODAL ────────────────────────────────────────────────────────
-function AddModal({mode,prefill,currentMonthIdx,corsi,anagraficaCorsi,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddCorso,onEditCorso,onDeleteCorso,onClose,onOpenAnaTutors,onOpenAnaCorsi,isAdmin,userEmail,canVerify,canDelete}){
+function AddModal({mode,prefill,currentMonthIdx,corsi,anagraficaCorsi,tutors,editTarget,onAddTut,onEditTut,onDeleteTut,onAddCorso,onEditCorso,onDeleteCorso,onDuplicate,onClose,onOpenAnaTutors,onOpenAnaCorsi,isAdmin,userEmail,canVerify,canDelete}){
   const isEdit=!!editTarget;
   const[tab,setTab]=useState(mode==="avviso"?"avviso":"tutoraggio");
-  const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(tutors[0]?.id||""));
-  const[tutAvId,setTutAvId]=useState(()=>{if(isEdit&&editTarget.type==="tutoraggio"){const a=anagraficaCorsi.find(x=>x.nome===editTarget.ev.name);return a?.id||"";}return anagraficaCorsi[0]?.id||"";});
+  const[tutTutor,setTutTutor]=useState(isEdit&&editTarget.type==="tutoraggio"?(editTarget.ev.tutorId||tutors[0]?.id||""):(prefill?.tutorId||tutors[0]?.id||""));
+  const[tutAvId,setTutAvId]=useState(()=>{if(isEdit&&editTarget.type==="tutoraggio"){const a=anagraficaCorsi.find(x=>x.nome===editTarget.ev.name);return a?.id||"";}return prefill?.tutAvId||anagraficaCorsi[0]?.id||"";});
   const[tutDay,setTutDay]=useState(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.day:(prefill?.day||1));
   const[tutMonthIdx,setTutMonthIdx]=useState(currentMonthIdx);
   const[tutStart,setTutStart]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.start:(prefill?.start||9)));
   const[tutEnd,setTutEnd]=useState(hToTimeStr(isEdit&&editTarget.type==="tutoraggio"?editTarget.ev.end:(prefill?.end||10)));
   const[tutVerified,setTutVerified]=useState(!!(isEdit&&editTarget.type==="tutoraggio"&&editTarget.ev.verified));
-  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(anagraficaCorsi[0]?.id||""));
+  const[avId,setAvId]=useState(isEdit&&editTarget.type==="avviso"?editTarget.avviso.id:(prefill?.avId||anagraficaCorsi[0]?.id||""));
   const[avDay,setAvDay]=useState(isEdit&&editTarget.type==="avviso"?editTarget.ev.day:(prefill?.day||1));
   const[avMonthIdx,setAvMonthIdx]=useState(currentMonthIdx);
   const[avStart,setAvStart]=useState(hToTimeStr(isEdit&&editTarget.type==="avviso"?editTarget.ev.start:(prefill?.start||9)));
@@ -213,6 +213,7 @@ function AddModal({mode,prefill,currentMonthIdx,corsi,anagraficaCorsi,tutors,edi
         </label>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteTut(editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
+          {isEdit&&<button onClick={()=>{onDuplicate("tutoraggio",{tutorId:tutTutor,tutAvId,day:tutDay,start:timeStrToH(tutStart),end:timeStrToH(tutEnd)});onClose();}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="copy" size={13}/>Duplica</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
           <button onClick={()=>{const s=timeStrToH(tutStart),e=timeStrToH(tutEnd);if(!tutAvId||tutAvId==="__open__"||!tutTutor||e<=s)return;const ana=anagraficaCorsi.find(a=>a.id===tutAvId);const mk=MONTHS[tutMonthIdx].key;const vFields=isAdmin?{verified:tutVerified,verifiedBy:tutVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:tutVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};if(isEdit)onEditTut(editTarget.ev.id,{day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor,...vFields},mk,{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?tutVerified:!!editTarget.ev.verified});else onAddTut({day:tutDay,name:ana?.nome,start:s,end:e,ore:e-s,tutorId:tutTutor},mk);onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
@@ -235,6 +236,7 @@ function AddModal({mode,prefill,currentMonthIdx,corsi,anagraficaCorsi,tutors,edi
         </label>}
         <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
           {isEdit&&canDelete&&<button onClick={()=>{if(confirm("Eliminare questo slot?")){onDeleteCorso(editTarget.avviso.id,editTarget.ev.id);onClose();}}} className="btn" data-variant="danger" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={14} color="var(--danger)"/>Elimina</button>}
+          {isEdit&&<button onClick={()=>{onDuplicate("avviso",{avId,day:avDay,start:timeStrToH(avStart),end:timeStrToH(avEnd)});onClose();}} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="copy" size={13}/>Duplica</button>}
           <div style={{display:"flex",gap:8,marginLeft:"auto"}}><button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
           <button onClick={()=>{const s=timeStrToH(avStart),e=timeStrToH(avEnd);if(e<=s||!avId||avId==="__open__")return;const ana=anagraficaCorsi.find(a=>a.id===avId);const mk=MONTHS[avMonthIdx].key;const vFields=isAdmin?{verified:avVerified,verifiedBy:avVerified?(editTarget?.ev?.verifiedBy||userEmail):null,verifiedAt:avVerified?(editTarget?.ev?.verifiedAt||new Date().toISOString()):null}:{};const evData={month:mk,day:avDay,start:s,end:e,ore:e-s};if(isEdit){if(avId!==editTarget.avviso.id){onDeleteCorso(editTarget.avviso.id,editTarget.ev.id);onAddCorso({existingId:avId,name:ana?.nome,color:ana?.colore,...evData,...vFields});}else{onEditCorso(editTarget.avviso.id,editTarget.ev.id,{...evData,...vFields},{wasVerified:!!editTarget.ev.verified,nowVerified:isAdmin?avVerified:!!editTarget.ev.verified});}}else onAddCorso({existingId:avId,name:ana?.nome,color:ana?.colore,...evData});onClose();}} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}><Icon name={isEdit?"check":"plus"} size={13} color="#fff"/>{isEdit?"Salva":"Aggiungi"}</button></div>
         </div>
@@ -610,7 +612,7 @@ function App({user}){
 
     {showInsights&&perms.useInsights&&<InsightsScreen corsi={corsi} anagraficaCorsi={anagraficaCorsi} avvisi={avvisi} tutors={tutors} tutEvents={tutEvents} currentMonthKey={month.key} onClose={()=>setShowInsights(false)} onNavigate={(mk)=>{setShowInsights(false);const idx=MONTHS.findIndex(m=>m.key===mk);if(idx>=0){setMonthIdx(idx);setActiveScreen("calendar");}}}/>}
     {showProfileModal&&<ProfileModal user={user} onClose={()=>setShowProfileModal(false)}/>}
-    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} corsi={corsi} anagraficaCorsi={anagraficaCorsi} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddCorso={addCorso} onEditCorso={editCorso} onDeleteCorso={deleteCorso} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
+    {modal&&canEdit&&<AddModal mode={modal.mode||view} prefill={modal.prefill} currentMonthIdx={monthIdx} corsi={corsi} anagraficaCorsi={anagraficaCorsi} tutors={tutors} editTarget={modal.type==="edit-tut"?{type:"tutoraggio",ev:modal.ev}:modal.type==="edit-av"?{type:"avviso",avviso:modal.avviso,ev:modal.ev}:null} onAddTut={addTutoraggio} onEditTut={editTutoraggio} onDeleteTut={deleteTutoraggio} onAddCorso={addCorso} onEditCorso={editCorso} onDeleteCorso={deleteCorso} onDuplicate={(type,data)=>setModal({type:"add",mode:type,prefill:data})} onClose={()=>setModal(null)} onOpenAnaTutors={()=>setActiveScreen("ana-tutors")} onOpenAnaCorsi={()=>setActiveScreen("ana-corsi")} isAdmin={isAdmin} userEmail={user.email} canVerify={perms.verifySlot} canDelete={perms.deleteSlot}/>}
   </div>);
 }
 
