@@ -257,12 +257,13 @@ function App({user}){
   const tutEvRef=useRef({});const corsiRef=useRef([]);const anaCorsiRef=useRef([]);const avvisoRef=useRef([]);
   const[settings,setSettings]=useState({});const[showOvr,setShowOvr]=useState(false);const[zoomIdx,setZoomIdx]=useState(2);const[calView,setCalView]=useState("day");const[weekStart,setWeekStart]=useState(null);const[modal,setModal]=useState(null);
   const[showAi,setShowAi]=useState(false);const[showHelp,setShowHelp]=useState(false);
-  const[showInsights,setShowInsights]=useState(false);const[highlightEvId,setHighlightEvId]=useState(null);
+  const[showInsights,setShowInsights]=useState(false);const[highlightEvId,setHighlightEvId]=useState(null);const[centerTarget,setCenterTarget]=useState(null);
   const[showAvatarMenu,setShowAvatarMenu]=useState(false);const[showProfileModal,setShowProfileModal]=useState(false);const[profileTarget,setProfileTarget]=useState(null);
   const[dragWarn,setDragWarn]=useState(null);
   const avatarRef=useRef();
   const dragWarnTimerRef=useRef();
   const highlightTimerRef=useRef();
+  const weekDayHintRef=useRef(null);
   useEffect(()=>{function h(e){if(avatarRef.current&&!avatarRef.current.contains(e.target))setShowAvatarMenu(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
   const[showMonthPicker,setShowMonthPicker]=useState(false);
   const[role,setRole]=useState("user");const[loading,setLoading]=useState(true);
@@ -322,9 +323,9 @@ function App({user}){
   },[]);
 
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
-  useEffect(()=>{const m=MONTHS[monthIdx];const now=new Date();if(m.year===now.getFullYear()&&m.month===now.getMonth()){const d=new Date(now);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));setWeekStart(d);}else{const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));}},[monthIdx]);
+  useEffect(()=>{const m=MONTHS[monthIdx];const hint=weekDayHintRef.current;if(hint&&hint.idx===monthIdx){weekDayHintRef.current=null;setWeekStart(weekStartForDay(monthIdx,hint.day));return;}const now=new Date();if(m.year===now.getFullYear()&&m.month===now.getMonth()){const d=new Date(now);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));setWeekStart(d);}else{const fd=new Date(m.year,m.month,1);const dow=fd.getDay()||7;const mon=new Date(fd);mon.setDate(fd.getDate()-(dow-1));setWeekStart(new Date(mon));}},[monthIdx]);
   useEffect(()=>{if(activeScreen==="calendar")setView(settings.defaultCalMode||"avviso");},[activeScreen]);
-  useEffect(()=>{if(!highlightEvId)return;const t=setTimeout(()=>{const el=document.querySelector(`[data-ev-id="${highlightEvId}"]`);if(el)el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});},200);return()=>clearTimeout(t);},[highlightEvId]);
+  useEffect(()=>{if(!centerTarget)return;const{evId,day}=centerTarget;const t=setTimeout(()=>{let el=evId?document.querySelector(`[data-ev-id="${evId}"]`):null;if(!el&&day!=null)el=document.getElementById(`day-col-${day}`);if(el)el.scrollIntoView({behavior:"smooth",block:el.id&&el.id.startsWith("day-col")?"nearest":"center",inline:"center"});},300);return()=>clearTimeout(t);},[centerTarget]);
   useEffect(()=>{if(!isCalendar||calView==="month"||loading)return;const now=new Date();const m=MONTHS[monthIdx];if(m.year!==now.getFullYear()||m.month!==now.getMonth())return;const today=now.getDate();const t=setTimeout(()=>{const el=document.getElementById(`day-col-${today}`);const sc=el?.closest(".cal-scroll");if(!el||!sc)return;const elR=el.getBoundingClientRect(),scR=sc.getBoundingClientRect();sc.scrollLeft+=elR.left-scR.left-TIME_W;},80);return()=>clearTimeout(t);},[activeScreen,calView,loading,monthIdx]);
 
   window.__restoreBackup=async(data)=>{
@@ -456,7 +457,8 @@ function App({user}){
 
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
-  function navigateToError(monthKey,evId){clearTimeout(highlightTimerRef.current);if(monthKey){const idx=MONTHS.findIndex(m=>m.key===monthKey);if(idx>=0)setMonthIdx(idx);}if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
+  function weekStartForDay(mIdx,day){const m=MONTHS[mIdx];const d=new Date(m.year,m.month,day);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));return d;}
+  function navigateToError(monthKey,evId,day){clearTimeout(highlightTimerRef.current);const idx=monthKey?MONTHS.findIndex(m=>m.key===monthKey):monthIdx;if(idx>=0){if(day!=null){if(idx!==monthIdx){weekDayHintRef.current={idx,day};setMonthIdx(idx);}else setWeekStart(weekStartForDay(idx,day));}else if(idx!==monthIdx)setMonthIdx(idx);}setCenterTarget({evId,day,n:Date.now()});if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
 
   function handleNavClick(id){
     if(id==="insights"){if(!perms.useInsights)return;setShowInsights(true);return;}
