@@ -17,6 +17,9 @@ function runVerifica(corsi,anagraficaCorsi,tutors,tutEvents){
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const t=tutors.find(x=>x.id===tid);const byDay={};for(const ev of evs){if(!byDay[ev.day])byDay[ev.day]=0;byDay[ev.day]+=ev.ore||0;}for(const[day,totH]of Object.entries(byDay)){if(totH>8)errors.push({type:"giornata_lunga",monthKey:mk,day:Number(day),msg:`Tutor "${t?.cognome} ${t?.nome}": giornata >8h il ${fmtDayMonth(Number(day),mk)} (${totH}h).`,detail:"Superato limite giornaliero consigliato."});}}}
   // weekend
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0||d===6)errors.push({type:"weekend",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${fmtDayMonth(ev.day,mk)}.`,detail:"Giorno festivo o weekend."});}}}
+  // orario_zero — slot/sessioni con orario non valido (start>=end, tipicamente 00:00-00:00)
+  for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const t=tutors.find(x=>x.id===tid);for(const ev of evs){if(ev.end<=ev.start)errors.push({type:"orario_zero",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot "${ev.name||"?"}" del ${fmtDayMonth(ev.day,mk)} ha orario non valido (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:"Orario non valido: correggere o eliminare lo slot."});}}}
+  for(const ana of anagraficaCorsi){const co=corsiById[ana.id];if(!co)continue;for(const ev of (co.events||[])){if(ev.end<=ev.start){const mk=ev.month||"";errors.push({type:"orario_zero",monthKey:mk,day:ev.day,msg:`Corso "${ana.nome}": sessione del ${fmtDayMonth(ev.day,mk)} ha orario non valido (${fmt(ev.start)}–${fmt(ev.end)}).`,detail:"Orario non valido: correggere o eliminare la sessione."})}}}
   // tutor_senza_slot
   const corsiNamesSet=new Set(anagraficaCorsi.map(a=>a.nome));
   for(const t of tutors){let totalSlots=0,hasLinkedSlot=false;for(const{evs}of safeEvs(tutEvents[t.id]||{})){totalSlots+=evs.length;if(evs.some(ev=>corsiNamesSet.has(ev.name)))hasLinkedSlot=true;}if(totalSlots===0)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" non è mai presente nel calendario.`,detail:"Tutor presente in anagrafica ma senza sessioni."});else if(!hasLinkedSlot)errors.push({type:"tutor_senza_slot",monthKey:null,msg:`Tutor "${t.cognome} ${t.nome}" presente ma non collegato ad alcun corso in anagrafica.`,detail:"Tutti gli slot fanno riferimento a corsi non in anagrafica."});}
@@ -37,6 +40,7 @@ const VERIFICA_CATS=[
   {type:"tutor_senza_slot",label:"Tutor senza slot",icon:"users",tone:"info"},
   {type:"corso_senza_sessioni",label:"Corso senza sessioni",icon:"briefcase",tone:"info"},
   {type:"giornata_lunga",label:"Giornata >8h",icon:"alert",tone:"warning"},
+  {type:"orario_zero",label:"Orario non valido",icon:"clock",tone:"danger"},
 ];
 
 function VerificaScreen({corsi=[],tutors=[],tutEvents={},anagraficaCorsi=[],onNavigateToError}){
