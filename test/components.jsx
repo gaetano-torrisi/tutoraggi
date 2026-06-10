@@ -38,12 +38,12 @@ function FloatingModal({title,titleBg,width,children,footer,onClose}){
 }
 
 // ── UI HELPERS ────────────────────────────────────────────────────────────
-function MiniCalendar({initialMonthIdx,selected,onSelect,fixedPos}){
+function MiniCalendar({initialMonthIdx,selected,onSelect,inline}){
   const[mIdx,setMIdx]=useState(initialMonthIdx);const md=MONTHS[mIdx];const{year,month,days}=md;
   const firstDow=new Date(year,month,1).getDay();const offset=firstDow===0?6:firstDow-1;
   const cells=[];for(let i=0;i<offset;i++)cells.push(null);for(let d=1;d<=days;d++)cells.push(d);while(cells.length%7!==0)cells.push(null);
-  const posStyle=fixedPos?{position:"fixed",top:fixedPos.top,left:fixedPos.left}:{position:"absolute",top:"100%",left:0,marginTop:4};
-  return(<div style={{...posStyle,background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:"var(--shadow-md)",zIndex:1000,width:240}}>
+  const posStyle=inline?{position:"relative"}:{position:"absolute",top:"100%",left:0,marginTop:4,zIndex:1000};
+  return(<div style={{...posStyle,background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:inline?"none":"var(--shadow-md)",width:inline?"100%":240}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
       <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevLeft" size={14}/></button>
       <span style={{fontSize:12,fontWeight:700,color:"var(--fg)"}}>{md.label}</span>
@@ -57,24 +57,9 @@ function MiniCalendar({initialMonthIdx,selected,onSelect,fixedPos}){
 }
 
 function DayPicker({initialMonthIdx,value,selectedMonthIdx,onChange}){
-  const[open,setOpen]=useState(false);const[fixedPos,setFixedPos]=useState(null);
-  const wrapRef=useRef(null);const mLabel=MONTHS[selectedMonthIdx??initialMonthIdx]?.label||"";
-  function handleToggle(){
-    if(!open&&wrapRef.current){const r=wrapRef.current.getBoundingClientRect();setFixedPos({top:r.bottom+4,left:r.left});}
-    setOpen(o=>!o);
-  }
-  useEffect(()=>{
-    if(!open)return;
-    function h(e){if(wrapRef.current&&!wrapRef.current.contains(e.target))setOpen(false);}
-    document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);
-  },[open]);
-  return(<div ref={wrapRef} style={{position:"relative",marginBottom:10}}>
+  return(<div style={{marginBottom:10}}>
     <label className="label">Giorno</label>
-    <button type="button" onClick={handleToggle} className="input" style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",height:"var(--row-h)"}}>
-      <span>{value?`${value} ${mLabel}`:"Seleziona giorno"}</span>
-      <Icon name="calendar" size={14} color="var(--fg-muted)"/>
-    </button>
-    {open&&fixedPos&&<MiniCalendar initialMonthIdx={initialMonthIdx} selected={value} fixedPos={fixedPos} onSelect={(d,mIdx)=>{onChange(d,mIdx);setOpen(false);}}/>}
+    <MiniCalendar initialMonthIdx={initialMonthIdx} selected={value} inline onSelect={(d,mIdx)=>onChange(d,mIdx)}/>
   </div>);
 }
 
