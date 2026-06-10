@@ -1,123 +1,133 @@
 rules_version = '2';
 
-// =============================================================================
-//  TutorIA — Firestore Security Rules  ·  BOZZA DA RIVEDERE INSIEME
-// -----------------------------------------------------------------------------
-//  Stato: NON ancora definitiva. Da validare con l'utente e testare nel
-//  Firebase Rules Playground prima del deploy (firebase deploy --only firestore:rules
-//  oppure incolla nella Console > Firestore > Rules).
-//
-//  Copre:
-//   • S1 — lock-down completo: nessun accesso se non autenticato E autorizzato.
-//   • S3 — blocco role escalation: l'utente NON può scrivere il proprio ruolo;
-//          solo il superadmin gestisce authorizedEmails.
-//
-//  NON copre (vedi S2, decisione in sospeso backend vs in-repo):
-//   • Le chiavi API vivono in settings/app, che TUTTI gli autorizzati devono
-//     poter leggere (tema/logo/colori). Finché le chiavi restano in quel
-//     documento, qualunque utente autorizzato può leggerle. Soluzione reale:
-//     spostarle in un doc settings/secrets leggibile solo superadmin (o backend).
-//     Vedi nota [S2] più sotto.
-// =============================================================================
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---- Helper -------------------------------------------------------------
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    // email normalizzata (gli id di authorizedEmails sono lowercase)
-    function email() {
-      return request.auth.token.email.lower();
+    function userEmail() {
+      return signedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : null;
     }
 
-    // documento del chiamante in authorizedEmails (può non esistere)
-    function authDoc() {
-      return get(/databases/$(database)/documents/authorizedEmails/$(email()));
+    function userDoc() {
+      return get(/databases/$(database)/documents/authorizedEmails/$(userEmail()));
     }
 
-    function isAuthorized() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/authorizedEmails/$(email()));
+    function userListed() {
+      return signedIn() &&
+             request.auth.token.email != null &&
+             exists(/databases/$(database)/documents/authorizedEmails/$(userEmail()));
     }
 
     function role() {
-      return authDoc().data.role;
+      return userListed() ? userDoc().data.role : null;
     }
 
-    function isSuperadmin() { return isAuthorized() && role() == 'superadmin'; }
-    function isAdmin()      { return isAuthorized() && (role() == 'admin' || role() == 'superadmin'); }
-    // "editor" = chi può modificare i dati operativi (non i viewer)
-    function isEditor()     { return isAuthorized() && (role() == 'user' || role() == 'admin' || role() == 'superadmin'); }
-
-    // ---- Dati operativi -----------------------------------------------------
-    // Lettura: ogni utente autorizzato. Scrittura: editor (no viewer).
-    // (Il controllo fine dei permessi resta lato app; qui c'è il baseline.)
-    match /corsi/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isEditor();
-    }
-    match /tutors/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isEditor();
-    }
-    match /tutEvents/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isEditor();
-    }
-    match /anagraficaCorsi/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isEditor();
-    }
-    match /avvisi_progetti/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isEditor();
+    function isViewer() {
+      return role() == 'viewer';
     }
 
-    // ---- Impostazioni app ---------------------------------------------------
-    // [S2] settings/app è leggibile da tutti gli autorizzati (tema/logo/colori)
-    //      MA contiene anche openaiApiKey / geminiApiKey in chiaro → esposte.
-    //      Scrittura ristretta al superadmin. Per proteggere davvero le chiavi
-    //      vanno spostate fuori da qui (settings/secrets superadmin-only o backend).
-    match /settings/{id} {
-      allow read:  if isAuthorized();
-      allow write: if isSuperadmin();
+    function isUser() {
+      return role() == 'user';
     }
 
-    // ---- Ruoli / autorizzazioni  [S3 — anti escalation] ---------------------
-    // L'utente può leggere SOLO il proprio documento (gli serve per sapere il
-    // proprio ruolo al login). Il superadmin legge tutti.
-    // Scrittura: SOLO superadmin → un utente non può promuoversi da sé.
-    match /authorizedEmails/{userEmail} {
-      allow read:  if isSuperadmin() || (isSignedIn() && userEmail == email());
-      allow write: if isSuperadmin();
+    function isAdmin() {
+      return role() == 'admin' || role() == 'superadmin';
     }
 
-    // ---- Profili utente -----------------------------------------------------
-    // Ognuno gestisce il proprio profilo (chiave = uid). Admin in lettura.
-    match /userProfiles/{uid} {
-      allow read:   if isAdmin() || (isSignedIn() && request.auth.uid == uid);
-      allow write:  if isSignedIn() && request.auth.uid == uid;
+    function isSuperAdmin() {
+      return role() == 'superadmin';
     }
 
-    // ---- Log attività -------------------------------------------------------
-    // Append-only: chiunque autorizzato può creare una riga di log; nessuno
-    // può modificarla o cancellarla (audit trail). Lettura: admin+.
-    match /activityLog/{id} {
-      allow create: if isAuthorized();
-      allow read:   if isAdmin();
+    function canReadAppData() {
+      return signedIn() && userListed();
+    }
+
+    function canEditAppData() {
+      return isUser() || isAdmin();
+    }
+
+    function canReadLogAndBackup() {
+      return isUser() || isAdmin();
+    }
+
+    match /authorizedEmails/{email} {
+      // S3-b: niente più lettura pubblica dei ruoli.
+      // Ognuno legge solo il proprio documento; gli admin leggono tutti.
+      allow get: if isAdmin() || (signedIn() && email == userEmail());
+      allow list: if isAdmin();
+      // S3-a: gli admin gestiscono gli utenti MA non possono creare un
+      // superadmin né modificare/eliminare il proprio documento (anti escalation).
+      // Il superadmin può fare tutto.
+      allow create, update: if isSuperAdmin()
+        || (isAdmin() && request.resource.data.role != 'superadmin' && email != userEmail());
+      allow delete: if isSuperAdmin() || (isAdmin() && email != userEmail());
+    }
+
+    // ── Corsi (ex avvisi): sessioni in calendario ──
+    match /corsi/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    // ── Anagrafica corsi (ex anagraficaAv) ──
+    match /anagraficaCorsi/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    // ── Avvisi / Progetti (entità padre) ──
+    match /avvisi_progetti/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    // ── Legacy (vecchie collection, mantenute per sicurezza) ──
+    match /avvisi/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    match /anagraficaAv/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    match /tutors/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    match /tutEvents/{doc} {
+      allow read: if canReadAppData();
+      allow write: if canEditAppData();
+    }
+
+    // NOTA [S2]: settings/app è leggibile da tutti gli utenti autorizzati
+    // (serve per tema/logo/colori) ma contiene anche le chiavi API in chiaro,
+    // quindi resta leggibile da chiunque sia autorizzato. Per proteggerle
+    // davvero vanno spostate in un documento separato (es. settings/secrets
+    // leggibile solo dal superadmin) oppure dietro un backend proxy.
+    match /settings/{doc} {
+      allow read: if canReadAppData();
+      allow write: if isSuperAdmin();
+    }
+
+    match /activityLog/{doc} {
+      allow create: if signedIn() && userListed();
+      allow read: if canReadLogAndBackup();
       allow update, delete: if false;
     }
 
-    // ---- Backup (dump intero DB) --------------------------------------------
-    // Contiene l'esportazione completa → solo admin/superadmin.
-    match /backups/{id} {
+    // I backup sono dump completi del DB: solo admin/superadmin.
+    match /backups/{doc} {
       allow read, write: if isAdmin();
     }
 
-    // ---- Default deny -------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
