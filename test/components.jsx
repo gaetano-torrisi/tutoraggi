@@ -42,7 +42,7 @@ function MiniCalendar({initialMonthIdx,selected,onSelect}){
   const[mIdx,setMIdx]=useState(initialMonthIdx);const md=MONTHS[mIdx];const{year,month,days}=md;
   const firstDow=new Date(year,month,1).getDay();const offset=firstDow===0?6:firstDow-1;
   const cells=[];for(let i=0;i<offset;i++)cells.push(null);for(let d=1;d<=days;d++)cells.push(d);while(cells.length%7!==0)cells.push(null);
-  return(<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:"var(--shadow-md)",position:"absolute",zIndex:400,top:"100%",left:0,marginTop:4,width:240}}>
+  return(<div style={{background:"var(--bg-elev)",border:"1px solid var(--border)",borderRadius:10,padding:10,boxShadow:"var(--shadow-md)",position:"absolute",zIndex:400,bottom:"100%",left:0,marginBottom:4,width:240}}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
       <button onClick={()=>setMIdx(i=>Math.max(0,i-1))} disabled={mIdx===0} className="btn" data-variant="ghost" data-size="icon-sm"><Icon name="chevLeft" size={14}/></button>
       <span style={{fontSize:12,fontWeight:700,color:"var(--fg)"}}>{md.label}</span>
