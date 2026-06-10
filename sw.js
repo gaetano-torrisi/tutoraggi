@@ -17,7 +17,7 @@
 
    Per forzare l'aggiornamento totale: incrementa CACHE_VERSION.
    ════════════════════════════════════════════════════════════════════ */
-const CACHE_VERSION = "tutoria-v1";
+const CACHE_VERSION = "tutoria-v2";
 
 // Host CDN di sole risorse statiche/immutabili (versionate nell'URL).
 const STATIC_CDN = [
@@ -69,8 +69,8 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // File propri (bundle, css, assets) → stale-while-revalidate
-  event.respondWith(staleWhileRevalidate(req));
+  // File propri (bundle, css, assets) → network-first (sempre aggiornati senza hard refresh)
+  event.respondWith(networkFirst(req));
 });
 
 async function cacheFirst(req) {

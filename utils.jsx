@@ -43,7 +43,7 @@ const VERIFICA_CATEGORIES=[
   {id:"eccedenza",label:"Ore eccedenti",icon:"trending",color:"var(--warning)"},
   {id:"durata",label:"Durata non corrispondente",icon:"clipboard",color:"var(--info)"},
   {id:"orfano",label:"Slot orfani",icon:"alert",color:"var(--warning)"},
-  {id:"weekend",label:"Slot nel weekend",icon:"sun",color:"var(--info)"},
+  {id:"domenica",label:"Slot di domenica",icon:"sun",color:"var(--warning)"},
   {id:"tutor_senza_slot",label:"Tutor senza slot",icon:"user",color:"var(--info)"},
   {id:"corso_senza_sessioni",label:"Corso senza sessioni",icon:"briefcase",color:"var(--info)"},
   {id:"giornata_lunga",label:"Giornata >8h",icon:"alert",color:"var(--warning)"},

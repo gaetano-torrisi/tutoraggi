@@ -22,12 +22,18 @@ function VerifiedBadge({by,at}){
 function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClick,onDragEnd,posOverride,highlightError,onDragMove}){
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u}),onClick,onDragMove:dd=>onDragMove&&onDragMove(ev,dd)});
   const ore=ev.end-ev.start;
-  const dTop=(ev.start-8)*slotH,dH=Math.max((ev.end-ev.start)*slotH,20);
-  const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:color,userSelect:"none",boxShadow:"var(--shadow-sm)"};
+  const isInvalid=ev.end<=ev.start;
+  const cs=Math.max(8,Math.min(20,ev.start)),ce=Math.max(8,Math.min(20,ev.end));
+  const outOfBand=!isInvalid&&(ev.start<8||ev.end>20);
+  const flag=isInvalid||outOfBand;
+  const effColor=flag?"var(--warning)":color;
+  const dTop=isInvalid?0:(cs-8)*slotH,dH=isInvalid?28:Math.max((ce-cs)*slotH,20);
+  const style=posOverride?{position:"absolute",...posOverride,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:5,background:effColor,userSelect:"none",boxShadow:"var(--shadow-sm)"}:{position:"absolute",top:dTop,left:`calc(${(col/numCols)*100}% + 2px)`,width:`calc(${100/numCols}% - 4px)`,height:dH,borderRadius:"var(--radius-sm)",overflow:"visible",boxSizing:"border-box",zIndex:3,background:effColor,userSelect:"none",boxShadow:"var(--shadow-sm)"};
   return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} style={style} title={`${ev.name}\n${fmt(ev.start)}–${fmt(ev.end)}${tutorLabel?"\n"+tutorLabel:""}`}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"#fff",background:"rgba(0,0,0,.14)",borderBottom:"1px solid rgba(255,255,255,.15)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",borderRadius:"var(--radius-sm) var(--radius-sm) 0 0",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
-        {onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
+        {flag&&<Icon name="alert" size={10} color="#fff"/>}
+        {!flag&&onEdit&&<Icon name="edit" size={10} color="rgba(255,255,255,.8)"/>}
         {ev.name}
       </span>
       <span style={{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
@@ -41,8 +47,12 @@ function DraggableSlot({ev,col,numCols,color,tutorLabel,slotH,colW,onEdit,onClic
 }
 
 function AvOverlaySlot({ev,col,numCols,color,slotH}){
-  const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
-  return(<div style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",boxSizing:"border-box",zIndex:20,background:hexToRgba(color,.07),border:`2px solid ${color}`,pointerEvents:"none"}}>
+  const isInvalid=ev.end<=ev.start;
+  const cs=Math.max(8,Math.min(20,ev.start)),ce=Math.max(8,Math.min(20,ev.end));
+  const outOfBand=!isInvalid&&(ev.start<8||ev.end>20);
+  const effColor=(isInvalid||outOfBand)?"var(--warning)":color;
+  const top=isInvalid?0:(cs-8)*slotH,h=isInvalid?28:Math.max((ce-cs)*slotH,20);
+  return(<div style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",boxSizing:"border-box",zIndex:20,background:hexToRgba(effColor,.07),border:`2px solid ${effColor}`,pointerEvents:"none"}}>
     <div style={{position:"absolute",top:-15,left:-1,fontSize:9,fontWeight:700,color,background:"var(--bg-elev)",padding:"1px 6px",borderRadius:"3px 3px 0 0",border:`1px solid ${color}`,borderBottom:"none",whiteSpace:"nowrap",overflow:"hidden",maxWidth:"100%",textOverflow:"ellipsis",lineHeight:"14px",zIndex:21,pointerEvents:"none",display:"flex",alignItems:"center",gap:3}}>
       {ev.verified&&<VerifiedBadge by={ev.verifiedBy} at={ev.verifiedAt}/>}
       {(ev.corsoName||"").substring(0,26)}
@@ -51,13 +61,19 @@ function AvOverlaySlot({ev,col,numCols,color,slotH}){
 }
 
 function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highlightError}){
-  const top=(ev.start-8)*slotH,h=Math.max((ev.end-ev.start)*slotH,20);
+  const isInvalid=ev.end<=ev.start;
+  const cs=Math.max(8,Math.min(20,ev.start)),ce=Math.max(8,Math.min(20,ev.end));
+  const outOfBand=!isInvalid&&(ev.start<8||ev.end>20);
+  const flag=isInvalid||outOfBand;
+  const effColor=flag?"var(--warning)":color;
+  const top=isInvalid?0:(cs-8)*slotH,h=isInvalid?28:Math.max((ce-cs)*slotH,20);
   const ore=ev.end-ev.start;
   const{dragRef,resizeRef,makeBody,makeResize}=useDrag({onDragEnd:u=>onDragEnd&&onDragEnd({...ev,...u})});
-  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} title={`${ev.corsoName}\n${fmt(ev.start)}–${fmt(ev.end)}${ev.sede?"\n"+ev.sede:""}`} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:2,background:hexToRgba(color,.35),border:`1.5px dashed ${color}`,userSelect:"none"}}>
+  return(<div ref={dragRef} id={`slot-${ev.id}`} data-ev-id={ev.id} className={highlightError?"highlight-error":""} title={`${ev.corsoName}\n${fmt(ev.start)}–${fmt(ev.end)}${ev.sede?"\n"+ev.sede:""}`} style={{position:"absolute",top,left:`calc(${(col/numCols)*100}% + 1px)`,width:`calc(${100/numCols}% - 3px)`,height:h,borderRadius:"var(--radius-sm)",overflow:"hidden",boxSizing:"border-box",zIndex:flag?4:2,background:hexToRgba(effColor,.35),border:`1.5px dashed ${effColor}`,userSelect:"none"}}>
     <div onClick={e=>{e.stopPropagation();onEdit&&onEdit();}} style={{padding:"2px 5px",cursor:onEdit?"pointer":"default",fontSize:10,fontWeight:700,color:"var(--fg)",background:"rgba(0,0,0,.07)",borderBottom:"1px dashed rgba(0,0,0,.12)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",justifyContent:"space-between",gap:4}}>
       <span style={{overflow:"hidden",textOverflow:"ellipsis",display:"flex",alignItems:"center",gap:4}}>
-        {onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
+        {flag&&<Icon name="alert" size={10} color="var(--warning)"/>}
+        {!flag&&onEdit&&<Icon name="edit" size={10} color="var(--fg-muted)"/>}
         {ev.corsoName}
       </span>
       <span style={{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}}>
