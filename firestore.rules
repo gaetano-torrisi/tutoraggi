@@ -43,6 +43,16 @@ service cloud.firestore {
       return role() == 'superadmin';
     }
 
+    // Un admin può gestire SOLO utenti non-admin (viewer/user):
+    // - il ruolo ESISTENTE del target dev'essere viewer/user (non tocca admin/superadmin)
+    // - il NUOVO ruolo dev'essere viewer/user (non promuove ad admin/superadmin)
+    function targetIsNonAdmin() {
+      return resource.data.role == 'viewer' || resource.data.role == 'user';
+    }
+    function newRoleNonAdmin() {
+      return request.resource.data.role == 'viewer' || request.resource.data.role == 'user';
+    }
+
     function canReadAppData() {
       return signedIn() && userListed();
     }
@@ -60,12 +70,18 @@ service cloud.firestore {
       // Ognuno legge solo il proprio documento; gli admin leggono tutti.
       allow get: if isAdmin() || (signedIn() && email == userEmail());
       allow list: if isAdmin();
-      // S3-a: gli admin gestiscono gli utenti MA non possono creare un
-      // superadmin né modificare/eliminare il proprio documento (anti escalation).
-      // Il superadmin può fare tutto.
-      allow create, update: if isSuperAdmin()
-        || (isAdmin() && request.resource.data.role != 'superadmin' && email != userEmail());
-      allow delete: if isSuperAdmin() || (isAdmin() && email != userEmail());
+      // S3-a: gli admin gestiscono SOLO utenti non-admin (viewer/user). Non
+      // possono toccare altri admin/superadmin, promuovere ad admin/superadmin,
+      // né modificare il proprio documento. Il superadmin può fare tutto.
+      // create: nuovo utente → admin solo con ruolo viewer/user.
+      allow create: if isSuperAdmin()
+        || (isAdmin() && newRoleNonAdmin());
+      // update: admin solo su target non-admin, verso ruoli non-admin, mai su di sé.
+      allow update: if isSuperAdmin()
+        || (isAdmin() && email != userEmail() && targetIsNonAdmin() && newRoleNonAdmin());
+      // delete: admin solo target non-admin, mai se stesso.
+      allow delete: if isSuperAdmin()
+        || (isAdmin() && email != userEmail() && targetIsNonAdmin());
     }
 
     // ── Corsi (ex avvisi): sessioni in calendario ──
