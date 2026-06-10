@@ -15,8 +15,8 @@ function runVerifica(corsi,anagraficaCorsi,tutors,tutEvents){
   for(const ana of anagraficaCorsi){const co=corsiById[ana.id];const totAv=co?(co.events||[]).reduce((s,e)=>s+(e.ore||0),0):0;let totTut=0;for(const[,months]of Object.entries(tutEvents))for(const{evs}of safeEvs(months))for(const ev of evs)if(ev.name===ana.nome)totTut+=(ev.ore||0);if(totTut>totAv)errors.push({type:"eccedenza",monthKey:null,msg:`Corso "${ana.nome}": ore tutoraggio (${totTut}h) superano ore corso (${totAv}h).`,detail:`Eccedenza: ${totTut-totAv}h`});if(ana.durataOre&&totAv!==ana.durataOre)errors.push({type:"durata",monthKey:null,msg:`Corso "${ana.nome}": ore nel calendario (${totAv}h) ≠ durata da bando (${ana.durataOre}h).`,detail:`Differenza: ${Math.abs(totAv-ana.durataOre)}h`});}
   // giornata_lunga
   for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const t=tutors.find(x=>x.id===tid);const byDay={};for(const ev of evs){if(!byDay[ev.day])byDay[ev.day]=0;byDay[ev.day]+=ev.ore||0;}for(const[day,totH]of Object.entries(byDay)){if(totH>8)errors.push({type:"giornata_lunga",monthKey:mk,day:Number(day),msg:`Tutor "${t?.cognome} ${t?.nome}": giornata >8h il ${fmtDayMonth(Number(day),mk)} (${totH}h).`,detail:"Superato limite giornaliero consigliato."});}}}
-  // weekend (sabato) e domenica — la domenica è segnalata a parte, per tutor e corsi
-  for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0)errors.push({type:"domenica",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot di domenica il ${fmtDayMonth(ev.day,mk)}.`,detail:"Slot inserito di domenica."});else if(d===6)errors.push({type:"weekend",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot nel weekend il ${fmtDayMonth(ev.day,mk)}.`,detail:"Giorno festivo o weekend."});}}}
+  // domenica — segnalata come errore per tutor e corsi (il sabato è ammesso)
+  for(const[tid,months]of Object.entries(tutEvents)){for(const{mk,evs}of safeEvs(months)){const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const t=tutors.find(x=>x.id===tid);for(const ev of evs){const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0)errors.push({type:"domenica",monthKey:mk,evId:ev.id,day:ev.day,msg:`Tutor "${t?.cognome} ${t?.nome}": slot di domenica il ${fmtDayMonth(ev.day,mk)}.`,detail:"Slot inserito di domenica."});}}}
   for(const ana of anagraficaCorsi){const co=corsiById[ana.id];if(!co)continue;for(const ev of (co.events||[])){const mk=ev.month||"";const mObj=MONTHS.find(m=>m.key===mk);if(!mObj)continue;const d=new Date(mObj.year,mObj.month,ev.day).getDay();if(d===0)errors.push({type:"domenica",monthKey:mk,day:ev.day,msg:`Corso "${ana.nome}": sessione di domenica il ${fmtDayMonth(ev.day,mk)}.`,detail:"Sessione inserita di domenica."});}}
   // orario_zero — slot/sessioni con orario non valido (start>=end, tipicamente 00:00-00:00)
   // fuori_fascia — slot/sessioni con orario prima delle 08:00 o dopo le 20:00 (fuori dalla griglia visibile)
@@ -38,7 +38,6 @@ const VERIFICA_CATS=[
   {type:"eccedenza",label:"Ore eccedenti",icon:"trending",tone:"warning"},
   {type:"durata",label:"Durata non corrispondente",icon:"clipboard",tone:"info"},
   {type:"orfano",label:"Slot orfani",icon:"user",tone:"warning"},
-  {type:"weekend",label:"Slot nel weekend",icon:"sun",tone:"info"},
   {type:"domenica",label:"Slot di domenica",icon:"sun",tone:"warning"},
   {type:"tutor_senza_slot",label:"Tutor senza slot",icon:"users",tone:"info"},
   {type:"corso_senza_sessioni",label:"Corso senza sessioni",icon:"briefcase",tone:"info"},
