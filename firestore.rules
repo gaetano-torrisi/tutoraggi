@@ -70,16 +70,19 @@ service cloud.firestore {
       // Ognuno legge solo il proprio documento; gli admin leggono tutti.
       allow get: if isAdmin() || (signedIn() && email == userEmail());
       allow list: if isAdmin();
-      // S3-a: gli admin gestiscono SOLO utenti non-admin (viewer/user). Non
-      // possono toccare altri admin/superadmin, promuovere ad admin/superadmin,
-      // né modificare il proprio documento. Il superadmin può fare tutto.
+      // S3-a: il superadmin può tutto. L'admin:
+      //  • gestisce solo utenti viewer/user, mantenendoli viewer/user;
+      //  • può auto-declassarsi a viewer/user (modifica del proprio doc solo verso il basso);
+      //  • non può promuoversi a superadmin né toccare in alcun modo altri admin/superadmin.
       // create: nuovo utente → admin solo con ruolo viewer/user.
       allow create: if isSuperAdmin()
         || (isAdmin() && newRoleNonAdmin());
-      // update: admin solo su target non-admin, verso ruoli non-admin, mai su di sé.
+      // update: admin su sé stesso solo per declassarsi (viewer/user);
+      //         su altri solo se target è viewer/user e resta viewer/user.
       allow update: if isSuperAdmin()
+        || (isAdmin() && email == userEmail() && newRoleNonAdmin())
         || (isAdmin() && email != userEmail() && targetIsNonAdmin() && newRoleNonAdmin());
-      // delete: admin solo target non-admin, mai se stesso.
+      // delete: admin solo target viewer/user, mai se stesso né altri admin.
       allow delete: if isSuperAdmin()
         || (isAdmin() && email != userEmail() && targetIsNonAdmin());
     }
