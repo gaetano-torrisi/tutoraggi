@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Mockup Mobile — TutorIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════════
+   TOKENS — light & dark
+═══════════════════════════════════════════════════════ */
+:root {
+  --brand-navy:#1A1F4D; --brand-navy-2:#2A2F66;
+  --brand-orange:#EC7A26; --brand-orange-light:#F5A35A; --brand-orange-soft:#FFEFE0;
+  --bg:#FAF8F4; --bg-elev:#FFFFFF; --bg-sunken:#F2EFE9; --bg-hover:#F0EBE2;
+  --border:#E6E1D6; --border-strong:#D8D1C2; --divider:#ECE7DC;
+  --fg:#1A1F2E; --fg-muted:#5B5F70; --fg-subtle:#8A8E9E; --fg-faint:#B5B7C3;
+  --accent:#EC7A26; --accent-fg:#fff; --accent-soft:#FFEFE0; --accent-strong:#D5651A;
+  --success:#2F8F5B; --success-soft:#E4F3EA;
+  --warning:#C58B1B; --warning-soft:#FBF1D9;
+  --danger:#C0392B; --danger-soft:#FBE7E3;
+  --info:#3E6FB8; --info-soft:#E6EEFA;
+  --shadow-xs:0 1px 2px rgba(26,31,77,.06);
+  --shadow-sm:0 2px 6px rgba(26,31,77,.08);
+  --shadow-md:0 6px 20px rgba(26,31,77,.10),0 2px 6px rgba(26,31,77,.06);
+  --shadow-lg:0 20px 50px rgba(26,31,77,.16),0 6px 16px rgba(26,31,77,.08);
+  --radius-sm:6px; --radius:8px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px;
+}
+[data-theme="dark"] {
+  --bg:#0C0F22; --bg-elev:#161A36; --bg-sunken:#090C1B; --bg-hover:#1E2244;
+  --border:#262B4C; --border-strong:#353A5E; --divider:#1F2342;
+  --fg:#EEEDF2; --fg-muted:#A7A9BC; --fg-subtle:#7A7E94; --fg-faint:#5A5E74;
+  --accent:#F08A3B; --accent-fg:#1A1F2E; --accent-soft:rgba(240,138,59,.14); --accent-strong:#FFB07A;
+  --brand-orange:#F08A3B; --brand-orange-soft:rgba(240,138,59,.14);
+  --success:#58B383; --success-soft:rgba(88,179,131,.16);
+  --warning:#E2B25C; --warning-soft:rgba(226,178,92,.16);
+  --danger:#E47A6E; --danger-soft:rgba(228,122,110,.18);
+  --info:#6A95DB; --info-soft:rgba(106,149,219,.18);
+  --shadow-md:0 6px 20px rgba(0,0,0,.5);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.7);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAGE SHELL — centred, outer background
+═══════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; }
+body {
+  font-family:"Inter Tight","Inter",-apple-system,sans-serif;
+  font-feature-settings:"ss01","cv11","tnum";
+  background:linear-gradient(135deg,#0F1230 0%,#1A1F4D 45%,#2C1A0E 100%);
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start; padding:40px 20px 60px;
+  -webkit-font-smoothing:antialiased;
+}
+.page-header {
+  text-align:center; margin-bottom:32px; color:#fff;
+}
+.page-header h1 {
+  font-family:"Fraunces",Georgia,serif; font-size:28px; font-weight:700;
+  letter-spacing:-.02em; margin-bottom:6px;
+}
+.page-header p { font-size:13px; color:rgba(255,255,255,.55); }
+
+/* Theme toggle */
+.theme-toggle {
+  position:fixed; top:20px; right:20px;
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18);
+  color:#fff; border-radius:8px; padding:7px 14px; cursor:pointer;
+  font-family:"Inter Tight",sans-serif; font-size:12px; font-weight:600;
+  backdrop-filter:blur(8px); transition:all .15s; z-index:100;
+}
+.theme-toggle:hover { background:rgba(255,255,255,.2); }
+
+/* ═══════════════════════════════════════════════════════
+   PHONE FRAME
+═══════════════════════════════════════════════════════ */
+.phone-frame {
+  width:393px; height:852px;
+  background:#101010;
+  border-radius:50px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 0 10px #1C1C1E,
+    0 0 0 12px rgba(255,255,255,.08),
+    var(--shadow-lg),
+    0 60px 120px rgba(0,0,0,.8);
+  position:relative; overflow:hidden; flex-shrink:0;
+}
+/* Dynamic Island */
+.phone-frame::before {
+  content:"";
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:120px; height:34px;
+  background:#000;
+  border-radius:20px;
+  z-index:999;
+}
+/* Screen */
+.phone-screen {
+  position:absolute; inset:0;
+  background:var(--bg);
+  border-radius:49px;
+  overflow:hidden;
+  display:flex; flex-direction:column;
+  color:var(--fg);
+  font-size:14px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════════════════════════ */
+.status-bar {
+  height:54px; flex-shrink:0;
+  display:flex; align-items:flex-end; justify-content:space-between;
+  padding:0 28px 8px;
+  background:var(--bg);
+  font-size:12px; font-weight:600;
+}
+.status-time { font-size:15px; font-weight:700; }
+.status-icons { display:flex; align-items:center; gap:6px; }
+.status-icons svg { opacity:.9; }
+
+/* ═══════════════════════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════════════════════ */
+.topbar {
+  height:56px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 16px;
+  background:var(--bg-elev);
+  border-bottom:1px solid var(--border);
+}
+.topbar-brand {
+  display:flex; flex-direction:column; align-items:flex-start;
+}
+.topbar-logo {
+  font-family:"Fraunces",Georgia,serif;
+  font-size:15px; font-weight:700; letter-spacing:-.01em;
+  color:var(--brand-navy); line-height:1.1;
+  display:flex; align-items:center; gap:5px;
+}
+[data-theme="dark"] .topbar-logo { color:var(--accent); }
+.topbar-logo-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--accent); flex-shrink:0;
+}
+.topbar-screen {
+  font-size:11px; font-weight:500;
+  color:var(--fg-subtle); margin-top:1px;
+}
+.topbar-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:var(--brand-navy);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:#fff; flex-shrink:0;
+}
+[data-theme="dark"] .topbar-avatar { background:var(--brand-navy-2); }
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLABLE CONTENT AREA
+═══════════════════════════════════════════════════════ */
+.screen-content {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.screen-content::-webkit-scrollbar { display:none; }
+
+/* ═══════════════════════════════════════════════════════
+   BOTTOM TAB BAR
+═══════════════════════════════════════════════════════ */
+.tab-bar {
+  height:82px; flex-shrink:0;
+  background:var(--bg-elev);
+  border-top:1px solid var(--border);
+  display:flex; align-items:flex-start; justify-content:space-around;
+  padding-top:10px;
+}
+.tab-btn {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  background:none; border:none; cursor:pointer; padding:0 10px;
+  color:var(--fg-subtle); transition:color .15s; min-width:60px;
+}
+.tab-btn.active { color:var(--accent); }
+.tab-btn svg { width:24px; height:24px; stroke-width:1.8; }
+.tab-btn span {
+  font-size:10px; font-weight:600; letter-spacing:.01em;
+  text-transform:none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCREEN SECTIONS — show/hide
+═══════════════════════════════════════════════════════ */
+.screen { display:none; flex-direction:column; height:100%; }
+.screen.active { display:flex; }
+
+/* ═══════════════════════════════════════════════════════
+   REUSABLE COMPONENTS (mobile scale)
+═══════════════════════════════════════════════════════ */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  height:20px; padding:0 7px; border-radius:100px;
+  font-size:10px; font-weight:700; white-space:nowrap;
+  background:var(--bg-sunken); color:var(--fg-muted);
+}
+.badge[data-tone="success"] { background:var(--success-soft); color:var(--success); }
+.badge[data-tone="warning"] { background:var(--warning-soft); color:var(--warning); }
+.badge[data-tone="danger"]  { background:var(--danger-soft);  color:var(--danger); }
+.badge[data-tone="info"]    { background:var(--info-soft);    color:var(--info); }
+.badge[data-tone="accent"]  { background:var(--accent-soft);  color:var(--accent-strong); }
+.badge[data-tone="navy"]    { background:var(--brand-navy); color:#fff; }
+
+.avatar {
+  border-radius:50%; color:#fff; font-weight:700;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  font-size:11px;
+}
+.avatar-md { width:38px; height:38px; font-size:13px; }
+.avatar-sm { width:28px; height:28px; font-size:10px; }
+.avatar-xs { width:22px; height:22px; font-size:8px; }
+
+.pb-track { height:5px; background:var(--bg-sunken); border-radius:999px; overflow:hidden; }
+.pb-fill  { height:100%; border-radius:999px; }
+
+.search-bar {
+  margin:12px 14px; position:relative;
+}
+.search-bar input {
+  width:100%; height:38px; padding:0 12px 0 36px;
+  border-radius:var(--radius-md); border:1.5px solid var(--border);
+  background:var(--bg-elev); color:var(--fg); font-size:13.5px;
+  font-family:"Inter Tight",sans-serif;
+  transition:border-color .12s;
+}
+.search-bar input:focus { outline:none; border-color:var(--accent); }
+.search-bar input::placeholder { color:var(--fg-faint); }
+.search-icon {
+  position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  color:var(--fg-subtle); pointer-events:none;
+}
+
+/* Detail back navigation */
+.detail-back {
+  display:flex; align-items:center; gap:8px;
+  padding:12px 14px 8px;
+  font-size:13.5px; font-weight:600; color:var(--accent);
+  cursor:pointer; background:none; border:none; width:100%;
+  text-align:left;
+}
+.detail-back svg { width:18px; height:18px; stroke-width:2.5; flex-shrink:0; }
+
+/* KPI grid 2×2 */
+.kpi-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  padding:0 14px 12px;
+}
+.kpi-card {
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:12px;
+}
+.kpi-label { font-size:10px; font-weight:600; color:var(--fg-subtle);
+             text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.kpi-value { font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--fg); }
+.kpi-sub   { font-size:10.5px; color:var(--fg-muted); margin-top:2px; }
+
+/* Form field */
+.form-field { padding:0 14px; margin-bottom:14px; }
+.form-label { font-size:10.5px; font-weight:600; color:var(--fg-subtle);
+              text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; display:block; }
+.form-value { font-size:13.5px; color:var(--fg); font-weight:500;
+              padding:10px 12px; background:var(--bg-sunken);
+              border-radius:var(--radius); border:1px solid var(--border); }
+
+/* Section header */
+.section-hdr {
+  padding:12px 14px 6px;
+  font-size:11px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--fg-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ── 1. CALENDARIO ──
+═══════════════════════════════════════════════════════ */
+.cal-month-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 14px 8px;
+}
+.cal-month-label {
+  font-family:"Fraunces",Georgia,serif;
+  font-size:16px; font-weight:700; color:var(--fg);
+}
+.cal-nav-btn {
+  width:32px; height:32px; border-radius:8px; border:none;
+  background:var(--bg-sunken); color:var(--fg-muted);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all .1s;
+}
+.cal-nav-btn:hover { background:var(--bg-hover); color:var(--fg); }
+.cal-nav-btn svg { width:16px; height:16px; stroke-width:2.5; }
+
+/* Day strip */
+.day-strip {
+  display:flex; gap:4px; padding:0 14px 10px;
+  overflow-x:auto; scrollbar-width:none; flex-shrink:0;
+}
+.day-strip::-webkit-scrollbar { display:none; }
+.day-chip {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:6px 8px; border-radius:12px; cursor:pointer;
+  flex-shrink:0; min-width:40px; transition:all .12s;
+  border:none; background:transparent;
+}
+.day-chip:hover { background:var(--bg-hover); }
+.day-chip.active {
+  background:var(--brand-navy);
+}
+[data-theme="dark"] .day-chip.active { background:var(--accent); }
+.day-chip-dow {
+  font-size:10px; font-weight:600; color:var(--fg-subtle);
+  text-transform:uppercase; letter-spacing:.03em;
+}
+.day-chip.active .day-chip-dow { color:rgba(255,255,255,.7); }
+[data-theme="dark"] .day-chip.active .day-chip-dow { color:rgba(26,31,46,.8); }
+.day-chip-num {
+  font-size:15px; font-weight:700; color:var(--fg);
+}
+.day-chip.active .day-chip-num { color:#fff; }
+[data-theme="dark"] .day-chip.active .day-chip-num { color:#1A1F2E; }
+.day-chip.today .day-chip-num::after {
+  content:""; display:block; width:4px; height:4px; border-radius:50%;
+  background:var(--accent); margin:2px auto 0;
+}
+.day-chip.active.today .day-chip-num::after { background:rgba(255,255,255,.6); }
+
+/* Agenda list */
+.agenda-list { padding:0 14px 20px; }
+.agenda-time-group { margin-bottom:12px; }
+.agenda-slot {
+  display:flex; gap:10px; align-items:stretch;
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:10px 12px;
+  margin-bottom:8px; cursor:pointer; transition:box-shadow .12s;
+  position:relative; overflow:hidden;
+}
+.agenda-slot::before {
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+.agenda-slot:hover { box-shadow:var(--shadow-sm); }
+.agenda-slot-time {
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px; color:var(--fg-subtle); white-space:nowrap;
+  padding-top:2px; min-width:38px;
+}
+.agenda-slot-body { flex:1; min-width:0; }
+.agenda-slot-name {
+  font-size:13.5px; font-weight:600; color:var(--fg);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.agenda-slot-meta {
+  display:flex; align-items:center; gap:6px; margin-top:4px;
+  font-size:11px; color:var(--fg-muted);
+}
+.agenda-empty {
+  text-align:center; padding:40px 20px;
+  color:var(--fg-subtle); font-size:13px;
+}
+.agenda-empty svg { display:block; margin:0 auto 12px;
+                    width:40px; height:40px; opacity:.3; }
+
+/* FAB */
+.fab {
+  position:absolute; bottom:94px; right:16px;
+  width:48px; height:48px; border-radius:50%;
+  background:var(--brand-navy); color:#fff;
+  border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(26,31,77,.35);
+  transition:transform .12s;
+  z-index:10;
+}
+[data-theme="dark"] .fab { background:var(--accent); }
+.fab:hover { transform:scale(1.06); }
+.fab svg { width:22px; height:22px; stroke-width:2.5; }
+
+/* Slot detail overlay */
+.slot-detail {
+  position:absolute; inset:0; z-index:20;
+  background:var(--bg); overflow-y:auto;
+  animation:slideUp .22s cubic-bezier(.32,0,.14,1);
+  scrollbar-width:none;
+}
+.slot-detail::-webkit-scrollbar { display:none; }
+.slot-detail-hero {
+  padding:14px 14px 0;
+}
+.slot-detail-banner {
+  border-radius:var(--radius-md); padding:16px;
+  display:flex; flex-direction:column; gap:10px; margin-bottom:14px;
+}
+.slot-detail-course { font-size:15px; font-weight:700; color:#fff; }
+.slot-detail-time   {
+  font-family:"JetBrains Mono",monospace;
+  font-size:13px; color:rgba(255,255,255,.8);
+}
+
+/* Form overlay for new slot */
+.new-slot-overlay {
+  position:absolute; inset:0; z-index:20;
+  background:var(--bg); overflow-y:auto;
+  animation:slideUp .22s cubic-bezier(.32,0,.14,1);
+  scrollbar-width:none;
+}
+.new-slot-overlay::-webkit-scrollbar { display:none; }
+
+@keyframes slideUp {
+  from { transform:translateY(40px); opacity:0; }
+  to   { transform:translateY(0); opacity:1; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ── 2. TUTOR ──
+═══════════════════════════════════════════════════════ */
+.tutor-list, .corsi-list { overflow-y:auto; scrollbar-width:none; }
+.tutor-list::-webkit-scrollbar, .corsi-list::-webkit-scrollbar { display:none; }
+
+.tutor-row {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 14px; border-bottom:1px solid var(--divider);
+  cursor:pointer; transition:background .1s;
+}
+.tutor-row:hover { background:var(--bg-hover); }
+.tutor-row-info { flex:1; min-width:0; }
+.tutor-row-name { font-size:13.5px; font-weight:600; color:var(--fg);
+                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tutor-row-sub  { font-size:11px; color:var(--fg-muted); margin-top:2px; }
+.tutor-row-ore  {
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px; font-weight:600; color:var(--fg-subtle); flex-shrink:0;
+}
+
+/* Tutor detail */
+.tutor-detail-hdr {
+  display:flex; align-items:center; gap:12px;
+  padding:0 14px 14px;
+}
+.tutor-detail-hdr-info h2 {
+  font-size:18px; font-weight:700; letter-spacing:-.01em; color:var(--fg);
+}
+.tutor-detail-hdr-info p { font-size:12px; color:var(--fg-muted); margin-top:3px; }
+
+/* ═══════════════════════════════════════════════════════
+   ── 3. CORSI ──
+═══════════════════════════════════════════════════════ */
+.chips-row {
+  display:flex; gap:6px; padding:0 14px 10px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.chips-row::-webkit-scrollbar { display:none; }
+.chip {
+  flex-shrink:0; height:28px; padding:0 12px;
+  border-radius:100px; border:1.5px solid var(--border);
+  background:var(--bg-elev); color:var(--fg-muted);
+  font-size:11px; font-weight:600; cursor:pointer;
+  display:flex; align-items:center; gap:5px;
+  transition:all .12s;
+}
+.chip:hover { border-color:var(--border-strong); color:var(--fg); }
+.chip.active { border-color:var(--brand-navy); background:var(--brand-navy); color:#fff; }
+[data-theme="dark"] .chip.active { border-color:var(--accent); background:var(--accent); color:#1A1F2E; }
+
+.corso-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; border-bottom:1px solid var(--divider);
+  cursor:pointer; transition:background .1s; position:relative;
+}
+.corso-row:hover { background:var(--bg-hover); }
+.corso-color-bar {
+  width:3px; border-radius:2px; self-align:stretch;
+  align-self:stretch; flex-shrink:0; min-height:44px;
+}
+.corso-row-info { flex:1; min-width:0; }
+.corso-row-name { font-size:13px; font-weight:600; color:var(--fg);
+                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.corso-row-code { font-size:10.5px; font-family:"JetBrains Mono",monospace;
+                  color:var(--fg-subtle); margin-top:2px; }
+.corso-row-prog { margin-top:6px; }
+
+.corso-detail-banner {
+  margin:0 14px 14px; padding:14px;
+  border-radius:var(--radius-md);
+}
+.corso-detail-banner-name {
+  font-size:16px; font-weight:700; color:#fff; margin-bottom:4px;
+}
+.corso-detail-banner-code {
+  font-size:11px; font-family:"JetBrains Mono",monospace;
+  color:rgba(255,255,255,.7);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ── 4. INSIGHTS ──
+═══════════════════════════════════════════════════════ */
+.period-selector {
+  display:flex; gap:4px; padding:12px 14px 8px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.period-selector::-webkit-scrollbar { display:none; }
+.period-btn {
+  flex-shrink:0; height:30px; padding:0 14px;
+  border-radius:8px; border:1.5px solid var(--border);
+  background:var(--bg-elev); color:var(--fg-muted);
+  font-size:11.5px; font-weight:600; cursor:pointer;
+  transition:all .12s;
+}
+.period-btn.active {
+  border-color:var(--brand-navy); background:var(--brand-navy); color:#fff;
+}
+[data-theme="dark"] .period-btn.active {
+  border-color:var(--accent); background:var(--accent); color:#1A1F2E;
+}
+
+.insight-kpi-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  padding:0 14px 16px;
+}
+.insight-kpi {
+  background:var(--bg-elev); border:1px solid var(--border);
+  border-radius:var(--radius-md); padding:14px 12px;
+  position:relative; overflow:hidden;
+}
+.insight-kpi::after {
+  content:""; position:absolute; bottom:-10px; right:-10px;
+  width:60px; height:60px; border-radius:50%;
+  background:var(--accent-soft); opacity:.5;
+}
+.insight-kpi-icon {
+  width:28px; height:28px; border-radius:8px;
+  background:var(--accent-soft); color:var(--accent-strong);
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:8px;
+}
+.insight-kpi-icon svg { width:15px; height:15px; stroke-width:2; }
+.insight-kpi-val {
+  font-size:26px; font-weight:800; letter-spacing:-.03em; color:var(--fg);
+}
+.insight-kpi-label {
+  font-size:10.5px; color:var(--fg-muted); margin-top:2px;
+}
+
+.ranking-section { padding:0 14px 20px; }
+.ranking-header {
+  font-size:11px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--fg-subtle);
+  margin-bottom:12px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.rank-toggle { display:flex; gap:4px; }
+.rank-btn {
+  height:22px; padding:0 10px; border-radius:6px;
+  border:1px solid var(--border); background:transparent;
+  font-size:10px; font-weight:600; color:var(--fg-muted); cursor:pointer;
+  transition:all .1s;
+}
+.rank-btn.active { background:var(--brand-navy); border-color:var(--brand-navy); color:#fff; }
+[data-theme="dark"] .rank-btn.active { background:var(--accent); border-color:var(--accent); color:#1A1F2E; }
+
+.rank-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:10px;
+}
+.rank-pos { font-size:11px; font-weight:700; color:var(--fg-faint); width:16px; text-align:center; }
+.rank-bar-wrap { flex:1; }
+.rank-name { font-size:12.5px; font-weight:600; color:var(--fg); margin-bottom:4px; }
+.rank-bar-track { height:6px; background:var(--bg-sunken); border-radius:99px; overflow:hidden; }
+.rank-bar-fill  { height:100%; border-radius:99px; }
+.rank-ore { font-family:"JetBrains Mono",monospace; font-size:11px;
+            color:var(--fg-muted); flex-shrink:0; }
+
+/* ═══════════════════════════════════════════════════════
+   DESKTOP-ONLY NOTE
+═══════════════════════════════════════════════════════ */
+.desktop-only-note {
+  margin:12px 14px; padding:10px 12px;
+  background:var(--bg-sunken); border-radius:var(--radius);
+  border:1px solid var(--border);
+  font-size:11px; color:var(--fg-subtle);
+  display:flex; align-items:flex-start; gap:8px;
+}
+.desktop-only-note svg { width:14px; height:14px; flex-shrink:0; margin-top:1px; stroke-width:2; }
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════ */
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none} }
+.fade-in { animation:fadeIn .2s ease both; }
+</style>
+</head>
+
+<body>
+
+<!-- Theme toggle -->
+<button class="theme-toggle" onclick="toggleTheme()">☀/☾ Tema</button>
+
+<!-- Page header -->
+<div class="page-header">
+  <h1>TutorIA — Mobile</h1>
+  <p>Mockup navigabile · Solo valutazione · Non riflette il build</p>
+</div>
+
+<!-- ══════════════════════════════════════
+     PHONE FRAME
+══════════════════════════════════════ -->
+<div class="phone-frame">
+  <div class="phone-screen">
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span class="status-time">9:41</span>
+      <div class="status-icons">
+        <!-- signal -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" style="color:var(--fg)">
+          <rect x="0" y="9" width="3" height="3" rx="0.5"/>
+          <rect x="4.5" y="6" width="3" height="6" rx="0.5"/>
+          <rect x="9" y="3" width="3" height="9" rx="0.5"/>
+          <rect x="13.5" y="0" width="2.5" height="12" rx="0.5"/>
+        </svg>
+        <!-- wifi -->
+        <svg width="16" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--fg)">
+          <path d="M12 14.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" fill="currentColor" stroke="none"/>
+          <path d="M5.5 11C7.5 9 9.6 8 12 8s4.5 1 6.5 3"/>
+          <path d="M2 7.5C5.2 4.3 8.4 3 12 3s6.8 1.3 10 4.5"/>
+        </svg>
+        <!-- battery -->
+        <svg width="22" height="12" viewBox="0 0 22 12" fill="none" style="color:var(--fg)">
+          <rect x="0" y="1" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="1.5" y="2.5" width="13" height="7" rx="1" fill="currentColor"/>
+          <path d="M19.5 4v4a2 2 0 0 0 0-4z" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-logo">
+          <div class="topbar-logo-dot"></div>
+          TutorIA
+        </div>
+        <div class="topbar-screen" id="screenTitle">Calendario</div>
+      </div>
+      <div class="topbar-avatar">GT</div>
+    </div>
+
+    <!-- ════════════════════════ SCREEN: CALENDARIO ════════════════════════ -->
+    <div class="screen active" id="screen-cal">
+      <div style="display:flex;flex-direction:column;height:100%;position:relative;">
+
+        <!-- Month bar -->
+        <div class="cal-month-bar">
+          <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--fg)">Giugno 2026</div>
+          <div style="display:flex;gap:6px;">
+            <button class="cal-nav-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="cal-nav-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Day strip -->
+        <div class="day-strip" id="dayStrip"></div>
+
+        <!-- Agenda content area -->
+        <div class="screen-content" id="agendaContent"></div>
+
+        <!-- FAB -->
+        <button class="fab" onclick="showNewSlot()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+
+        <!-- Slot detail overlay (hidden by default) -->
+        <div class="slot-detail" id="slotDetail" style="display:none;">
+          <button class="detail-back" onclick="hideSlotDetail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Torna al calendario
+          </button>
+          <div id="slotDetailContent"></div>
+        </div>
+
+        <!-- New slot overlay -->
+        <div class="new-slot-overlay" id="newSlotOverlay" style="display:none;">
+          <button class="detail-back" onclick="hideNewSlot()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Annulla
+          </button>
+          <div class="section-hdr">Nuovo slot</div>
+          <div class="form-field">
+            <span class="form-label">Tutor</span>
+            <div class="form-value">
+              <select style="width:100%;border:none;background:transparent;font-size:13.5px;color:var(--fg);font-family:'Inter Tight',sans-serif;">
+                <option>Rossi Marco</option>
+                <option>Bianchi Lucia</option>
+                <option>Ferri Andrea</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="form-label">Corso</span>
+            <div class="form-value">
+              <select style="width:100%;border:none;background:transparent;font-size:13.5px;color:var(--fg);font-family:'Inter Tight',sans-serif;">
+                <option>Sviluppo Web Full-Stack</option>
+                <option>Data Science con Python</option>
+                <option>UX/UI Design</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px;margin-bottom:14px;">
+            <div>
+              <span class="form-label">Inizio</span>
+              <div class="form-value" style="font-family:'JetBrains Mono',monospace;">09:00</div>
+            </div>
+            <div>
+              <span class="form-label">Fine</span>
+              <div class="form-value" style="font-family:'JetBrains Mono',monospace;">13:00</div>
+            </div>
+          </div>
+          <div style="padding:0 14px;margin-top:8px;">
+            <button onclick="hideNewSlot()" style="width:100%;height:44px;border-radius:12px;border:none;background:var(--brand-navy);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter Tight',sans-serif;">
+              Aggiungi slot
+            </button>
+          </div>
+          <div class="desktop-only-note" style="margin-top:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            Su mobile è disponibile solo l'inserimento semplificato. Verifica coerenza, AI Import e trascinamento slot sono funzionalità desktop.
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /screen-cal -->
+
+    <!-- ════════════════════════ SCREEN: TUTOR ════════════════════════ -->
+    <div class="screen" id="screen-tutor">
+      <div style="display:flex;flex-direction:column;height:100%;">
+        <div class="search-bar">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Cerca tutor..." oninput="filterTutors(this.value)"/>
+        </div>
+        <div class="screen-content" id="tutorList"></div>
+
+        <!-- Tutor detail -->
+        <div class="slot-detail" id="tutorDetail" style="display:none;">
+          <button class="detail-back" onclick="hideTutorDetail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Tutor
+          </button>
+          <div id="tutorDetailContent"></div>
+        </div>
+      </div>
+    </div>
+    <!-- /screen-tutor -->
+
+    <!-- ════════════════════════ SCREEN: CORSI ════════════════════════ -->
+    <div class="screen" id="screen-corsi">
+      <div style="display:flex;flex-direction:column;height:100%;">
+        <div class="search-bar">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Cerca corso..." oninput="filterCorsi(this.value)"/>
+        </div>
+        <div class="chips-row" id="statusChips"></div>
+        <div class="screen-content" id="corsiList"></div>
+
+        <!-- Corso detail -->
+        <div class="slot-detail" id="corsoDetail" style="display:none;">
+          <button class="detail-back" onclick="hideCorsoDetail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Corsi
+          </button>
+          <div id="corsoDetailContent"></div>
+        </div>
+      </div>
+    </div>
+    <!-- /screen-corsi -->
+
+    <!-- ════════════════════════ SCREEN: INSIGHTS ════════════════════════ -->
+    <div class="screen" id="screen-insights">
+      <div class="screen-content">
+        <div class="period-selector" id="periodSelector"></div>
+
+        <div class="insight-kpi-grid" id="insightKpis"></div>
+
+        <div class="ranking-section">
+          <div class="ranking-header">
+            Top per ore
+            <div class="rank-toggle">
+              <button class="rank-btn active" id="rankTutorBtn" onclick="showRank('tutor')">Tutor</button>
+              <button class="rank-btn" id="rankCorsiBtn" onclick="showRank('corsi')">Corsi</button>
+            </div>
+          </div>
+          <div id="rankingList"></div>
+        </div>
+
+        <div class="desktop-only-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          Analisi completa, confronto periodi, albero avvisi/corsi e filtri avanzati sono disponibili nella versione desktop.
+        </div>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+    <!-- /screen-insights -->
+
+    <!-- BOTTOM TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-cal" onclick="switchTab('cal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+        </svg>
+        <span>Calendario</span>
+      </button>
+      <button class="tab-btn" id="tab-tutor" onclick="switchTab('tutor')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Tutor</span>
+      </button>
+      <button class="tab-btn" id="tab-corsi" onclick="switchTab('corsi')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <span>Corsi</span>
+      </button>
+      <button class="tab-btn" id="tab-insights" onclick="switchTab('insights')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span>Insights</span>
+      </button>
+    </div>
+
+  </div><!-- /phone-screen -->
+</div><!-- /phone-frame -->
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+/* ─── MOCK DATA ─── */
+const TUTORS = [
+  { id:'t1', nome:'Marco', cognome:'Rossi',    azienda:'EHT Srl',      color:'#2D6BE4', ore:142, slot:38, corsi:4 },
+  { id:'t2', nome:'Lucia', cognome:'Bianchi',  azienda:'EHT Srl',      color:'#E44D7B', ore:118, slot:31, corsi:3 },
+  { id:'t3', nome:'Andrea',cognome:'Ferri',    azienda:'EHT Srl',      color:'#2EAD6A', ore:96,  slot:24, corsi:2 },
+  { id:'t4', nome:'Sofia', cognome:'Martini',  azienda:'Harmonic Group',color:'#9B59B6', ore:74,  slot:20, corsi:3 },
+  { id:'t5', nome:'Luca',  cognome:'De Luca',  azienda:'EHT Srl',      color:'#E67E22', ore:62,  slot:16, corsi:2 },
+  { id:'t6', nome:'Elena', cognome:'Colombo',  azienda:'Harmonic Group',color:'#16A085', ore:44,  slot:12, corsi:1 },
+];
+
+const CORSI = [
+  { id:'c1', nome:'Sviluppo Web Full-Stack',     codice:'FE-2601', colore:'#2D6BE4', stato:'In corso',  dataInizio:'03/03/2026', dataFine:'30/06/2026', durataOre:120, oreLog:87,  avviso:'Avviso FSE 2024-A', tutor:'Rossi Marco'  },
+  { id:'c2', nome:'Data Science con Python',     codice:'DS-2603', colore:'#2EAD6A', stato:'In corso',  dataInizio:'10/03/2026', dataFine:'15/07/2026', durataOre:96,  oreLog:62,  avviso:'Avviso FSE 2024-A', tutor:'Bianchi Lucia' },
+  { id:'c3', nome:'UX/UI Design Avanzato',       codice:'UX-2602', colore:'#E44D7B', stato:'In corso',  dataInizio:'01/04/2026', dataFine:'30/09/2026', durataOre:80,  oreLog:28,  avviso:'Prog. Horizon 2026', tutor:'Ferri Andrea'  },
+  { id:'c4', nome:'Cybersecurity Fondamentale',  codice:'CS-2604', colore:'#E67E22', stato:'Sospeso',   dataInizio:'15/02/2026', dataFine:'30/05/2026', durataOre:64,  oreLog:44,  avviso:'Prog. Horizon 2026', tutor:'Martini Sofia'  },
+  { id:'c5', nome:'Cloud & DevOps',              codice:'CD-2605', colore:'#9B59B6', stato:'Concluso',  dataInizio:'01/01/2026', dataFine:'30/04/2026', durataOre:72,  oreLog:72,  avviso:'Avviso PNRR 2025',  tutor:'De Luca Luca'  },
+  { id:'c6', nome:'Project Management Agile',   codice:'PM-2606', colore:'#16A085', stato:'Concluso',  dataInizio:'01/02/2026', dataFine:'31/03/2026', durataOre:48,  oreLog:48,  avviso:'Avviso PNRR 2025',  tutor:'Colombo Elena' },
+];
+
+const SLOT_DATA = {
+  10: [
+    { id:'s1', start:9,  end:13, name:'Sviluppo Web Full-Stack', tutor:'Rossi Marco',  color:'#2D6BE4', verified:true  },
+    { id:'s2', start:14, end:17, name:'Data Science con Python', tutor:'Bianchi Lucia',color:'#2EAD6A', verified:false },
+    { id:'s3', start:9,  end:11, name:'UX/UI Design Avanzato',   tutor:'Ferri Andrea', color:'#E44D7B', verified:true  },
+  ],
+  11: [
+    { id:'s4', start:10, end:13.5, name:'Cloud & DevOps',              tutor:'De Luca Luca',color:'#9B59B6', verified:true  },
+    { id:'s5', start:14.5,end:17,  name:'Project Management Agile',    tutor:'Colombo Elena',color:'#16A085', verified:false },
+  ],
+  12: [],
+  13: [
+    { id:'s6', start:9, end:13, name:'Sviluppo Web Full-Stack', tutor:'Rossi Marco', color:'#2D6BE4', verified:true },
+    { id:'s7', start:15,end:18, name:'Cybersecurity Fond.',    tutor:'Martini Sofia',color:'#E67E22', verified:false },
+  ],
+  14: [
+    { id:'s8', start:9,  end:12, name:'Data Science con Python', tutor:'Bianchi Lucia',color:'#2EAD6A', verified:true },
+    { id:'s9', start:13, end:16, name:'UX/UI Design Avanzato',   tutor:'Ferri Andrea', color:'#E44D7B', verified:true },
+  ],
+  15: [
+    { id:'s10',start:10, end:13, name:'Cloud & DevOps', tutor:'De Luca Luca', color:'#9B59B6', verified:true },
+  ],
+  16: [],
+};
+
+const PERIODS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Anno'];
+let currentPeriod = 'Giu';
+let currentRank = 'tutor';
+let selectedDay = 10;
+let activeTutor = null;
+let activeCorso = null;
+let activeStatusFilter = 'Tutti';
+
+/* ─── UTILS ─── */
+function fmt(h) {
+  const hh=Math.floor(h), mm=Math.round((h-hh)*60);
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+}
+function initials(nome,cognome) {
+  return ((cognome||'').charAt(0)+(nome||'').charAt(0)).toUpperCase();
+}
+function statoBadgeTone(stato) {
+  if(stato==='In corso') return 'success';
+  if(stato==='Sospeso')  return 'warning';
+  if(stato==='Concluso') return 'accent';
+  return '';
+}
+
+/* ─── THEME ─── */
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+}
+
+/* ─── TAB NAVIGATION ─── */
+const SCREEN_TITLES = { cal:'Calendario', tutor:'Anagrafica Tutor', corsi:'Anagrafica Corsi', insights:'Insights' };
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('screenTitle').textContent = SCREEN_TITLES[tab];
+}
+
+/* ═══════════════════════════════════════════════
+   CALENDARIO
+═══════════════════════════════════════════════ */
+const DAYS = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const JUNE_DAYS = Array.from({length:30},(_,i)=>({num:i+1,dow:DAYS[(i+2)%7]}));
+
+function buildDayStrip() {
+  const strip = document.getElementById('dayStrip');
+  strip.innerHTML = JUNE_DAYS.map(d=>`
+    <button class="day-chip${d.num===selectedDay?' active':''}${d.num===10?' today':''}"
+            onclick="selectDay(${d.num})">
+      <span class="day-chip-dow">${d.dow}</span>
+      <span class="day-chip-num">${d.num}</span>
+    </button>
+  `).join('');
+}
+
+function selectDay(n) {
+  selectedDay = n;
+  buildDayStrip();
+  buildAgenda();
+  // scroll selected into view
+  setTimeout(()=>{
+    const active = document.querySelector('.day-chip.active');
+    if(active) active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  },50);
+}
+
+function buildAgenda() {
+  const content = document.getElementById('agendaContent');
+  const slots = SLOT_DATA[selectedDay] || [];
+  if(!slots.length) {
+    content.innerHTML = `
+      <div class="agenda-empty fade-in">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        Nessuno slot per questo giorno
+      </div>`;
+    return;
+  }
+  content.innerHTML = `<div class="agenda-list fade-in">${
+    slots.map(s=>`
+      <div class="agenda-slot" onclick="showSlotDetail('${s.id}')" style="cursor:pointer;">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:${s.color};"></div>
+        <div style="padding-left:4px;">
+          <div class="agenda-slot-time">${fmt(s.start)}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg-faint);">${fmt(s.end)}</div>
+        </div>
+        <div class="agenda-slot-body">
+          <div class="agenda-slot-name">${s.name}</div>
+          <div class="agenda-slot-meta">
+            <div class="avatar avatar-xs" style="background:${s.color}">${s.tutor.split(' ').map(w=>w[0]).join('')}</div>
+            ${s.tutor}
+            <span style="flex:1"></span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--fg-subtle);">${(s.end-s.start).toFixed(1)}h</span>
+            ${s.verified ? '<span class="badge" data-tone="success" style="font-size:9px;height:18px;">✓</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function showSlotDetail(id) {
+  const slot = Object.values(SLOT_DATA).flat().find(s=>s.id===id);
+  if(!slot) return;
+  const content = document.getElementById('slotDetailContent');
+  content.innerHTML = `
+    <div class="slot-detail-hero">
+      <div class="slot-detail-banner" style="background:${slot.color};">
+        <div class="slot-detail-course">${slot.name}</div>
+        <div class="slot-detail-time">${fmt(slot.start)} – ${fmt(slot.end)} · ${(slot.end-slot.start).toFixed(1)} ore</div>
+        ${slot.verified ? '<span class="badge" data-tone="navy" style="align-self:flex-start;">✓ Verificato</span>' : '<span class="badge" style="background:rgba(255,255,255,.2);color:#fff;border-color:transparent;align-self:flex-start;">Non verificato</span>'}
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Inizio</div>
+        <div class="kpi-value" style="font-size:20px;font-family:'JetBrains Mono',monospace;">${fmt(slot.start)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Fine</div>
+        <div class="kpi-value" style="font-size:20px;font-family:'JetBrains Mono',monospace;">${fmt(slot.end)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Durata</div>
+        <div class="kpi-value" style="font-size:20px;">${(slot.end-slot.start).toFixed(1)}</div>
+        <div class="kpi-sub">ore</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Data</div>
+        <div class="kpi-value" style="font-size:18px;">${selectedDay} giu</div>
+      </div>
+    </div>
+    <div class="section-hdr">Tutor</div>
+    <div style="display:flex;align-items:center;gap:12px;padding:0 14px 14px;">
+      <div class="avatar avatar-md" style="background:${slot.color};">${slot.tutor.split(' ').map(w=>w[0]).join('')}</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--fg);">${slot.tutor}</div>
+        <div style="font-size:11px;color:var(--fg-muted);">EHT Srl</div>
+      </div>
+    </div>
+    <div class="desktop-only-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      La modifica, eliminazione e verifica degli slot sono disponibili nella versione desktop.
+    </div>
+  `;
+  document.getElementById('slotDetail').style.display='block';
+}
+function hideSlotDetail() {
+  document.getElementById('slotDetail').style.display='none';
+}
+function showNewSlot() {
+  document.getElementById('newSlotOverlay').style.display='block';
+}
+function hideNewSlot() {
+  document.getElementById('newSlotOverlay').style.display='none';
+}
+
+/* ═══════════════════════════════════════════════
+   TUTOR
+═══════════════════════════════════════════════ */
+function buildTutorList(filter='') {
+  const f = filter.toLowerCase();
+  const list = document.getElementById('tutorList');
+  const tutors = f ? TUTORS.filter(t=>`${t.cognome} ${t.nome}`.toLowerCase().includes(f)||t.azienda.toLowerCase().includes(f)) : TUTORS;
+  if(!tutors.length) {
+    list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--fg-subtle);font-size:13px;">Nessun tutor trovato</div>`;
+    return;
+  }
+  list.innerHTML = `<div class="tutor-list">${
+    tutors.map(t=>`
+      <div class="tutor-row" onclick="showTutorDetail('${t.id}')">
+        <div class="avatar avatar-md" style="background:${t.color};">${initials(t.nome,t.cognome)}</div>
+        <div class="tutor-row-info">
+          <div class="tutor-row-name">${t.cognome} ${t.nome}</div>
+          <div class="tutor-row-sub">${t.azienda}</div>
+        </div>
+        <div class="tutor-row-ore">${t.ore}h</div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--fg-faint);flex-shrink:0;"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+function filterTutors(v) { buildTutorList(v); }
+
+function showTutorDetail(id) {
+  const t = TUTORS.find(x=>x.id===id);
+  if(!t) return;
+  const content = document.getElementById('tutorDetailContent');
+  content.innerHTML = `
+    <div style="padding:0 14px 14px;display:flex;align-items:center;gap:14px;">
+      <div class="avatar" style="width:52px;height:52px;font-size:18px;background:${t.color};">${initials(t.nome,t.cognome)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--fg);">${t.cognome} ${t.nome}</div>
+        <div style="font-size:12px;color:var(--fg-muted);margin-top:3px;">${t.azienda}</div>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Ore totali</div>
+        <div class="kpi-value">${t.ore}</div>
+        <div class="kpi-sub">ore lavorate</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Slot</div>
+        <div class="kpi-value">${t.slot}</div>
+        <div class="kpi-sub">sessioni</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Corsi</div>
+        <div class="kpi-value">${t.corsi}</div>
+        <div class="kpi-sub">attivi</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Media slot</div>
+        <div class="kpi-value">${(t.ore/t.slot).toFixed(1)}</div>
+        <div class="kpi-sub">ore/slot</div>
+      </div>
+    </div>
+    <div class="section-hdr">Dati anagrafici</div>
+    <div class="form-field">
+      <span class="form-label">Cognome e Nome</span>
+      <div class="form-value">${t.cognome} ${t.nome}</div>
+    </div>
+    <div class="form-field">
+      <span class="form-label">Azienda</span>
+      <div class="form-value">${t.azienda}</div>
+    </div>
+    <div class="form-field">
+      <span class="form-label">Colore</span>
+      <div class="form-value" style="display:flex;align-items:center;gap:8px;">
+        <div style="width:18px;height:18px;border-radius:4px;background:${t.color};flex-shrink:0;"></div>
+        <span style="font-family:'JetBrains Mono',monospace;">${t.color}</span>
+      </div>
+    </div>
+    <div class="desktop-only-note" style="margin-bottom:20px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Modifica anagrafica, storico completo degli slot e export disponibili nella versione desktop.
+    </div>
+  `;
+  document.getElementById('tutorDetail').style.display='block';
+}
+function hideTutorDetail() {
+  document.getElementById('tutorDetail').style.display='none';
+}
+
+/* ═══════════════════════════════════════════════
+   CORSI
+═══════════════════════════════════════════════ */
+const STATUS_FILTERS = ['Tutti','In corso','Sospeso','Concluso'];
+
+function buildStatusChips() {
+  const row = document.getElementById('statusChips');
+  row.innerHTML = STATUS_FILTERS.map(s=>`
+    <button class="chip${s===activeStatusFilter?' active':''}" onclick="setStatusFilter('${s}')">${s}</button>
+  `).join('');
+}
+
+function setStatusFilter(s) {
+  activeStatusFilter = s;
+  buildStatusChips();
+  buildCorsiList();
+}
+
+function buildCorsiList(filter='') {
+  const f = filter.toLowerCase();
+  const list = document.getElementById('corsiList');
+  let corsi = activeStatusFilter==='Tutti' ? CORSI : CORSI.filter(c=>c.stato===activeStatusFilter);
+  if(f) corsi = corsi.filter(c=>c.nome.toLowerCase().includes(f)||c.codice.toLowerCase().includes(f));
+  if(!corsi.length) {
+    list.innerHTML=`<div style="padding:40px;text-align:center;color:var(--fg-subtle);font-size:13px;">Nessun corso trovato</div>`;
+    return;
+  }
+  list.innerHTML = `<div class="corsi-list">${
+    corsi.map(c=>{
+      const pct = Math.round((c.oreLog/c.durataOre)*100);
+      return `
+        <div class="corso-row" onclick="showCorsoDetail('${c.id}')">
+          <div class="corso-color-bar" style="background:${c.colore};"></div>
+          <div class="corso-row-info">
+            <div class="corso-row-name">${c.nome}</div>
+            <div class="corso-row-code">${c.codice}</div>
+            <div class="corso-row-prog">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span class="badge" data-tone="${statoBadgeTone(c.stato)}">${c.stato}</span>
+                <span style="font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--fg-subtle);">${c.oreLog}/${c.durataOre}h</span>
+              </div>
+              <div class="pb-track">
+                <div class="pb-fill" style="width:${pct}%;background:${c.colore};"></div>
+              </div>
+            </div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--fg-faint);flex-shrink:0;margin-left:4px;"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      `;
+    }).join('')
+  }</div>`;
+}
+
+function filterCorsi(v) { buildCorsiList(v); }
+
+function showCorsoDetail(id) {
+  const c = CORSI.find(x=>x.id===id);
+  if(!c) return;
+  const pct = Math.round((c.oreLog/c.durataOre)*100);
+  const content = document.getElementById('corsoDetailContent');
+  content.innerHTML = `
+    <div class="corso-detail-banner" style="background:${c.colore};">
+      <div class="corso-detail-banner-name">${c.nome}</div>
+      <div class="corso-detail-banner-code">${c.codice}</div>
+      <span class="badge" data-tone="navy" style="align-self:flex-start;margin-top:6px;">${c.stato}</span>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Ore svolte</div>
+        <div class="kpi-value">${c.oreLog}</div>
+        <div class="kpi-sub">di ${c.durataOre} previste</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Completamento</div>
+        <div class="kpi-value">${pct}%</div>
+        <div class="kpi-sub" style="margin-top:6px;">
+          <div class="pb-track"><div class="pb-fill" style="width:${pct}%;background:${c.colore};"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Inizio</div>
+        <div class="kpi-value" style="font-size:14px;margin-top:4px;">${c.dataInizio}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Fine</div>
+        <div class="kpi-value" style="font-size:14px;margin-top:4px;">${c.dataFine}</div>
+      </div>
+    </div>
+    <div class="section-hdr">Dettagli</div>
+    <div class="form-field">
+      <span class="form-label">Tutor principale</span>
+      <div class="form-value">${c.tutor}</div>
+    </div>
+    <div class="form-field">
+      <span class="form-label">Avviso / Progetto</span>
+      <div class="form-value">${c.avviso}</div>
+    </div>
+    <div class="form-field">
+      <span class="form-label">Durata prevista</span>
+      <div class="form-value" style="font-family:'JetBrains Mono',monospace;">${c.durataOre} ore</div>
+    </div>
+    <div class="desktop-only-note" style="margin-bottom:20px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      Modifica corso, calendario sessioni e analisi completa disponibili nella versione desktop.
+    </div>
+  `;
+  document.getElementById('corsoDetail').style.display='block';
+}
+function hideCorsoDetail() {
+  document.getElementById('corsoDetail').style.display='none';
+}
+
+/* ═══════════════════════════════════════════════
+   INSIGHTS
+═══════════════════════════════════════════════ */
+const PERIOD_DATA = {
+  'Gen':{ ore:48,  slot:12, tutorAttivi:3, corsiAttivi:2 },
+  'Feb':{ ore:62,  slot:16, tutorAttivi:4, corsiAttivi:3 },
+  'Mar':{ ore:89,  slot:23, tutorAttivi:5, corsiAttivi:4 },
+  'Apr':{ ore:104, slot:27, tutorAttivi:5, corsiAttivi:5 },
+  'Mag':{ ore:118, slot:30, tutorAttivi:6, corsiAttivi:5 },
+  'Giu':{ ore:72,  slot:18, tutorAttivi:6, corsiAttivi:4 },
+  'Anno':{ ore:536, slot:138, tutorAttivi:6, corsiAttivi:6 },
+};
+
+function buildPeriodSelector() {
+  const sel = document.getElementById('periodSelector');
+  sel.innerHTML = PERIODS.map(p=>`
+    <button class="period-btn${p===currentPeriod?' active':''}" onclick="setPeriod('${p}')">${p}</button>
+  `).join('');
+}
+function setPeriod(p) {
+  currentPeriod=p; buildPeriodSelector(); buildInsightKpis();
+}
+
+function buildInsightKpis() {
+  const d = PERIOD_DATA[currentPeriod];
+  const kpis = [
+    { icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`, val:d.ore, label:'Ore totali', unit:'h' },
+    { icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>`, val:d.slot, label:'Slot', unit:'' },
+    { icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`, val:d.tutorAttivi, label:'Tutor attivi', unit:'' },
+    { icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`, val:d.corsiAttivi, label:'Corsi attivi', unit:'' },
+  ];
+  document.getElementById('insightKpis').innerHTML = kpis.map(k=>`
+    <div class="insight-kpi">
+      <div class="insight-kpi-icon">${k.icon}</div>
+      <div class="insight-kpi-val">${k.val}${k.unit}</div>
+      <div class="insight-kpi-label">${k.label}</div>
+    </div>
+  `).join('');
+}
+
+function showRank(type) {
+  currentRank=type;
+  document.getElementById('rankTutorBtn').className='rank-btn'+(type==='tutor'?' active':'');
+  document.getElementById('rankCorsiBtn').className='rank-btn'+(type==='corsi'?' active':'');
+  buildRanking();
+}
+
+function buildRanking() {
+  const list = document.getElementById('rankingList');
+  const items = currentRank==='tutor'
+    ? [...TUTORS].sort((a,b)=>b.ore-a.ore).map(t=>({ name:`${t.cognome} ${t.nome}`, ore:t.ore, color:t.color }))
+    : [...CORSI].sort((a,b)=>b.oreLog-a.oreLog).map(c=>({ name:c.nome, ore:c.oreLog, color:c.colore }));
+  const max = items[0]?.ore||1;
+  list.innerHTML = items.map((item,i)=>`
+    <div class="rank-row">
+      <div class="rank-pos">${i+1}</div>
+      <div class="rank-bar-wrap">
+        <div class="rank-name">${item.name}</div>
+        <div class="rank-bar-track">
+          <div class="rank-bar-fill" style="width:${Math.round(item.ore/max*100)}%;background:${item.color};"></div>
+        </div>
+      </div>
+      <div class="rank-ore">${item.ore}h</div>
+    </div>
+  `).join('');
+}
+
+/* ─── INIT ─── */
+buildDayStrip();
+buildAgenda();
+buildTutorList();
+buildStatusChips();
+buildCorsiList();
+buildPeriodSelector();
+buildInsightKpis();
+buildRanking();
+</script>
+</body>
+</html>
