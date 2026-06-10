@@ -123,8 +123,8 @@ function MonthView({month,tutByDay,avByDay,onDayClick}){
 }
 
 // ── ZOOM BAR ──────────────────────────────────────────────────────────────
-function ZoomBar({zoomIdx,onZoomChange,onHelpOpen}){
-  return(<div className="zoom-bar">
+function ZoomBar({zoomIdx,onZoomChange,onHelpOpen,leftOffset}){
+  return(<div className="zoom-bar" style={{right:"auto",left:leftOffset??16}}>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.max(0,zoomIdx-1))} disabled={zoomIdx===0}>−</button>
     <span style={{fontSize:11,color:"var(--fg-muted)",minWidth:36,textAlign:"center"}}>{Math.round(ZOOM_LEVELS[zoomIdx]*100)}%</span>
     <button className="zoom-btn" onClick={()=>onZoomChange(Math.min(ZOOM_LEVELS.length-1,zoomIdx+1))}>+</button>
