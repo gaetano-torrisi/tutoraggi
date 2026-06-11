@@ -385,8 +385,8 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
   const[selPeriod,setSelPeriod]=useState({mode:"single",monthKey:currentMonthKey,year:MONTHS.find(m=>m.key===currentMonthKey)?.year||2026});
   const[selAvFilter,setSelAvFilter]=useState("");
   const[selTutFilter,setSelTutFilter]=useState("");
-  const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});
-  const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});
+  const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});const[expandedTutSlots,setExpandedTutSlots]=useState({});
+  const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});const[expandedAvLezioni,setExpandedAvLezioni]=useState({});
   const[selProgettoFilter,setSelProgettoFilter]=useState("");
   const[expandedProg,setExpandedProg]=useState({});const[expandedProgCo,setExpandedProgCo]=useState({});
   const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
@@ -427,6 +427,8 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
   function toggleTutAv(key){setExpandedTutAv(p=>({...p,[key]:!p[key]}))}
   function toggleAv(id){setExpandedAv(p=>({...p,[id]:!p[id]}))}
   function toggleAvTut(key){setExpandedAvTut(p=>({...p,[key]:!p[key]}))}
+  function toggleAvLezioni(id){setExpandedAvLezioni(p=>({...p,[id]:!p[id]}))}
+  function toggleTutSlots(id){setExpandedTutSlots(p=>({...p,[id]:!p[id]}))}
   function toggleProg(id){setExpandedProg(p=>({...p,[id]:!p[id]}))}
   function toggleProgCo(key){setExpandedProgCo(p=>({...p,[key]:!p[key]}))}
   return(<div className="drawer-overlay">
@@ -500,6 +502,26 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
                   </div>}
                 </div>);
               })}
+              {(()=>{const allSlots=mks.flatMap(mk=>(tutEvents[t.id]?.[mk]||[]).map(sl=>({...sl,_mk:mk}))).sort((a,b)=>{const ai=mks.indexOf(a._mk),bi=mks.indexOf(b._mk);return ai!==bi?ai-bi:a.day-b.day||a.start-b.start;});if(!allSlots.length)return null;const expS=expandedTutSlots[t.id];
+                return(<div style={{marginTop:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                  <button onClick={()=>toggleTutSlots(t.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <Icon name="calendar" size={12} color="var(--fg-subtle)"/>
+                    <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>Slot pianificati</span>
+                    <span style={{fontSize:11,color:"var(--fg-subtle)",marginRight:4}}>{allSlots.length}</span>
+                    <Icon name={expS?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                  </button>
+                  {expS&&<div style={{borderTop:"1px solid var(--divider)"}}>
+                    {allSlots.map((sl,i)=><button key={sl.id||i} onClick={()=>onNavigate&&onNavigate(sl._mk,sl.day)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"6px 12px",background:"none",border:"none",borderBottom:"1px solid var(--divider)",cursor:"pointer",textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-sunken)"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,color:"var(--fg-muted)",minWidth:70,flexShrink:0}}>{fmtDayMonth(sl.day,sl._mk)}</span>
+                      <span style={{width:8,height:8,borderRadius:2,background:(anagraficaCorsi.find(a=>a.nome===sl.name)?.colore)||"var(--accent)",flexShrink:0}}/>
+                      <span style={{flex:1,fontSize:11,color:"var(--fg)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{sl.name}</span>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:10,color:"var(--fg-muted)",flexShrink:0}}>{fmt(sl.start)}–{fmt(sl.end)}</span>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:10,color:"var(--fg-subtle)",minWidth:36,textAlign:"right",flexShrink:0}}>{fmtOreMin(sl.ore||0)}</span>
+                      {sl.verified&&<Icon name="check" size={10} color="var(--success)"/>}
+                    </button>)}
+                  </div>}
+                </div>);
+              })()}
             </div>}
           </div>);
         })}
@@ -539,6 +561,24 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
                   </div>}
                 </div>);
               })}
+              {(()=>{const events=(corsiById[ana.id]?.events||[]).filter(e=>mks.includes(e.month)).sort((a,b)=>{const ai=mks.indexOf(a.month),bi=mks.indexOf(b.month);return ai!==bi?ai-bi:a.day-b.day||a.start-b.start;});if(!events.length)return null;const expL=expandedAvLezioni[ana.id];
+                return(<div style={{marginTop:6,border:"1px solid var(--border)",borderRadius:"var(--radius)",overflow:"hidden"}}>
+                  <button onClick={()=>toggleAvLezioni(ana.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:"none",border:"none",cursor:"pointer",textAlign:"left"}}>
+                    <Icon name="calendar" size={12} color="var(--fg-subtle)"/>
+                    <span style={{flex:1,fontSize:12,fontWeight:600,color:"var(--fg)"}}>Lezioni pianificate</span>
+                    <span style={{fontSize:11,color:"var(--fg-subtle)",marginRight:4}}>{events.length}</span>
+                    <Icon name={expL?"chevUp":"chevDown"} size={12} color="var(--fg-subtle)"/>
+                  </button>
+                  {expL&&<div style={{borderTop:"1px solid var(--divider)"}}>
+                    {events.map((ev,i)=><button key={ev.id||i} onClick={()=>onNavigate&&onNavigate(ev.month,ev.day)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"6px 12px",background:"none",border:"none",borderBottom:"1px solid var(--divider)",cursor:"pointer",textAlign:"left"}} onMouseEnter={e=>e.currentTarget.style.background="var(--bg-sunken)"} onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,color:"var(--fg-muted)",minWidth:70,flexShrink:0}}>{fmtDayMonth(ev.day,ev.month)}</span>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:10,color:"var(--fg-muted)",flex:1}}>{fmt(ev.start)}–{fmt(ev.end)}</span>
+                      <span style={{fontFamily:'"JetBrains Mono",monospace',fontSize:10,color:"var(--fg-subtle)",minWidth:36,textAlign:"right",flexShrink:0}}>{fmtOreMin(ev.ore||0)}</span>
+                      {ev.verified&&<Icon name="check" size={10} color="var(--success)"/>}
+                    </button>)}
+                  </div>}
+                </div>);
+              })()}
             </div>}
           </div>);
         })}
