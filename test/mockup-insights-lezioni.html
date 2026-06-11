@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TutorIA — Mockup Insights Corsi · Elenco lezioni</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-navy:#1A1F4D;
+  --accent:#EC7A26;
+  --accent-strong:#d2691a;
+  --accent-soft:rgba(236,122,38,.12);
+  --bg:#FAF8F4;
+  --bg-elev:#FFFFFF;
+  --bg-sunken:#F4F1EB;
+  --bg-hover:#EFEBE3;
+  --fg:#1C1B22;
+  --fg-muted:#5C5A66;
+  --fg-subtle:#8E8B98;
+  --fg-faint:#B5B2BD;
+  --border:#E7E2D9;
+  --divider:#EFEBE2;
+  --success:#2F8F5B;
+  --success-soft:rgba(47,143,91,.12);
+  --warning:#C8881E;
+  --danger:#C0392B;
+  --radius:8px;
+  --radius-md:11px;
+  --radius-lg:16px;
+  --shadow-md:0 4px 16px rgba(26,31,77,.08);
+  --shadow-lg:0 12px 40px rgba(26,31,77,.16);
+}
+[data-theme="dark"]{
+  --brand-navy:#0F1232;
+  --bg:#14141B;
+  --bg-elev:#1C1C26;
+  --bg-sunken:#22222E;
+  --bg-hover:#2A2A38;
+  --fg:#F0EEF4;
+  --fg-muted:#A6A3B2;
+  --fg-subtle:#7D7A8A;
+  --fg-faint:#55525F;
+  --border:#2E2E3C;
+  --divider:#26262F;
+  --success-soft:rgba(47,143,91,.2);
+  --accent-soft:rgba(236,122,38,.18);
+  --shadow-md:0 4px 16px rgba(0,0,0,.3);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:"Inter Tight",sans-serif;
+  background:
+    radial-gradient(1200px 700px at 85% -10%, rgba(236,122,38,.06), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(26,31,77,.06), transparent 55%),
+    var(--bg);
+  color:var(--fg);
+  min-height:100vh;
+  padding:32px 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+  transition:background .3s;
+}
+.page-head{width:100%;max-width:880px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;}
+.page-head h1{font-family:"Fraunces",serif;font-weight:600;font-size:24px;color:var(--brand-navy);letter-spacing:-.01em;}
+[data-theme="dark"] .page-head h1{color:var(--fg);}
+.page-head h1 .ia{color:var(--accent);}
+.page-head p{font-size:12.5px;color:var(--fg-subtle);margin-top:3px;max-width:520px;line-height:1.5;}
+.theme-btn{font-family:"Inter Tight";font-size:12px;font-weight:600;padding:8px 14px;border-radius:100px;border:1px solid var(--border);background:var(--bg-elev);color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;flex-shrink:0;}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── Drawer mock ── */
+.drawer{
+  width:100%;max-width:880px;
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  max-height:86vh;
+}
+.drawer-top{
+  padding:18px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.drawer-top .title{flex:1;}
+.drawer-top .title .t{font-family:"Fraunces",serif;font-weight:600;font-size:20px;color:var(--fg);letter-spacing:-.01em;}
+.drawer-top .title .s{font-size:11.5px;color:var(--fg-subtle);margin-top:1px;}
+.x-btn{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg-sunken);color:var(--fg-muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.x-btn:hover{background:var(--bg-hover);color:var(--fg);}
+
+.drawer-tabs{padding:10px 24px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.tab-strip{display:inline-flex;background:var(--bg-sunken);border-radius:100px;padding:3px;gap:2px;}
+.tab-strip-btn{font-family:"Inter Tight";font-size:12px;font-weight:600;padding:6px 14px;border-radius:100px;border:none;background:transparent;color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
+.tab-strip-btn.active{background:var(--bg-elev);color:var(--fg);box-shadow:var(--shadow-md);}
+.tab-strip-btn .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;}
+.period{margin-left:auto;font-size:12px;font-weight:600;color:var(--fg-muted);background:var(--bg-sunken);border:1px solid var(--border);border-radius:100px;padding:6px 14px;}
+
+/* ── Corso header card ── */
+.scroll{flex:1;overflow-y:auto;padding:18px 24px;background:var(--bg);}
+.corso-card{
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius-md);
+  overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow-md);
+}
+.corso-head{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;position:relative;}
+.corso-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--co-color);}
+.corso-avatar{
+  width:46px;height:46px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--co-color),color-mix(in srgb,var(--co-color) 70%, #000));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-family:"Fraunces",serif;font-weight:600;font-size:19px;
+  box-shadow:0 4px 12px color-mix(in srgb,var(--co-color) 40%, transparent);
+}
+.corso-info{flex:1;min-width:0;}
+.corso-info .name{font-family:"Fraunces",serif;font-weight:600;font-size:17px;color:var(--fg);line-height:1.25;letter-spacing:-.01em;}
+.corso-meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap;}
+.badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:100px;letter-spacing:.02em;}
+.badge.code{font-family:"JetBrains Mono",monospace;background:var(--bg-sunken);color:var(--fg-muted);border:1px solid var(--border);}
+.badge.stato{background:var(--success-soft);color:var(--success);}
+.badge.info{background:var(--accent-soft);color:var(--accent-strong);}
+.corso-kpis{display:flex;gap:22px;flex-shrink:0;padding-top:2px;}
+.kpi{text-align:right;}
+.kpi .v{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:18px;color:var(--fg);line-height:1;}
+.kpi .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-subtle);margin-top:5px;}
+
+.progress-wrap{padding:0 20px 18px;}
+.progress-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.progress-row .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);}
+.progress-row .val{font-family:"JetBrains Mono",monospace;font-size:11.5px;font-weight:700;color:var(--fg);}
+.track{height:7px;border-radius:100px;background:var(--bg-sunken);overflow:hidden;}
+.fill{height:100%;border-radius:100px;background:linear-gradient(90deg,color-mix(in srgb,var(--co-color) 65%, transparent),var(--co-color));}
+
+/* ── Section label with toggle ── */
+.lessons-bar{display:flex;align-items:center;gap:10px;margin:4px 2px 12px;}
+.lessons-bar .lab{font-family:"Fraunces",serif;font-weight:600;font-size:15px;color:var(--fg);letter-spacing:-.01em;}
+.lessons-bar .count{font-size:11px;font-weight:600;color:var(--fg-subtle);background:var(--bg-sunken);border-radius:100px;padding:3px 10px;}
+.lessons-bar .grow{flex:1;}
+.mini-toggle{display:inline-flex;background:var(--bg-sunken);border-radius:100px;padding:3px;gap:2px;}
+.mini-toggle button{font-family:"Inter Tight";font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;border:none;background:transparent;color:var(--fg-muted);cursor:pointer;transition:all .15s;}
+.mini-toggle button.active{background:var(--bg-elev);color:var(--accent);box-shadow:var(--shadow-md);}
+
+/* ── Lesson timeline ── */
+.month-group{margin-bottom:18px;}
+.month-label{
+  position:sticky;top:-18px;z-index:2;
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;margin-bottom:4px;
+  background:linear-gradient(var(--bg) 70%, transparent);
+}
+.month-label .m{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent-strong);}
+.month-label .line{flex:1;height:1px;background:var(--divider);}
+.month-label .sum{font-size:11px;font-weight:600;color:var(--fg-subtle);font-family:"JetBrains Mono",monospace;}
+
+.lesson{
+  display:flex;align-items:stretch;gap:0;
+  position:relative;
+  padding-left:4px;
+}
+.rail{width:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;position:relative;}
+.rail::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--divider);transform:translateX(-50%);}
+.lesson:first-child .rail::before{top:22px;}
+.lesson:last-child .rail::before{bottom:calc(100% - 22px);}
+.date-chip{
+  position:relative;z-index:1;margin-top:8px;
+  width:44px;height:44px;border-radius:11px;
+  background:var(--bg-elev);border:1.5px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.date-chip .d{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:16px;color:var(--fg);line-height:1;}
+.date-chip .w{font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-subtle);margin-top:2px;}
+.lesson.weekend .date-chip{border-color:color-mix(in srgb,var(--accent) 30%, var(--border));}
+.lesson.weekend .date-chip .w{color:var(--accent-strong);}
+
+.lesson-body{
+  flex:1;margin:6px 0;padding:11px 14px;
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;transition:all .15s;
+}
+.lesson-body:hover{border-color:var(--co-color);box-shadow:var(--shadow-md);transform:translateX(2px);}
+.time-block{display:flex;flex-direction:column;gap:2px;min-width:96px;}
+.time-block .range{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:13.5px;color:var(--fg);}
+.time-block .dur{font-size:10.5px;color:var(--fg-subtle);}
+.lesson-tutor{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
+.t-avatar{width:28px;height:28px;border-radius:100px;flex-shrink:0;color:#fff;font-weight:700;font-size:10.5px;display:flex;align-items:center;justify-content:center;}
+.t-name{font-size:13px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-role{font-size:10.5px;color:var(--fg-subtle);}
+.sessione-corso{display:flex;align-items:center;gap:8px;flex:1;color:var(--fg-muted);font-size:12.5px;font-style:italic;}
+.sessione-corso .ico{width:28px;height:28px;border-radius:8px;background:var(--bg-sunken);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.verify{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:100px;flex-shrink:0;}
+.verify.ok{background:var(--success-soft);color:var(--success);}
+.verify.no{background:var(--bg-sunken);color:var(--fg-faint);}
+.verify svg{width:12px;height:12px;}
+
+.empty-note{font-size:12px;color:var(--fg-faint);font-style:italic;padding:10px 0 0 62px;}
+
+/* footer summary */
+.foot-sum{
+  margin-top:6px;display:flex;gap:14px;flex-wrap:wrap;
+  padding:14px 18px;border-radius:var(--radius-md);
+  background:var(--bg-sunken);border:1px solid var(--border);
+}
+.foot-sum .fs{display:flex;flex-direction:column;gap:3px;}
+.foot-sum .fs .v{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:16px;color:var(--fg);}
+.foot-sum .fs .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-subtle);}
+.foot-sum .sep{width:1px;background:var(--border);}
+
+.legend{width:100%;max-width:880px;font-size:11.5px;color:var(--fg-subtle);line-height:1.6;padding:0 4px;}
+.legend b{color:var(--fg-muted);font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div>
+    <h1>Tutor<span class="ia">IA</span> · Insights Corsi</h1>
+    <p>Proposta — elenco completo delle lezioni pianificate a calendario, per ciascun corso: data, orario, durata, tutor assegnato e stato di verifica.</p>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()"><span id="theme-ico">🌙</span> <span id="theme-lbl">Scuro</span></button>
+</div>
+
+<div class="drawer">
+  <div class="drawer-top">
+    <div class="title">
+      <div class="t">Insights</div>
+      <div class="s">Maggio 2026 · vista per corso</div>
+    </div>
+    <button class="x-btn">✕</button>
+  </div>
+
+  <div class="drawer-tabs">
+    <div class="tab-strip">
+      <button class="tab-strip-btn"><span class="dot"></span>Per tutor</button>
+      <button class="tab-strip-btn active"><span class="dot"></span>Per corso</button>
+      <button class="tab-strip-btn"><span class="dot"></span>Per avviso/progetto</button>
+    </div>
+    <span class="period">Maggio 2026</span>
+  </div>
+
+  <div class="scroll">
+
+    <!-- CORSO CARD -->
+    <div class="corso-card" style="--co-color:#3E6FB8;">
+      <div class="corso-head">
+        <div class="corso-avatar">Mi</div>
+        <div class="corso-info">
+          <div class="name">Mediatore interculturale</div>
+          <div class="corso-meta">
+            <span class="badge code">DDG 7618/2026</span>
+            <span class="badge stato">In corso</span>
+            <span class="badge info">534h da bando</span>
+          </div>
+        </div>
+        <div class="corso-kpis">
+          <div class="kpi"><div class="v">7</div><div class="l">Lezioni</div></div>
+          <div class="kpi"><div class="v">28h</div><div class="l">Ore periodo</div></div>
+          <div class="kpi"><div class="v">3</div><div class="l">Tutor</div></div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-row"><span class="lbl">Avanzamento ore corso</span><span class="val">186h / 534h · 35%</span></div>
+        <div class="track"><div class="fill" style="width:35%"></div></div>
+      </div>
+    </div>
+
+    <!-- LESSONS -->
+    <div class="lessons-bar">
+      <span class="lab">Lezioni pianificate</span>
+      <span class="count">7 in Maggio</span>
+      <span class="grow"></span>
+      <div class="mini-toggle">
+        <button class="active">Timeline</button>
+        <button>Per tutor</button>
+      </div>
+    </div>
+
+    <div class="month-group">
+      <div class="month-label"><span class="m">Maggio 2026</span><span class="line"></span><span class="sum">7 lezioni · 28h</span></div>
+
+      <!-- lesson 1 -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">6</span><span class="w">Mer</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">09:00–13:00</span><span class="dur">4h · mattina</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#EC7A26">RM</div><div><div class="t-name">Mario Rossi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verificata</span>
+        </div>
+      </div>
+
+      <!-- lesson 2 -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">13</span><span class="w">Mer</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">09:00–13:00</span><span class="dur">4h · mattina</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#EC7A26">RM</div><div><div class="t-name">Mario Rossi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verificata</span>
+        </div>
+      </div>
+
+      <!-- lesson 3 — sessione corso senza tutor -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">14</span><span class="w">Gio</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">14:00–18:00</span><span class="dur">4h · pomeriggio</span></div>
+          <div class="sessione-corso"><span class="ico">📚</span>Sessione corso · nessun tutor assegnato</div>
+          <span class="verify no">Da verificare</span>
+        </div>
+      </div>
+
+      <!-- lesson 4 -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">20</span><span class="w">Mer</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">09:00–14:00</span><span class="dur">5h · mattina</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#2F8F5B">BL</div><div><div class="t-name">Laura Bianchi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify no">Da verificare</span>
+        </div>
+      </div>
+
+      <!-- lesson 5 -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">21</span><span class="w">Gio</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">14:00–18:00</span><span class="dur">4h · pomeriggio</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#2F8F5B">BL</div><div><div class="t-name">Laura Bianchi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verificata</span>
+        </div>
+      </div>
+
+      <!-- lesson 6 — sabato -->
+      <div class="lesson weekend">
+        <div class="rail"><div class="date-chip"><span class="d">23</span><span class="w">Sab</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">09:00–13:00</span><span class="dur">4h · mattina</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#9B59B6">VG</div><div><div class="t-name">Giuseppe Verdi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verificata</span>
+        </div>
+      </div>
+
+      <!-- lesson 7 -->
+      <div class="lesson">
+        <div class="rail"><div class="date-chip"><span class="d">27</span><span class="w">Mer</span></div></div>
+        <div class="lesson-body">
+          <div class="time-block"><span class="range">09:00–12:00</span><span class="dur">3h · mattina</span></div>
+          <div class="lesson-tutor"><div class="t-avatar" style="background:#EC7A26">RM</div><div><div class="t-name">Mario Rossi</div><div class="t-role">Tutoraggio</div></div></div>
+          <span class="verify no">Da verificare</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot-sum">
+      <div class="fs"><span class="v">7</span><span class="l">Lezioni totali</span></div>
+      <div class="sep"></div>
+      <div class="fs"><span class="v">28h</span><span class="l">Ore pianificate</span></div>
+      <div class="sep"></div>
+      <div class="fs"><span class="v">4</span><span class="l">Verificate</span></div>
+      <div class="sep"></div>
+      <div class="fs"><span class="v">3</span><span class="l">Tutor coinvolti</span></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="legend">
+  <p><b>Come leggerla:</b> ogni lezione è una riga sulla timeline del mese. Il <b>rail a sinistra</b> con giorno + giorno-settimana evidenzia i fine settimana (bordo arancio). A destra: <b>orario</b>, <b>durata</b>, <b>tutor assegnato</b> (o "Sessione corso" se senza tutor), e <b>stato di verifica</b>. Cliccando una riga si va al calendario sulla data. Il toggle <b>Timeline / Per tutor</b> alterna l'elenco cronologico al raggruppamento per tutor (vista attuale).</p>
+</div>
+
+<script>
+function toggleTheme(){
+  const h=document.documentElement;
+  const dark=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('theme-ico').textContent=dark?'🌙':'☀️';
+  document.getElementById('theme-lbl').textContent=dark?'Scuro':'Chiaro';
+}
+// mini-toggle demo
+document.querySelectorAll('.mini-toggle button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.mini-toggle button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+}));
+</script>
+</body>
+</html>
