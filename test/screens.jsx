@@ -386,6 +386,113 @@ function AnaAvvisiScreen({avvisi=[],onSaveAvviso,canEdit}){
   </div>);
 }
 
+// ── EXPORT INSIGHTS MODAL ────────────────────────────────────────────────────
+function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,currentMonthKey,onClose}){
+  const[selIds,setSelIds]=useState(anagraficaCorsi.map(a=>a.id));
+  const[period,setPeriod]=useState({mode:"single",monthKey:currentMonthKey,year:MONTHS.find(m=>m.key===currentMonthKey)?.year||2026});
+  const[generating,setGenerating]=useState(false);
+  const[err,setErr]=useState(null);
+  function toggleId(id){setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);}
+  function getMks(){if(period.mode==="single")return[period.monthKey];if(period.mode==="year")return MONTHS.filter(m=>m.year===period.year).map(m=>m.key);if(period.mode==="range"){const si=MONTHS.findIndex(m=>m.key===period.startKey),ei=MONTHS.findIndex(m=>m.key===period.endKey);if(si<0||ei<0)return[currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
+  function periodLabel(){if(period.mode==="year")return`Anno ${period.year}`;if(period.mode==="range"){const s=MONTHS.find(m=>m.key===period.startKey),e=MONTHS.find(m=>m.key===period.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} ${s.year} – ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"Range";}return MONTHS.find(m=>m.key===period.monthKey)?.label||period.monthKey;}
+  async function buildDocx(mks){
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ShadingType,BorderStyle}=window.docx;
+    const GIORNI=["Domenica","Luned\xEC","Marted\xEC","Mercoled\xEC","Gioved\xEC","Venerd\xEC","Sabato"];
+    const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+    function fmt2(d){const h=Math.floor(d),m=Math.round((d%1)*60);return`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;}
+    const BRD={style:BorderStyle.SINGLE,size:4,color:"CCCCCC"};
+    const tblBorders={top:BRD,bottom:BRD,left:BRD,right:BRD,insideH:BRD,insideV:BRD};
+    const COL=[1800,2800,2000,900,700];
+    const body=[];
+    body.push(new Paragraph({children:[new TextRun({text:"Calendario Lezioni",bold:true,size:44,color:"1A1F4D"})],spacing:{after:120}}));
+    body.push(new Paragraph({children:[new TextRun({text:`Periodo: ${periodLabel()}`,size:22,color:"444444"})],spacing:{after:80}}));
+    body.push(new Paragraph({children:[new TextRun({text:`Generato il ${new Date().toLocaleDateString("it-IT")}`,size:18,color:"888888",italics:true})],spacing:{after:480}}));
+    let first=true;
+    for(const ana of [...anagraficaCorsi].filter(a=>selIds.includes(a.id)).sort((a,b)=>a.nome.localeCompare(b.nome))){
+      const evs=(corsiById[ana.id]?.events||[]).filter(e=>mks.includes(e.month)).sort((a,b)=>{const ai=mks.indexOf(a.month),bi=mks.indexOf(b.month);return ai!==bi?ai-bi:a.day-b.day||a.start-b.start;});
+      if(!evs.length)continue;
+      if(!first)body.push(new Paragraph({text:"",spacing:{before:560,after:0}}));
+      first=false;
+      const av=avvisi.find(x=>x.id===ana.avvisoId);
+      const totOre=evs.reduce((s,e)=>s+(e.ore||(e.end-e.start)||0),0);
+      const hasUnver=evs.some(e=>!e.verified);
+      if(av)body.push(new Paragraph({children:[new TextRun({text:av.nome,size:18,color:"888888"})],spacing:{after:40}}));
+      body.push(new Paragraph({children:[new TextRun({text:ana.nome,bold:true,size:32,color:"1A1F4D"})],spacing:{after:40}}));
+      if(ana.codice)body.push(new Paragraph({children:[new TextRun({text:`Codice: ${ana.codice}`,size:18,color:"888888"})],spacing:{after:40}}));
+      body.push(new Paragraph({children:[new TextRun({text:`${evs.length} sessioni · ${fmtOreMin(totOre)} · ${periodLabel()}`,size:18,color:"555555"})],spacing:{after:200}}));
+      const hdrRow=new TableRow({tableHeader:true,children:["Giorno","Data","Orario","Ore","Verif."].map((h,i)=>new TableCell({width:{size:COL[i],type:WidthType.DXA},shading:{fill:"1A1F4D",type:ShadingType.CLEAR,color:"auto"},children:[new Paragraph({children:[new TextRun({text:h,bold:true,color:"FFFFFF",size:18})],alignment:AlignmentType.LEFT})]}))});
+      const dataRows=evs.map(ev=>{
+        const mObj=MONTHS.find(m=>m.key===ev.month);
+        const dt=new Date(mObj.year,mObj.month,ev.day);
+        const row=[
+          {t:GIORNI[dt.getDay()],i:0,c:"111111"},
+          {t:`${ev.day} ${MESI[mObj.month]} ${mObj.year}`,i:1,c:"111111"},
+          {t:`${fmt2(ev.start)} – ${fmt2(ev.end)}`,i:2,c:"111111"},
+          {t:fmtOreMin(ev.ore||(ev.end-ev.start)||0),i:3,c:"111111"},
+          {t:ev.verified?"✓":"*",i:4,c:ev.verified?"1A7A1A":"CC4400"},
+        ];
+        return new TableRow({children:row.map(({t,i,c})=>new TableCell({width:{size:COL[i],type:WidthType.DXA},children:[new Paragraph({children:[new TextRun({text:t,size:18,color:c})]})]}))});
+      });
+      body.push(new Table({rows:[hdrRow,...dataRows],width:{size:8200,type:WidthType.DXA},borders:tblBorders}));
+      body.push(new Paragraph({children:[new TextRun({text:`Totale: ${fmtOreMin(totOre)}`,bold:true,size:20})],spacing:{before:120,after:40}}));
+      if(hasUnver)body.push(new Paragraph({children:[new TextRun({text:"* Sessioni non ancora verificate",size:16,color:"888888",italics:true})],spacing:{after:40}}));
+    }
+    return Packer.toBlob(new Document({sections:[{properties:{page:{margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:body}]}));
+  }
+  async function doExport(){
+    if(!window.docx){setErr("Libreria Word non disponibile — ricarica la pagina.");return;}
+    if(!selIds.length){setErr("Seleziona almeno un corso.");return;}
+    setErr(null);setGenerating(true);
+    try{
+      const blob=await buildDocx(getMks());
+      const lbl=periodLabel().replace(/[\s\/]+/g,"_");
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Calendario_Lezioni_${lbl}.docx`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+      onClose();
+    }catch(e){setErr(`Errore generazione: ${e.message}`);}
+    setGenerating(false);
+  }
+  const curMks=getMks();
+  return(
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="add-modal-box" style={{width:520,maxHeight:"85vh",display:"flex",flexDirection:"column"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexShrink:0}}>
+          <Icon name="download" size={16} color="var(--accent)"/>
+          <span style={{fontWeight:700,fontSize:15,color:"var(--fg)"}}>Esporta calendario lezioni</span>
+          <button onClick={onClose} className="btn" data-variant="ghost" data-size="icon-sm" style={{marginLeft:"auto"}}><Icon name="x" size={14}/></button>
+        </div>
+        <label className="label" style={{marginBottom:6,display:"block",flexShrink:0}}>Periodo</label>
+        <div style={{marginBottom:16,flexShrink:0}}><MonthRangePicker value={period} onChange={setPeriod} months={allMonthKeys}/></div>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,flexShrink:0}}>
+          <label className="label" style={{margin:0}}>Corsi da includere</label>
+          <button onClick={()=>setSelIds(anagraficaCorsi.map(a=>a.id))} style={{fontSize:11,color:"var(--accent)",background:"none",border:"none",cursor:"pointer"}}>Tutti</button>
+          <span style={{color:"var(--fg-subtle)",fontSize:11}}>·</span>
+          <button onClick={()=>setSelIds([])} style={{fontSize:11,color:"var(--fg-subtle)",background:"none",border:"none",cursor:"pointer"}}>Nessuno</button>
+          <span style={{marginLeft:"auto",fontSize:11,color:"var(--fg-subtle)"}}>{selIds.length}/{anagraficaCorsi.length}</span>
+        </div>
+        <div style={{overflowY:"auto",flex:1,minHeight:0,border:"1px solid var(--border)",borderRadius:"var(--radius)",background:"var(--bg-sunken)",marginBottom:16}}>
+          {[...anagraficaCorsi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(ana=>{
+            const cnt=(corsiById[ana.id]?.events||[]).filter(e=>curMks.includes(e.month)).length;
+            const chk=selIds.includes(ana.id);
+            return(<label key={ana.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",cursor:"pointer",borderBottom:"1px solid var(--divider)",opacity:cnt===0?.45:1}}>
+              <input type="checkbox" checked={chk} onChange={()=>toggleId(ana.id)} style={{accentColor:"var(--accent)",flexShrink:0}}/>
+              <span style={{width:8,height:8,borderRadius:2,background:ana.colore||"var(--accent)",flexShrink:0}}/>
+              <span style={{flex:1,fontSize:12,color:"var(--fg)",fontWeight:chk?600:400}}>{ana.nome}</span>
+              <span style={{fontSize:11,color:cnt>0?"var(--fg-subtle)":"var(--danger)",fontFamily:'"JetBrains Mono",monospace'}}>{cnt} sess.</span>
+            </label>);
+          })}
+        </div>
+        {err&&<div style={{color:"var(--danger)",fontSize:12,marginBottom:8,flexShrink:0}}>{err}</div>}
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",flexShrink:0}}>
+          <button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
+          <button onClick={doExport} disabled={generating||!selIds.length} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}>
+            {generating?<><Icon name="loader" size={13} color="#fff"/>Generazione…</>:<><Icon name="download" size={13} color="#fff"/>Esporta .docx</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── INSIGHTS SCREEN ───────────────────────────────────────────────────────
 function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,currentMonthKey,onClose,onNavigate}){
   const[viewMode,setViewMode]=useState("tutor");
@@ -395,7 +502,7 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
   const[expandedTut,setExpandedTut]=useState({});const[expandedTutAv,setExpandedTutAv]=useState({});const[expandedTutSlots,setExpandedTutSlots]=useState({});
   const[expandedAv,setExpandedAv]=useState({});const[expandedAvTut,setExpandedAvTut]=useState({});const[expandedAvLezioni,setExpandedAvLezioni]=useState({});
   const[selProgettoFilter,setSelProgettoFilter]=useState("");
-  const[expandedProg,setExpandedProg]=useState({});const[expandedProgCo,setExpandedProgCo]=useState({});
+  const[expandedProg,setExpandedProg]=useState({});const[expandedProgCo,setExpandedProgCo]=useState({});const[showExport,setShowExport]=useState(false);
   const corsiById=useMemo(()=>{const o={};corsi.forEach(co=>o[co.id]=co);return o;},[corsi]);
   function getMks(){if(selPeriod.mode==="single")return[selPeriod.monthKey];if(selPeriod.mode==="year")return MONTHS.filter(m=>m.year===selPeriod.year).map(m=>m.key);if(selPeriod.mode==="range"){const si=MONTHS.findIndex(m=>m.key===selPeriod.startKey),ei=MONTHS.findIndex(m=>m.key===selPeriod.endKey);if(si<0||ei<0)return[selPeriod.monthKey||currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
   const mks=useMemo(()=>getMks(),[selPeriod,currentMonthKey]);
@@ -459,6 +566,7 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
           :viewMode==="avviso"
             ?<select className="select" value={selAvFilter} onChange={e=>setSelAvFilter(e.target.value)} style={{minWidth:160}}><option value="">Tutti i corsi</option>{anagraficaCorsi.map(a=><option key={a.id} value={a.nome}>{a.nome}</option>)}</select>
             :<select className="select" value={selProgettoFilter} onChange={e=>setSelProgettoFilter(e.target.value)} style={{minWidth:180}}><option value="">Tutti gli avvisi/progetti</option>{[...avvisi].sort((a,b)=>a.nome.localeCompare(b.nome)).map(av=><option key={av.id} value={av.id}>{av.nome}</option>)}</select>}
+        {viewMode==="avviso"&&<button onClick={()=>setShowExport(true)} className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={13}/>Esporta .docx</button>}
         <div style={{flex:1}}/>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,padding:"14px 24px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
@@ -646,6 +754,7 @@ function InsightsScreen({corsi,anagraficaCorsi,avvisi=[],tutors,tutEvents,curren
         })}
       </div>
     </div>
+    {showExport&&<ExportInsightsModal anagraficaCorsi={anagraficaCorsi} corsiById={corsiById} avvisi={avvisi} allMonthKeys={allMonthKeys} currentMonthKey={currentMonthKey} onClose={()=>setShowExport(false)}/>}
   </div>);
 }
 
