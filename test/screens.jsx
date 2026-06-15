@@ -393,6 +393,7 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
   const[generating,setGenerating]=useState(false);
   const[err,setErr]=useState(null);
   function toggleId(id){setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);}
+  function loadDocx(){return new Promise((resolve,reject)=>{if(window.docx)return resolve(window.docx);const ex=document.getElementById("docx-cdn");if(ex){ex.addEventListener("load",()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word caricata ma non disponibile.")));ex.addEventListener("error",()=>reject(new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).")));return;}const s=document.createElement("script");s.id="docx-cdn";s.src="https://unpkg.com/docx@8.5.0/build/index.js";s.onload=()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word caricata ma non disponibile."));s.onerror=()=>reject(new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato)."));document.head.appendChild(s);});}
   function getMks(){if(period.mode==="single")return[period.monthKey];if(period.mode==="year")return MONTHS.filter(m=>m.year===period.year).map(m=>m.key);if(period.mode==="range"){const si=MONTHS.findIndex(m=>m.key===period.startKey),ei=MONTHS.findIndex(m=>m.key===period.endKey);if(si<0||ei<0)return[currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
   function periodLabel(){if(period.mode==="year")return`Anno ${period.year}`;if(period.mode==="range"){const s=MONTHS.find(m=>m.key===period.startKey),e=MONTHS.find(m=>m.key===period.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} ${s.year} – ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"Range";}return MONTHS.find(m=>m.key===period.monthKey)?.label||period.monthKey;}
   async function buildDocx(mks){
@@ -440,10 +441,10 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
     return Packer.toBlob(new Document({sections:[{properties:{page:{margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:body}]}));
   }
   async function doExport(){
-    if(!window.docx){setErr("Libreria Word non disponibile — ricarica la pagina.");return;}
     if(!selIds.length){setErr("Seleziona almeno un corso.");return;}
     setErr(null);setGenerating(true);
     try{
+      await loadDocx();
       const blob=await buildDocx(getMks());
       const lbl=periodLabel().replace(/[\s\/]+/g,"_");
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Calendario_Lezioni_${lbl}.docx`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
