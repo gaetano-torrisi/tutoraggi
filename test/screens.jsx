@@ -396,12 +396,11 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
   function toggleId(id){setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);}
   function loadDocx(){return new Promise((resolve,reject)=>{
     if(window.docx)return resolve(window.docx);
-    const okEnd=()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word non disponibile (script caricato ma incompleto)."));
-    const failEnd=()=>reject(new Error("Impossibile caricare la libreria Word. Verifica la connessione e riprova."));
-    let s=document.getElementById("docx-cdn");
-    if(s){s.addEventListener("load",okEnd);s.addEventListener("error",failEnd);return;}
-    s=document.createElement("script");s.id="docx-cdn";s.src="https://unpkg.com/docx@8.5.0/build/index.js";s.async=true;
-    s.onload=okEnd;s.onerror=failEnd;
+    const old=document.getElementById("docx-cdn");if(old)old.remove();
+    const s=document.createElement("script");s.id="docx-cdn";
+    s.src="https://unpkg.com/docx@7.8.2/build/index.js";s.async=true;
+    s.onload=()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word non disponibile (script caricato ma incompleto)."));
+    s.onerror=()=>reject(new Error("Impossibile caricare la libreria Word. Verifica la connessione e riprova."));
     document.head.appendChild(s);
   });}
   function getMks(){if(period.mode==="single")return[period.monthKey];if(period.mode==="year")return MONTHS.filter(m=>m.year===period.year).map(m=>m.key);if(period.mode==="range"){const si=MONTHS.findIndex(m=>m.key===period.startKey),ei=MONTHS.findIndex(m=>m.key===period.endKey);if(si<0||ei<0)return[currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
