@@ -394,17 +394,16 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
   const[progress,setProgress]=useState(null);
   const[err,setErr]=useState(null);
   function toggleId(id){setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);}
-  async function loadDocx(onProgress){
-    if(window.docx)return window.docx;
-    let resp;try{resp=await fetch("https://unpkg.com/docx@8.5.0/build/index.js");}catch{throw new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).");}
-    if(!resp.ok)throw new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).");
-    const total=+(resp.headers.get("content-length")||0);let blob;
-    if(resp.body&&resp.body.getReader&&total){const reader=resp.body.getReader();let recv=0;const chunks=[];for(;;){const{done,value}=await reader.read();if(done)break;chunks.push(value);recv+=value.length;onProgress&&onProgress(Math.min(1,recv/total));}blob=new Blob(chunks,{type:"application/javascript"});}
-    else{blob=await resp.blob();onProgress&&onProgress(1);}
-    await new Promise((res,rej)=>{const s=document.createElement("script");s.src=URL.createObjectURL(blob);s.onload=res;s.onerror=()=>rej(new Error("Errore caricamento libreria Word."));document.head.appendChild(s);});
-    if(!window.docx)throw new Error("Libreria Word caricata ma non disponibile.");
-    return window.docx;
-  }
+  function loadDocx(){return new Promise((resolve,reject)=>{
+    if(window.docx)return resolve(window.docx);
+    const okEnd=()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word non disponibile (script caricato ma incompleto)."));
+    const failEnd=()=>reject(new Error("Impossibile caricare la libreria Word. Verifica la connessione e riprova."));
+    let s=document.getElementById("docx-cdn");
+    if(s){s.addEventListener("load",okEnd);s.addEventListener("error",failEnd);return;}
+    s=document.createElement("script");s.id="docx-cdn";s.src="https://unpkg.com/docx@8.5.0/build/index.js";s.async=true;
+    s.onload=okEnd;s.onerror=failEnd;
+    document.head.appendChild(s);
+  });}
   function getMks(){if(period.mode==="single")return[period.monthKey];if(period.mode==="year")return MONTHS.filter(m=>m.year===period.year).map(m=>m.key);if(period.mode==="range"){const si=MONTHS.findIndex(m=>m.key===period.startKey),ei=MONTHS.findIndex(m=>m.key===period.endKey);if(si<0||ei<0)return[currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
   function periodLabel(){if(period.mode==="year")return`Anno ${period.year}`;if(period.mode==="range"){const s=MONTHS.find(m=>m.key===period.startKey),e=MONTHS.find(m=>m.key===period.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} ${s.year} – ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"Range";}return MONTHS.find(m=>m.key===period.monthKey)?.label||period.monthKey;}
   async function buildDocx(mks,onProgress){
@@ -457,16 +456,21 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
   async function doExport(){
     if(!selIds.length){setErr("Seleziona almeno un corso.");return;}
     setErr(null);setGenerating(true);setProgress({pct:2,label:"Preparazione…"});
+    let creep=null;
     try{
-      await loadDocx(f=>setProgress({pct:Math.round(f*65),label:`Download libreria Word… ${Math.round(f*100)}%`}));
+      if(!window.docx){let p=2;creep=setInterval(()=>{p=Math.min(60,p+Math.max(1,(60-p)*0.06));setProgress({pct:Math.round(p),label:"Caricamento libreria Word…"});},160);}
+      await loadDocx();
+      if(creep){clearInterval(creep);creep=null;}
       setProgress({pct:65,label:"Composizione documento…"});
       const blob=await buildDocx(getMks(),(done,tot)=>setProgress({pct:65+Math.round(done/Math.max(1,tot)*28),label:`Composizione corsi ${Math.min(done+1,tot)}/${tot}…`}));
       setProgress({pct:96,label:"Creazione file .docx…"});
       const lbl=periodLabel().replace(/[\s\/]+/g,"_");
-      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Calendario_Lezioni_${lbl}.docx`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
-      setProgress({pct:100,label:"Completato"});
-      setTimeout(onClose,400);
-    }catch(e){setErr(`Errore generazione: ${e.message}`);setProgress(null);setGenerating(false);}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download=`Calendario_Lezioni_${lbl}.docx`;a.rel="noopener";document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+      setProgress({pct:100,label:"Completato — download avviato"});
+      setTimeout(onClose,800);
+    }catch(e){if(creep)clearInterval(creep);setErr(`Errore generazione: ${e.message}`);setProgress(null);setGenerating(false);}
   }
   const curMks=getMks();
   return(
