@@ -391,12 +391,23 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
   const[selIds,setSelIds]=useState(anagraficaCorsi.map(a=>a.id));
   const[period,setPeriod]=useState({mode:"single",monthKey:currentMonthKey,year:MONTHS.find(m=>m.key===currentMonthKey)?.year||2026});
   const[generating,setGenerating]=useState(false);
+  const[progress,setProgress]=useState(null);
   const[err,setErr]=useState(null);
   function toggleId(id){setSelIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);}
-  function loadDocx(){return new Promise((resolve,reject)=>{if(window.docx)return resolve(window.docx);const ex=document.getElementById("docx-cdn");if(ex){ex.addEventListener("load",()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word caricata ma non disponibile.")));ex.addEventListener("error",()=>reject(new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).")));return;}const s=document.createElement("script");s.id="docx-cdn";s.src="https://unpkg.com/docx@8.5.0/build/index.js";s.onload=()=>window.docx?resolve(window.docx):reject(new Error("Libreria Word caricata ma non disponibile."));s.onerror=()=>reject(new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato)."));document.head.appendChild(s);});}
+  async function loadDocx(onProgress){
+    if(window.docx)return window.docx;
+    let resp;try{resp=await fetch("https://unpkg.com/docx@8.5.0/build/index.js");}catch{throw new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).");}
+    if(!resp.ok)throw new Error("Impossibile scaricare la libreria Word (rete/CDN bloccato).");
+    const total=+(resp.headers.get("content-length")||0);let blob;
+    if(resp.body&&resp.body.getReader&&total){const reader=resp.body.getReader();let recv=0;const chunks=[];for(;;){const{done,value}=await reader.read();if(done)break;chunks.push(value);recv+=value.length;onProgress&&onProgress(Math.min(1,recv/total));}blob=new Blob(chunks,{type:"application/javascript"});}
+    else{blob=await resp.blob();onProgress&&onProgress(1);}
+    await new Promise((res,rej)=>{const s=document.createElement("script");s.src=URL.createObjectURL(blob);s.onload=res;s.onerror=()=>rej(new Error("Errore caricamento libreria Word."));document.head.appendChild(s);});
+    if(!window.docx)throw new Error("Libreria Word caricata ma non disponibile.");
+    return window.docx;
+  }
   function getMks(){if(period.mode==="single")return[period.monthKey];if(period.mode==="year")return MONTHS.filter(m=>m.year===period.year).map(m=>m.key);if(period.mode==="range"){const si=MONTHS.findIndex(m=>m.key===period.startKey),ei=MONTHS.findIndex(m=>m.key===period.endKey);if(si<0||ei<0)return[currentMonthKey];return MONTHS.slice(Math.min(si,ei),Math.max(si,ei)+1).map(m=>m.key);}return[currentMonthKey];}
   function periodLabel(){if(period.mode==="year")return`Anno ${period.year}`;if(period.mode==="range"){const s=MONTHS.find(m=>m.key===period.startKey),e=MONTHS.find(m=>m.key===period.endKey);return s&&e?`${MONTH_NAMES_SHORT[s.month]} ${s.year} – ${MONTH_NAMES_SHORT[e.month]} ${e.year}`:"Range";}return MONTHS.find(m=>m.key===period.monthKey)?.label||period.monthKey;}
-  async function buildDocx(mks){
+  async function buildDocx(mks,onProgress){
     const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,ShadingType,BorderStyle}=window.docx;
     const GIORNI=["Domenica","Luned\xEC","Marted\xEC","Mercoled\xEC","Gioved\xEC","Venerd\xEC","Sabato"];
     const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
@@ -404,14 +415,16 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
     const BRD={style:BorderStyle.SINGLE,size:4,color:"CCCCCC"};
     const tblBorders={top:BRD,bottom:BRD,left:BRD,right:BRD,insideH:BRD,insideV:BRD};
     const COL=[1800,2800,2000,900,700];
+    const toRender=[...anagraficaCorsi].filter(a=>selIds.includes(a.id)).sort((a,b)=>a.nome.localeCompare(b.nome)).map(ana=>({ana,evs:(corsiById[ana.id]?.events||[]).filter(e=>mks.includes(e.month)).sort((a,b)=>{const ai=mks.indexOf(a.month),bi=mks.indexOf(b.month);return ai!==bi?ai-bi:a.day-b.day||a.start-b.start;})})).filter(x=>x.evs.length);
     const body=[];
     body.push(new Paragraph({children:[new TextRun({text:"Calendario Lezioni",bold:true,size:44,color:"1A1F4D"})],spacing:{after:120}}));
     body.push(new Paragraph({children:[new TextRun({text:`Periodo: ${periodLabel()}`,size:22,color:"444444"})],spacing:{after:80}}));
     body.push(new Paragraph({children:[new TextRun({text:`Generato il ${new Date().toLocaleDateString("it-IT")}`,size:18,color:"888888",italics:true})],spacing:{after:480}}));
     let first=true;
-    for(const ana of [...anagraficaCorsi].filter(a=>selIds.includes(a.id)).sort((a,b)=>a.nome.localeCompare(b.nome))){
-      const evs=(corsiById[ana.id]?.events||[]).filter(e=>mks.includes(e.month)).sort((a,b)=>{const ai=mks.indexOf(a.month),bi=mks.indexOf(b.month);return ai!==bi?ai-bi:a.day-b.day||a.start-b.start;});
-      if(!evs.length)continue;
+    for(let ci=0;ci<toRender.length;ci++){
+      const {ana,evs}=toRender[ci];
+      onProgress&&onProgress(ci,toRender.length);
+      await new Promise(r=>setTimeout(r,0));
       if(!first)body.push(new Paragraph({text:"",spacing:{before:560,after:0}}));
       first=false;
       const av=avvisi.find(x=>x.id===ana.avvisoId);
@@ -438,19 +451,22 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
       body.push(new Paragraph({children:[new TextRun({text:`Totale: ${fmtOreMin(totOre)}`,bold:true,size:20})],spacing:{before:120,after:40}}));
       if(hasUnver)body.push(new Paragraph({children:[new TextRun({text:"* Sessioni non ancora verificate",size:16,color:"888888",italics:true})],spacing:{after:40}}));
     }
+    onProgress&&onProgress(toRender.length,toRender.length);
     return Packer.toBlob(new Document({sections:[{properties:{page:{margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:body}]}));
   }
   async function doExport(){
     if(!selIds.length){setErr("Seleziona almeno un corso.");return;}
-    setErr(null);setGenerating(true);
+    setErr(null);setGenerating(true);setProgress({pct:2,label:"Preparazione…"});
     try{
-      await loadDocx();
-      const blob=await buildDocx(getMks());
+      await loadDocx(f=>setProgress({pct:Math.round(f*65),label:`Download libreria Word… ${Math.round(f*100)}%`}));
+      setProgress({pct:65,label:"Composizione documento…"});
+      const blob=await buildDocx(getMks(),(done,tot)=>setProgress({pct:65+Math.round(done/Math.max(1,tot)*28),label:`Composizione corsi ${Math.min(done+1,tot)}/${tot}…`}));
+      setProgress({pct:96,label:"Creazione file .docx…"});
       const lbl=periodLabel().replace(/[\s\/]+/g,"_");
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Calendario_Lezioni_${lbl}.docx`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
-      onClose();
-    }catch(e){setErr(`Errore generazione: ${e.message}`);}
-    setGenerating(false);
+      setProgress({pct:100,label:"Completato"});
+      setTimeout(onClose,400);
+    }catch(e){setErr(`Errore generazione: ${e.message}`);setProgress(null);setGenerating(false);}
   }
   const curMks=getMks();
   return(
@@ -483,12 +499,24 @@ function ExportInsightsModal({anagraficaCorsi,corsiById,avvisi,allMonthKeys,curr
           })}
         </div>
         {err&&<div style={{color:"var(--danger)",fontSize:12,marginBottom:8,flexShrink:0}}>{err}</div>}
-        <div style={{display:"flex",gap:8,justifyContent:"flex-end",flexShrink:0}}>
-          <button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
-          <button onClick={doExport} disabled={generating||!selIds.length} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}>
-            {generating?<><Icon name="loader" size={13} color="#fff"/>Generazione…</>:<><Icon name="download" size={13} color="#fff"/>Esporta .docx</>}
-          </button>
-        </div>
+        {generating&&progress?(
+          <div style={{flexShrink:0}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:12,color:"var(--fg-muted)",display:"flex",alignItems:"center",gap:6}}><Icon name="loader" size={12} color="var(--accent)"/>{progress.label}</span>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--accent)",fontFamily:'"JetBrains Mono",monospace'}}>{progress.pct}%</span>
+            </div>
+            <div style={{height:9,borderRadius:999,background:"var(--bg-sunken)",border:"1px solid var(--border)",overflow:"hidden"}}>
+              <div style={{height:"100%",width:`${progress.pct}%`,background:"linear-gradient(90deg,var(--accent),#F5A35A)",borderRadius:999,transition:"width .25s ease"}}/>
+            </div>
+          </div>
+        ):(
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",flexShrink:0}}>
+            <button onClick={onClose} className="btn" data-variant="outline">Annulla</button>
+            <button onClick={doExport} disabled={!selIds.length} className="btn" data-variant="accent" style={{display:"flex",alignItems:"center",gap:6}}>
+              <Icon name="download" size={13} color="#fff"/>Esporta .docx
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
