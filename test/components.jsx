@@ -323,7 +323,7 @@ function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,search
   const chip=it=>{const a=isActive(it.id);return(
     <button key={it.id} className={"cfb-chip"+(a?"":" inactive")} title={it.name}
       onClick={readOnly?undefined:()=>onToggle(it.id)}
-      style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,soft?.35:.12):"transparent",borderColor:a?it.color:"var(--border)",color:"var(--fg)"}}>
+      style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,soft?.35:.12):"transparent",borderColor:a?(soft?hexToRgba(it.color,.45):it.color):"var(--border)",color:"var(--fg)"}}>
       <span className="cfb-chip-dot" style={a?(soft?{background:hexToRgba(it.color,.35),border:`1.5px solid ${it.color}`,color:"var(--fg)"}:{background:it.color}):{background:"var(--fg-faint)"}}>{it.initials}</span>
       <span className="cfb-chip-nm">{it.name}</span></button>);};
 
