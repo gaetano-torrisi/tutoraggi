@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Filter bar calendario · TutorIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ════════ Token (da tokens.css) ════════ */
+:root[data-theme="light"]{
+  --brand-navy:#1A1F4D; --brand-navy-2:#2A2F66; --brand-orange:#EC7A26; --brand-orange-light:#F5A35A; --brand-orange-soft:#FFEFE0;
+  --bg:#FAF8F4; --bg-elev:#FFFFFF; --bg-sunken:#F2EFE9; --bg-hover:#F0EBE2; --bg-weekend:#F0EBF7; --surface-strong:#FFFFFF;
+  --border:#E6E1D6; --border-strong:#D8D1C2; --divider:#ECE7DC;
+  --fg:#1A1F2E; --fg-muted:#5B5F70; --fg-subtle:#8A8E9E; --fg-faint:#B5B7C3; --fg-inverse:#FAF8F4;
+  --accent:var(--brand-orange); --accent-fg:#FFFFFF; --accent-soft:var(--brand-orange-soft); --accent-strong:#D5651A;
+  --success:#2F8F5B; --success-soft:#E4F3EA; --danger:#C0392B; --danger-soft:#FBE7E3; --info:#3E6FB8; --info-soft:#E6EEFA;
+  --shadow-xs:0 1px 2px rgba(26,31,77,.06); --shadow-sm:0 1px 3px rgba(26,31,77,.08),0 1px 2px rgba(26,31,77,.04);
+  --shadow-md:0 4px 12px rgba(26,31,77,.08),0 2px 4px rgba(26,31,77,.04); --shadow-lg:0 16px 40px rgba(26,31,77,.14),0 4px 8px rgba(26,31,77,.06);
+  --radius-sm:6px; --radius:8px; --radius-md:10px; --radius-lg:14px; --radius-xl:20px;
+}
+:root[data-theme="dark"]{
+  --brand-navy:#1A1F4D; --brand-navy-2:#2A2F66; --brand-orange:#F08A3B; --brand-orange-light:#F5A35A; --brand-orange-soft:rgba(240,138,59,.14);
+  --bg:#0C0F22; --bg-elev:#161A36; --bg-sunken:#090C1B; --bg-hover:#1E2244; --bg-weekend:#0A0D1E; --surface-strong:#1B1F3D;
+  --border:#262B4C; --border-strong:#353A5E; --divider:#1F2342;
+  --fg:#EEEDF2; --fg-muted:#A7A9BC; --fg-subtle:#7A7E94; --fg-faint:#5A5E74; --fg-inverse:#1A1F2E;
+  --accent:var(--brand-orange); --accent-fg:#1A1F2E; --accent-soft:var(--brand-orange-soft); --accent-strong:#FFB07A;
+  --success:#58B383; --success-soft:rgba(88,179,131,.16); --danger:#E47A6E; --danger-soft:rgba(228,122,110,.18); --info:#6A95DB; --info-soft:rgba(106,149,219,.18);
+  --shadow-xs:0 1px 2px rgba(0,0,0,.4); --shadow-sm:0 2px 6px rgba(0,0,0,.4); --shadow-md:0 6px 18px rgba(0,0,0,.45); --shadow-lg:0 20px 50px rgba(0,0,0,.6);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;}
+body{
+  font-family:"Inter Tight","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--fg); font-size:13px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  padding:28px 20px 60px;
+}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-feature-settings:"tnum";}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;border:2px solid var(--bg-elev);}
+::-webkit-scrollbar-thumb:hover{background:var(--border-strong);}
+
+/* ════════ Meta header del mockup (non fa parte dell'app) ════════ */
+.mockup-meta{ max-width:1320px; margin:0 auto 18px; display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+.mockup-meta h1{ font-family:"Fraunces","Inter Tight",serif; font-size:23px; font-weight:600; letter-spacing:-.01em; margin:0 0 4px; color:var(--fg); }
+.mockup-meta p{ margin:0; font-size:12.5px; color:var(--fg-subtle); max-width:560px; }
+.meta-controls{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.seg{ display:inline-flex; padding:3px; gap:2px; background:var(--bg-sunken); border:1px solid var(--border); border-radius:100px; }
+.seg button{ border:none; background:none; padding:7px 14px; border-radius:100px; font-size:11.5px; font-weight:700; color:var(--fg-muted); cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:6px; }
+.seg button.active{ background:var(--brand-navy); color:#fff; box-shadow:var(--shadow-sm); }
+[data-theme="dark"] .seg button.active{ background:var(--accent); color:#1A1F2E; }
+.seg button .dot-state{width:6px;height:6px;border-radius:999px;background:currentColor;opacity:.55;}
+.theme-toggle{ display:inline-flex; padding:3px; gap:2px; background:var(--bg-sunken); border:1px solid var(--border); border-radius:100px; }
+.theme-toggle button{ border:none;background:none;padding:7px 11px;border-radius:100px;font-size:11.5px;font-weight:700;color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:5px; }
+.theme-toggle button.active{ background:var(--bg-elev); color:var(--fg); box-shadow:var(--shadow-xs); }
+
+/* ════════ Cornice "finestra app" ════════ */
+.app-frame{
+  max-width:1320px; margin:0 auto; height:760px;
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-lg); overflow:hidden; display:flex; position:relative;
+}
+.win-dots{position:absolute; top:14px; left:18px; display:flex; gap:7px; z-index:5;}
+.win-dots span{width:10px;height:10px;border-radius:999px;background:var(--border-strong);}
+
+/* ── Sidebar ── */
+.mini-sidebar{ width:236px; flex-shrink:0; background:var(--bg-elev); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:18px 14px 14px; }
+.brand{ display:flex; align-items:center; gap:10px; padding:0 6px 16px; margin-bottom:6px; border-bottom:1px solid var(--divider); }
+.brand-mark{ width:34px;height:34px;border-radius:10px;background:var(--brand-navy); display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+.brand-name{ font-family:"Fraunces",serif; font-weight:600; font-size:16px; letter-spacing:-.01em; line-height:1.1; }
+.brand-sub{ font-size:9.5px; color:var(--fg-subtle); line-height:1.2; margin-top:2px; }
+.nav-section{ font-size:9.5px; font-weight:700; color:var(--fg-faint); text-transform:uppercase; letter-spacing:.08em; padding:14px 8px 6px; }
+.nav-item{ display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--fg-muted); cursor:default; }
+.nav-item.active{ background:var(--accent-soft); color:var(--accent-strong); font-weight:700; }
+.nav-item svg{ flex-shrink:0; opacity:.85; }
+.sidebar-bottom{ margin-top:auto; padding-top:10px; border-top:1px solid var(--divider); }
+
+/* ── Main area ── */
+.main-area{ flex:1; min-width:0; display:flex; flex-direction:column; min-height:0; }
+.topbar{ height:56px; flex-shrink:0; display:flex; align-items:center; gap:14px; padding:0 20px; border-bottom:1px solid var(--border); background:var(--bg-elev); }
+.module-switch{ display:inline-flex; gap:2px; padding:3px; background:var(--bg-sunken); border-radius:var(--radius); border:1px solid var(--border); }
+.module-btn{ display:flex; align-items:center; gap:6px; border:none; background:none; padding:6px 13px; border-radius:6px; font-size:11.5px; font-weight:600; color:var(--fg-muted); cursor:pointer; }
+.module-btn.active{ background:var(--bg-elev); color:var(--brand-navy); box-shadow:var(--shadow-xs); }
+[data-theme="dark"] .module-btn.active{ color:var(--accent); }
+.month-btn2{ display:flex; align-items:center; gap:6px; height:32px; padding:0 12px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-elev); font-size:12px; font-weight:600; color:var(--fg); white-space:nowrap; }
+.tab-strip{ display:inline-flex; gap:2px; padding:3px; background:var(--bg-sunken); border-radius:var(--radius); border:1px solid var(--border); }
+.tab-strip-btn{ padding:6px 13px; border-radius:6px; font-size:10.8px; font-weight:600; color:var(--fg-muted); cursor:pointer; background:transparent; border:none; }
+.tab-strip-btn.active{ background:var(--bg-elev); color:var(--fg); box-shadow:var(--shadow-xs); }
+.spacer{flex:1;}
+.viz-pill{display:flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:100px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;}
+.avatar-mini{width:30px;height:30px;border-radius:999px;background:var(--brand-navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* ── Filterbar ATTUALE (replica fedele da style.css) ── */
+.filterbar{ background:var(--bg-elev); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; gap:14px; flex-shrink:0; flex-wrap:wrap; }
+.filterbar-divider{ width:1px; height:28px; background:var(--divider); flex-shrink:0; }
+.ore-display{ display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.ore-value{ font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--fg); line-height:1; }
+.ore-label{ font-size:10px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; line-height:1.2; }
+.section-lbl{ font-size:10.5px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; flex-shrink:0; }
+.tutor-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:100px; cursor:pointer; font-size:11.5px; font-weight:600; border:1px solid transparent; transition:all .12s; }
+.tutor-chip-dot{ width:20px;height:20px;border-radius:999px;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0; }
+.avviso-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:100px; font-size:11.5px; font-weight:600; cursor:pointer; border:1px solid transparent; transition:all .12s; }
+.avviso-chip span.sw{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.overlay-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--fg-muted);font-size:11.5px;font-weight:600;cursor:pointer;}
+
+/* ── Filterbar PROPOSTA (nuova, compatta) ── */
+.filterbar-new{ background:var(--bg-elev); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; height:50px; position:relative; z-index:40; }
+.chip-trigger-wrap{ position:relative; }
+.chip-trigger{ display:inline-flex; align-items:center; gap:8px; height:34px; padding:4px 12px 4px 6px; border-radius:100px; border:1.5px solid var(--border); background:var(--bg-elev); cursor:pointer; transition:all .15s; }
+.chip-trigger:hover{ border-color:var(--border-strong); background:var(--bg-hover); }
+.chip-trigger.open{ border-color:var(--accent); background:var(--accent-soft); }
+.stack{ display:flex; align-items:center; }
+.stack .sdot{ width:21px; height:21px; border-radius:999px; border:2px solid var(--bg-elev); margin-left:-7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:700; color:#fff; }
+.stack .sdot:first-child{ margin-left:0; }
+.stack .sdot.more{ background:var(--bg-sunken); color:var(--fg-muted); border-color:var(--bg-elev); }
+.trigger-text{ font-size:12px; font-weight:700; color:var(--fg); white-space:nowrap; }
+.trigger-text .ct{ font-family:"JetBrains Mono",monospace; color:var(--fg-subtle); font-weight:600; margin-left:1px; }
+.chip-trigger svg.chev{ flex-shrink:0; transition:transform .15s; color:var(--fg-subtle); }
+.chip-trigger.open svg.chev{ transform:rotate(180deg); }
+.new-badge{ font-size:8.5px; font-weight:800; letter-spacing:.04em; color:var(--accent-strong); background:var(--accent-soft); padding:2px 5px; border-radius:5px; margin-left:2px; vertical-align:1px; }
+
+.popover{ position:absolute; top:calc(100% + 10px); left:0; width:340px; background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:60; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-6px) scale(.98); transform-origin:top left; transition:opacity .15s, transform .15s, visibility .15s; }
+.popover.open{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+.popover-head{ padding:12px 14px 10px; border-bottom:1px solid var(--divider); }
+.popover-title{ font-size:12px; font-weight:700; color:var(--fg); margin-bottom:9px; display:flex; align-items:center; justify-content:space-between; }
+.popover-bulk{ display:flex; gap:12px; }
+.popover-bulk button{ background:none; border:none; font-size:10.8px; font-weight:700; color:var(--accent-strong); cursor:pointer; padding:0; }
+.popover-bulk button:hover{ text-decoration:underline; }
+.popover-search{ position:relative; }
+.popover-search input{ width:100%; height:32px; padding:0 12px 0 32px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-sunken); color:var(--fg); font-size:12px; }
+.popover-search input:focus{ outline:none; border-color:var(--accent); background:var(--bg-elev); }
+.popover-search svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--fg-subtle); pointer-events:none; }
+.popover-list{ max-height:286px; overflow-y:auto; padding:6px; }
+.popover-row{ display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:8px; cursor:pointer; user-select:none; }
+.popover-row:hover{ background:var(--bg-hover); }
+.popover-row .pdot{ width:9px;height:9px;border-radius:3px;flex-shrink:0; }
+.popover-row .pname{ flex:1; font-size:12px; font-weight:500; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.popover-row.inactive .pname{ color:var(--fg-faint); }
+.popover-row.inactive .pdot{ opacity:.35; }
+.popover-row .phours{ font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--fg-subtle); flex-shrink:0; }
+.toggle{ width:28px; height:17px; border-radius:999px; background:var(--border); position:relative; flex-shrink:0; transition:background .15s; }
+.toggle::after{ content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:999px; background:#fff; transition:transform .15s; box-shadow:var(--shadow-xs); }
+.popover-row.active .toggle{ background:var(--accent); }
+.popover-row.active .toggle::after{ transform:translateX(11px); }
+.popover-empty{ padding:20px 14px; text-align:center; font-size:11.5px; color:var(--fg-faint); font-style:italic; }
+.popover-foot{ padding:9px 14px; border-top:1px solid var(--divider); font-size:10.8px; color:var(--fg-subtle); display:flex; justify-content:space-between; align-items:center; }
+.popover-foot button{ background:var(--bg-sunken); border:1px solid var(--border); color:var(--fg-muted); font-size:10.8px; font-weight:600; padding:4px 10px; border-radius:7px; cursor:pointer; }
+.popover-foot button:hover{ background:var(--bg-hover); }
+
+/* ── Calendario (mock semplificato, sostituisce la griglia reale) ── */
+.cal-wrap{ flex:1; min-height:0; overflow:auto; padding:16px 20px 20px; background:var(--bg); }
+.cal-grid{ position:relative; display:grid; grid-template-columns:54px repeat(10,minmax(86px,1fr)); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-elev); min-width:920px; }
+.cal-cell{ border-right:1px solid var(--divider); border-bottom:1px solid var(--divider); position:relative; }
+.cal-head{ padding:8px 6px; text-align:center; font-size:10px; font-weight:700; color:var(--fg-muted); background:var(--bg-sunken); border-bottom:1px solid var(--border); position:sticky; top:0; }
+.cal-head .d{ font-size:13px; font-weight:700; color:var(--fg); display:block; margin-top:1px; }
+.cal-head.weekend{ background:var(--bg-weekend); }
+.cal-hourlbl{ font-size:9.5px; color:var(--fg-faint); text-align:right; padding:4px 6px; background:var(--bg-sunken); }
+.cal-row-h{ height:46px; }
+.evt{ position:absolute; inset:2px; border-radius:6px; padding:4px 6px; overflow:hidden; font-size:10px; font-weight:600; color:#1A1F2E; box-shadow:var(--shadow-xs); }
+.evt .t{ font-family:"JetBrains Mono",monospace; font-size:8.8px; font-weight:700; opacity:.75; display:block; }
+.evt .n{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+
+.callout{ position:absolute; z-index:55; background:var(--brand-navy); color:#fff; padding:9px 13px; border-radius:10px; font-size:11px; font-weight:600; box-shadow:var(--shadow-lg); max-width:230px; line-height:1.4; opacity:0; transform:translateY(4px); transition:opacity .2s,transform .2s; pointer-events:none; }
+.callout::after{ content:""; position:absolute; top:-5px; left:24px; width:10px; height:10px; background:var(--brand-navy); transform:rotate(45deg); }
+.callout.show{ opacity:1; transform:translateY(0); }
+
+/* ── Note di rationale sotto il frame ── */
+.rationale{ max-width:1320px; margin:26px auto 0; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.rationale .card{ background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 18px; box-shadow:var(--shadow-xs); }
+.rationale h3{ margin:0 0 8px; font-size:12.5px; font-weight:700; color:var(--brand-navy); display:flex; align-items:center; gap:7px; }
+[data-theme="dark"] .rationale h3{ color:var(--accent); }
+.rationale h3 svg{ color:var(--accent); flex-shrink:0; }
+.rationale p{ margin:0; font-size:12px; color:var(--fg-muted); line-height:1.55; }
+@media (max-width:1040px){ .rationale{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="mockup-meta">
+  <div>
+    <h1>Filter bar del calendario — mockup di valutazione</h1>
+    <p>Confronto live tra la barra corsi/tutor attuale (si espande su più righe) e una proposta compatta con pannello a comparsa. Usa i controlli per cambiare vista e versione.</p>
+  </div>
+  <div class="meta-controls">
+    <div class="seg" id="versionSeg">
+      <button data-v="old" class="active"><span class="dot-state"></span>Attuale</button>
+      <button data-v="new">Proposta</button>
+    </div>
+    <div class="theme-toggle" id="themeToggle">
+      <button data-t="light" class="active">☼ Light</button>
+      <button data-t="dark">☾ Dark</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-frame">
+  <div class="win-dots"><span></span><span></span><span></span></div>
+
+  <!-- ═══ Sidebar (solo contesto, non interattiva) ═══ -->
+  <aside class="mini-sidebar">
+    <div class="brand">
+      <div class="brand-mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div>
+      <div><div class="brand-name">TutorIA</div><div class="brand-sub">EHT · A Harmonic Innovation<br>Group Company</div></div>
+    </div>
+    <div class="nav-section">Calendario</div>
+    <div class="nav-item active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Calendari</div>
+    <div class="nav-section">Anagrafiche</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Anagrafica Tutor</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V6a2 2 0 0 1 2-2h7l7 7v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M13 4v6h6"/></svg>Anagrafica Corsi</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4Z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>Anagrafica Avvisi/Progetti</div>
+    <div class="nav-section">Strumenti</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 9 9l-7 1 5 5-1.5 7L12 18l6.5 4L17 15l5-5-7-1Z"/></svg>AI Import</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>Insights</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>Verifica coerenza</div>
+    <div class="nav-section">Sistema</div>
+    <div class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 7.04 4.3l.06.06A1.65 1.65 0 0 0 8.92 4.7H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.3 9c.13.36.43.64.8.8.36.13.7.2 1.09.2H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>Impostazioni</div>
+    <div class="sidebar-bottom"></div>
+  </aside>
+
+  <!-- ═══ Main area ═══ -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="module-switch">
+        <button class="module-btn" id="viewTutoraggio"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Tutoraggi</button>
+        <button class="module-btn active" id="viewAvviso"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4Z"/></svg>Corsi</button>
+      </div>
+      <div class="month-btn2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Giugno 2026</div>
+      <div class="tab-strip">
+        <button class="tab-strip-btn">Giorno</button>
+        <button class="tab-strip-btn active">Sett.</button>
+        <button class="tab-strip-btn">Mese</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="viz-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Visualizza</div>
+      <div class="avatar-mini">GA</div>
+    </div>
+
+    <!-- ═══ FILTERBAR — 4 varianti, una visibile ═══ -->
+
+    <!-- 1. ATTUALE · vista Corsi -->
+    <div class="filterbar variant" data-fb="old-avviso">
+      <div class="ore-display"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><div class="ore-value">544h</div><div class="ore-label">Ore mese</div></div></div>
+      <div class="filterbar-divider"></div>
+      <span class="section-lbl">Corsi</span>
+      <div id="oldChipsAvviso"></div>
+    </div>
+
+    <!-- 2. ATTUALE · vista Tutoraggi -->
+    <div class="filterbar variant" data-fb="old-tutoraggio" style="display:none">
+      <div class="ore-display"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><div class="ore-value">312h</div><div class="ore-label">Ore mese</div></div></div>
+      <div class="filterbar-divider"></div>
+      <span class="section-lbl">Tutor</span>
+      <div id="oldChipsTutor"></div>
+      <div class="filterbar-divider"></div>
+      <button class="overlay-pill" id="oldOverlayBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Mostra corsi</button>
+      <div class="filterbar-divider"></div>
+      <span class="section-lbl">Corsi</span>
+      <div id="oldChipsAvvisoLegend"></div>
+    </div>
+
+    <!-- 3. PROPOSTA · vista Corsi -->
+    <div class="filterbar-new variant" data-fb="new-avviso" style="display:none">
+      <div class="ore-display"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><div class="ore-value">544h</div><div class="ore-label">Ore mese</div></div></div>
+      <div class="filterbar-divider"></div>
+      <div class="chip-trigger-wrap" id="wrapCorsi">
+        <button class="chip-trigger" id="triggerCorsi">
+          <div class="stack" id="stackCorsi"></div>
+          <span class="trigger-text">Corsi <span class="ct" id="countCorsi"></span></span>
+          <svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="popover" id="popoverCorsi">
+          <div class="popover-head">
+            <div class="popover-title">Filtra corsi visibili<div class="popover-bulk"><button data-bulk="all" data-list="corsi">Mostra tutti</button><button data-bulk="none" data-list="corsi">Nascondi tutti</button></div></div>
+            <div class="popover-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Cerca corso…" data-search="corsi"></div>
+          </div>
+          <div class="popover-list" id="listCorsi"></div>
+          <div class="popover-foot"><span id="footCorsi"></span><button data-close>Chiudi</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PROPOSTA · vista Tutoraggi -->
+    <div class="filterbar-new variant" data-fb="new-tutoraggio" style="display:none">
+      <div class="ore-display"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div><div class="ore-value">312h</div><div class="ore-label">Ore mese</div></div></div>
+      <div class="filterbar-divider"></div>
+      <div class="chip-trigger-wrap" id="wrapTutor">
+        <button class="chip-trigger" id="triggerTutor">
+          <div class="stack" id="stackTutor"></div>
+          <span class="trigger-text">Tutor <span class="ct" id="countTutor"></span></span>
+          <svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="popover" id="popoverTutor">
+          <div class="popover-head">
+            <div class="popover-title">Filtra tutor visibili<div class="popover-bulk"><button data-bulk="all" data-list="tutor">Mostra tutti</button><button data-bulk="none" data-list="tutor">Nascondi tutti</button></div></div>
+            <div class="popover-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Cerca tutor…" data-search="tutor"></div>
+          </div>
+          <div class="popover-list" id="listTutor"></div>
+          <div class="popover-foot"><span id="footTutor"></span><button data-close>Chiudi</button></div>
+        </div>
+      </div>
+      <div class="filterbar-divider"></div>
+      <button class="overlay-pill" id="newOverlayBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Mostra corsi</button>
+      <div class="filterbar-divider"></div>
+      <div class="chip-trigger-wrap" id="wrapLegend">
+        <button class="chip-trigger" id="triggerLegend">
+          <div class="stack" id="stackLegend"></div>
+          <span class="trigger-text">Legenda corsi <span class="ct" id="countLegend"></span></span>
+          <svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="popover" id="popoverLegend" style="width:300px;">
+          <div class="popover-head" style="border-bottom:none;"><div class="popover-title" style="margin-bottom:0;">Corsi in sovrapposizione</div></div>
+          <div class="popover-list" id="listLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Calendario mock ═══ -->
+    <div class="cal-wrap">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div class="callout" id="callout">Con la stessa lista di corsi la barra resta sempre alta <strong>1 riga</strong> — niente più scroll verticale rubato al calendario.</div>
+</div>
+
+<div class="rationale">
+  <div class="card">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Altezza fissa, sempre 1 riga</h3>
+    <p>La barra attuale si espande in verticale con il numero di corsi (oggi anche 3 righe), comprimendo la griglia. La nuova barra resta a <strong>altezza costante</strong> indipendentemente da quanti corsi/tutor esistono: i toggle si spostano in un pannello a comparsa, non più inline.</p>
+  </div>
+  <div class="card">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Gestione più efficiente</h3>
+    <p>Il pannello aggiunge una <strong>ricerca</strong> per nome corso/tutor e le azioni rapide <strong>"Mostra tutti / Nascondi tutti"</strong>, oggi assenti: con 15+ corsi individuare e spuntare quello giusto richiede meno scroll e meno click rispetto a cercarlo tra le chip.</p>
+  </div>
+  <div class="card">
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Colpo d'occhio mantenuto</h3>
+    <p>Il trigger mostra comunque uno <strong>stack di pallini colorati</strong> (i corsi attivi) e il conteggio "8/14", così lo stato dei filtri resta visibile senza aprire nulla — stile e colori restano identici a badge/chip già usati nel resto dell'app.</p>
+  </div>
+</div>
+
+<script>
+const PALETTE_C = ["#4F86C6","#5FAE69","#C9A227","#D9622B","#7A4FC9","#2FA39A","#C0392B","#3E6FB8","#8E6C3A","#B5538A","#5B8C3E","#1A1F4D","#EC7A26","#4FA8D8"];
+const COURSES = [
+  {id:1,name:"EHT — Benessere Aziendale: Etica, Creatività e Collaborazione per un Futuro Sostenibile",hours:24,color:PALETTE_C[0],active:true},
+  {id:2,name:"Addetto amministrativo segretariale - 7248",hours:40,color:PALETTE_C[1],active:true},
+  {id:3,name:"Addetto amministrativo segretariale - 7258",hours:40,color:PALETTE_C[2],active:true},
+  {id:4,name:"Mediatore interculturale - 7618",hours:32,color:PALETTE_C[3],active:true},
+  {id:5,name:"Tecnico produzione pagine web - 7807",hours:48,color:PALETTE_C[4],active:true},
+  {id:6,name:"Operatore della riqualificazione energetica - 10309",hours:36,color:PALETTE_C[5],active:true},
+  {id:7,name:"Darwin - Uso dell'AI nei processi aziendali",hours:16,color:PALETTE_C[6],active:true},
+  {id:8,name:"Beentouch - Uso dell'AI nei processi aziendali",hours:16,color:PALETTE_C[7],active:true},
+  {id:9,name:"Winard - Uso dell'AI nei processi aziendali",hours:16,color:PALETTE_C[8],active:false},
+  {id:10,name:"Sapegis - Uso dell'AI nei processi aziendali",hours:16,color:PALETTE_C[9],active:false},
+  {id:11,name:"EHT - Uso dell'AI nei processi aziendali",hours:16,color:PALETTE_C[10],active:true},
+  {id:12,name:"Logiscool - Coding e robotica per ragazzi - 8841",hours:28,color:PALETTE_C[11],active:false},
+  {id:13,name:"Vertia - Sicurezza sui luoghi di lavoro - 9012",hours:20,color:PALETTE_C[12],active:true},
+  {id:14,name:"NovaTech - Competenze digitali avanzate - 9433",hours:24,color:PALETTE_C[13],active:false},
+];
+const TUTORS = [
+  {id:1,name:"Bianchi",full:"Bianchi Marco",hours:64,color:"#4F86C6",active:true},
+  {id:2,name:"Russo",full:"Russo Elena",hours:52,color:"#5FAE69",active:true},
+  {id:3,name:"Esposito",full:"Esposito Luca",hours:40,color:"#C9A227",active:true},
+  {id:4,name:"Romano",full:"Romano Giulia",hours:36,color:"#D9622B",active:false},
+  {id:5,name:"Colombo",full:"Colombo Sara",hours:48,color:"#7A4FC9",active:true},
+  {id:6,name:"Ferrari",full:"Ferrari Paolo",hours:28,color:"#2FA39A",active:true},
+  {id:7,name:"Greco",full:"Greco Anna",hours:22,color:"#C0392B",active:false},
+  {id:8,name:"Marino",full:"Marino Davide",hours:22,color:"#3E6FB8",active:true},
+];
+
+function initials(s){ return s.slice(0,2).toUpperCase(); }
+
+/* ── OLD bar: chips che vanno a capo ── */
+function renderOldChips(){
+  const wrapA = document.getElementById("oldChipsAvviso");
+  wrapA.innerHTML = COURSES.map(c=>{
+    const active=c.active;
+    return `<button class="avviso-chip" data-old-corso="${c.id}" style="border:1.5px solid ${active? c.color+'cc':'var(--border)'};background:${active? c.color+'1f':'transparent'};color:${active?'var(--fg)':'var(--fg-muted)'};margin:3px 4px 3px 0;"><span class="sw" style="background:${c.color}"></span>${c.name}</button>`;
+  }).join("");
+
+  const wrapT = document.getElementById("oldChipsTutor");
+  wrapT.innerHTML = TUTORS.map(t=>{
+    const active=t.active;
+    return `<button class="tutor-chip" data-old-tutor="${t.id}" style="border:1px solid ${active?t.color:'var(--border)'};background:${active? t.color+'1f':'transparent'};color:${active?'var(--fg)':'var(--fg-muted)'};opacity:${active?1:.5};margin:3px 4px 3px 0;"><span class="tutor-chip-dot" style="background:${active?t.color:'var(--bg-sunken)'}">${t.name[0]}</span>${t.name}</button>`;
+  }).join("");
+
+  const wrapL = document.getElementById("oldChipsAvvisoLegend");
+  wrapL.innerHTML = COURSES.slice(0,9).map(c=>`<span class="avviso-chip" style="background:${c.color}1f;border:1px solid ${c.color}66;color:var(--fg);margin:3px 4px 3px 0;"><span class="sw" style="background:${c.color}"></span>${c.name}</span>`).join("");
+
+  wrapA.querySelectorAll("[data-old-corso]").forEach(b=>b.addEventListener("click",()=>{
+    const c=COURSES.find(x=>x.id==b.dataset.oldCorso); c.active=!c.active; renderAll();
+  }));
+  wrapT.querySelectorAll("[data-old-tutor]").forEach(b=>b.addEventListener("click",()=>{
+    const t=TUTORS.find(x=>x.id==b.dataset.oldTutor); t.active=!t.active; renderAll();
+  }));
+}
+
+/* ── NEW bar: stack + popover ── */
+function renderStack(containerId, list, max=5){
+  const active=list.filter(x=>x.active);
+  const el=document.getElementById(containerId);
+  let html=active.slice(0,max).map(x=>`<span class="sdot" style="background:${x.color}" title="${x.name||x.full}">${initials(x.name||x.full)}</span>`).join("");
+  if(active.length>max) html+=`<span class="sdot more">+${active.length-max}</span>`;
+  if(active.length===0) html=`<span class="sdot more" style="margin-left:0;">–</span>`;
+  el.innerHTML=html;
+}
+
+function renderPopoverList(listId, footId, countId, stackId, data, filterText){
+  const listEl=document.getElementById(listId);
+  const q=(filterText||"").trim().toLowerCase();
+  const items=data.filter(x=>(x.name||x.full).toLowerCase().includes(q));
+  listEl.innerHTML = items.length ? items.map(x=>`
+    <div class="popover-row ${x.active?"active":"inactive"}" data-id="${x.id}">
+      <span class="pdot" style="background:${x.color}"></span>
+      <span class="pname">${x.name||x.full}</span>
+      <span class="phours mono">${x.hours}h</span>
+      <span class="toggle"></span>
+    </div>`).join("") : `<div class="popover-empty">Nessun risultato</div>`;
+  listEl.querySelectorAll(".popover-row").forEach(row=>row.addEventListener("click",()=>{
+    const item=data.find(x=>x.id==row.dataset.id);
+    item.active=!item.active;
+    renderPopoverList(listId,footId,countId,stackId,data,document.querySelector(`[data-search="${listId==='listCorsi'?'corsi':'tutor'}"]`)?.value);
+    renderStack(stackId,data);
+    updateCount(countId,data);
+  }));
+  updateCount(countId,data);
+}
+function updateCount(countId,data){
+  const n=data.filter(x=>x.active).length;
+  document.getElementById(countId).textContent=`${n}/${data.length}`;
+}
+
+function setupPopover(triggerId, popoverId, wrapId){
+  const trigger=document.getElementById(triggerId), pop=document.getElementById(popoverId);
+  trigger.addEventListener("click",e=>{
+    e.stopPropagation();
+    const isOpen=pop.classList.contains("open");
+    document.querySelectorAll(".popover.open").forEach(p=>p.classList.remove("open"));
+    document.querySelectorAll(".chip-trigger.open").forEach(t=>t.classList.remove("open"));
+    if(!isOpen){ pop.classList.add("open"); trigger.classList.add("open"); }
+  });
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".chip-trigger-wrap")){
+    document.querySelectorAll(".popover.open").forEach(p=>p.classList.remove("open"));
+    document.querySelectorAll(".chip-trigger.open").forEach(t=>t.classList.remove("open"));
+  }
+  if(e.target.matches("[data-close]")){
+    e.target.closest(".popover").classList.remove("open");
+    e.target.closest(".chip-trigger-wrap").querySelector(".chip-trigger").classList.remove("open");
+  }
+  if(e.target.matches("[data-bulk]")){
+    const list=e.target.dataset.list;
+    const data = list==="corsi" ? COURSES : TUTORS;
+    data.forEach(x=>x.active = e.target.dataset.bulk==="all");
+    renderAll();
+  }
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    document.querySelectorAll(".popover.open").forEach(p=>p.classList.remove("open"));
+    document.querySelectorAll(".chip-trigger.open").forEach(t=>t.classList.remove("open"));
+  }
+});
+document.querySelectorAll('[data-search]').forEach(input=>{
+  input.addEventListener("input",()=>{
+    const which=input.dataset.search;
+    if(which==="corsi") renderPopoverList("listCorsi","footCorsi","countCorsi","stackCorsi",COURSES,input.value);
+    if(which==="tutor") renderPopoverList("listTutor","footTutor","countTutor","stackTutor",TUTORS,input.value);
+  });
+});
+
+function renderAll(){
+  renderOldChips();
+  renderStack("stackCorsi",COURSES); updateCount("countCorsi",COURSES);
+  renderPopoverList("listCorsi","footCorsi","countCorsi","stackCorsi",COURSES,document.querySelector('[data-search="corsi"]')?.value);
+  renderStack("stackTutor",TUTORS); updateCount("countTutor",TUTORS);
+  renderPopoverList("listTutor","footTutor","countTutor","stackTutor",TUTORS,document.querySelector('[data-search="tutor"]')?.value);
+  renderStack("stackLegend",COURSES,5); updateCount("countLegend",COURSES);
+  document.getElementById("listLegend").innerHTML = COURSES.map(c=>`<div class="popover-row active" style="cursor:default;"><span class="pdot" style="background:${c.color}"></span><span class="pname">${c.name}</span></div>`).join("");
+  document.getElementById("footCorsi").textContent=`${COURSES.filter(c=>c.active).length} di ${COURSES.length} visibili`;
+  document.getElementById("footTutor").textContent=`${TUTORS.filter(t=>t.active).length} di ${TUTORS.length} visibili`;
+  renderCalendar();
+}
+
+setupPopover("triggerCorsi","popoverCorsi","wrapCorsi");
+setupPopover("triggerTutor","popoverTutor","wrapTutor");
+setupPopover("triggerLegend","popoverLegend","wrapLegend");
+
+document.getElementById("oldOverlayBtn").addEventListener("click",function(){
+  this.classList.toggle("on");
+  const on=this.classList.contains("on");
+  this.style.border=`1.5px solid ${on?"var(--accent)":"var(--border)"}`;
+  this.style.background=on?"var(--accent)":"transparent";
+  this.style.color=on?"#fff":"var(--fg-muted)";
+  this.innerHTML = (on? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.5 5.6A10.7 10.7 0 0 1 12 5c7 0 11 7 11 7a13.2 13.2 0 0 1-2.3 3M6.1 6.1A13.4 13.4 0 0 0 1 12s4 7 11 7a10.6 10.6 0 0 0 4.4-.9"/></svg>Nascondi corsi` : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Mostra corsi`);
+});
+document.getElementById("newOverlayBtn").addEventListener("click",function(){
+  this.classList.toggle("on");
+  const on=this.classList.contains("on");
+  this.style.border=`1.5px solid ${on?"var(--accent)":"var(--border)"}`;
+  this.style.background=on?"var(--accent)":"transparent";
+  this.style.color=on?"#fff":"var(--fg-muted)";
+  this.innerHTML = (on? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.5 5.6A10.7 10.7 0 0 1 12 5c7 0 11 7 11 7a13.2 13.2 0 0 1-2.3 3M6.1 6.1A13.4 13.4 0 0 0 1 12s4 7 11 7a10.6 10.6 0 0 0 4.4-.9"/></svg>Nascondi corsi` : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>Mostra corsi`);
+});
+
+/* ── Calendario mock ── */
+const DAYS=[["MAR","16"],["MER","17"],["GIO","18"],["VEN","19"],["SAB","20",true],["DOM","21",true],["LUN","22"],["MAR","23"],["MER","24"],["GIO","25"]];
+const HOURS=["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
+const EVENTS_AVVISO=[
+  {day:1,row:2,span:5,c:0},{day:1,row:7,span:3,c:1},{day:2,row:2,span:3,c:2},{day:2,row:7,span:4,c:3},
+  {day:3,row:2,span:4,c:4},{day:4,row:2,span:2,c:5},{day:4,row:5,span:3,c:6},{day:7,row:2,span:5,c:0},
+  {day:7,row:8,span:2,c:10},{day:8,row:3,span:3,c:1},{day:9,row:2,span:4,c:2},{day:9,row:7,span:3,c:12},
+  {day:10,row:2,span:3,c:4},{day:10,row:6,span:4,c:5},
+];
+const EVENTS_TUTOR=[
+  {day:1,row:2,span:4,t:0},{day:1,row:7,span:3,t:1},{day:2,row:2,span:3,t:2},{day:2,row:6,span:4,t:4},
+  {day:3,row:2,span:5,t:5},{day:4,row:2,span:3,t:0},{day:4,row:6,span:3,t:7},{day:7,row:2,span:4,t:1},
+  {day:8,row:3,span:3,t:2},{day:9,row:2,span:4,t:4},{day:9,row:7,span:3,t:5},{day:10,row:2,span:3,t:0},
+];
+
+function renderCalendar(){
+  const grid=document.getElementById("calGrid");
+  const isTutor = currentView==="tutoraggio";
+  const events = isTutor ? EVENTS_TUTOR : EVENTS_AVVISO;
+  const dataset = isTutor ? TUTORS : COURSES;
+  const colorOf = isTutor ? (i)=>TUTORS[i].color : (i)=>COURSES[i].color;
+  const nameOf = isTutor ? (i)=>TUTORS[i].name : (i)=>COURSES[i].name;
+  const activeOf = isTutor ? (i)=>TUTORS[i].active : (i)=>COURSES[i].active;
+
+  let html = `<div class="cal-cell cal-head" style="grid-column:1;grid-row:1;"></div>`;
+  DAYS.forEach((d,i)=>{ html+=`<div class="cal-cell cal-head${d[2]?' weekend':''}" style="grid-column:${i+2};grid-row:1;">${d[0]}<span class="d">${d[1]}</span></div>`; });
+  HOURS.forEach((h,r)=>{
+    html+=`<div class="cal-cell cal-hourlbl" style="grid-column:1;grid-row:${r+2};">${h}</div>`;
+    DAYS.forEach((d,i)=>{ html+=`<div class="cal-cell${d[2]?' weekend':''}" style="grid-column:${i+2};grid-row:${r+2};"></div>`; });
+  });
+
+  events.forEach(ev=>{
+    const idx = isTutor ? ev.t : ev.c;
+    if(!activeOf(idx)) return;
+    const color=colorOf(idx), name=nameOf(idx);
+    html+=`<div class="evt" style="grid-column:${ev.day+1};grid-row:${ev.row} / span ${ev.span};background:${color}26;border-left:3px solid ${color};">
+      <span class="t mono">${String(8+ev.row-2).padStart(2,'0')}:00</span><span class="n">${name.split(" - ")[0].split(" — ")[0]}</span>
+    </div>`;
+  });
+
+  grid.style.gridTemplateRows = `36px repeat(${HOURS.length},46px)`;
+  grid.innerHTML = html;
+}
+
+/* ── State: vista (tutoraggio/avviso) + versione (old/new) ── */
+let currentView="avviso", currentVersion="old";
+function updateFilterbars(){
+  document.querySelectorAll("[data-fb]").forEach(el=>el.style.display="none");
+  document.querySelector(`[data-fb="${currentVersion}-${currentView}"]`).style.display = currentVersion==="old" ? "flex" : "flex";
+  document.getElementById("viewTutoraggio").classList.toggle("active",currentView==="tutoraggio");
+  document.getElementById("viewAvviso").classList.toggle("active",currentView==="avviso");
+  document.querySelectorAll("#versionSeg button").forEach(b=>b.classList.toggle("active",b.dataset.v===currentVersion));
+  renderCalendar();
+}
+document.getElementById("viewTutoraggio").addEventListener("click",()=>{ currentView="tutoraggio"; updateFilterbars(); });
+document.getElementById("viewAvviso").addEventListener("click",()=>{ currentView="avviso"; updateFilterbars(); });
+document.querySelectorAll("#versionSeg button").forEach(b=>b.addEventListener("click",()=>{
+  currentVersion=b.dataset.v; updateFilterbars();
+  if(currentVersion==="new"){
+    const callout=document.getElementById("callout");
+    const rect=document.querySelector('[data-fb^="new-"]').getBoundingClientRect();
+    const frameRect=document.querySelector(".app-frame").getBoundingClientRect();
+    callout.style.left=(rect.left-frameRect.left+220)+"px";
+    callout.style.top=(rect.top-frameRect.top+44)+"px";
+    callout.classList.add("show");
+    setTimeout(()=>callout.classList.remove("show"),3600);
+  }
+}));
+
+document.getElementById("themeToggle").addEventListener("click",e=>{
+  const btn=e.target.closest("button"); if(!btn)return;
+  document.documentElement.setAttribute("data-theme",btn.dataset.t);
+  document.querySelectorAll("#themeToggle button").forEach(b=>b.classList.toggle("active",b===btn));
+});
+
+renderAll();
+updateFilterbars();
+</script>
+</body>
+</html>
