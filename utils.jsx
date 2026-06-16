@@ -1,5 +1,5 @@
 /* eslint-disable */
-const {useState,useEffect,useRef,useMemo}=React;
+const {useState,useEffect,useRef,useMemo,useLayoutEffect}=React;
 const BASE_COL_W=140,BASE_SLOT_H=48,TIME_W=52,OVR_PAD=4,UNDO_LIMIT=20;
 const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const MONTHS=[
@@ -76,6 +76,9 @@ const NAV_GROUPS=[
 function darkenHex(hex,pct){if(!hex||!hex.startsWith("#"))return hex;const r=Math.max(0,Math.round(parseInt(hex.slice(1,3),16)*(1-pct)));const g=Math.max(0,Math.round(parseInt(hex.slice(3,5),16)*(1-pct)));const b=Math.max(0,Math.round(parseInt(hex.slice(5,7),16)*(1-pct)));return`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;}
 function lightenHex(hex,pct){if(!hex||!hex.startsWith("#"))return hex;const r=Math.min(255,Math.round(parseInt(hex.slice(1,3),16)+(255-parseInt(hex.slice(1,3),16))*pct));const g=Math.min(255,Math.round(parseInt(hex.slice(3,5),16)+(255-parseInt(hex.slice(3,5),16))*pct));const b=Math.min(255,Math.round(parseInt(hex.slice(5,7),16)+(255-parseInt(hex.slice(5,7),16))*pct));return`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;}
 function hexToRgba(hex,a){if(!hex||!hex.startsWith("#"))return`rgba(79,134,198,${a})`;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
+// Iniziali (max 2 lettere) derivate dal nome: prime lettere delle prime due parole,
+// o prime due lettere se una sola parola. Usato per i pallini della filter bar.
+function deriveInitials(name){if(!name)return"?";const w=name.replace(/[^\p{L}\p{N}\s]/gu," ").trim().split(/\s+/).filter(Boolean);if(!w.length)return"?";if(w.length===1)return w[0].slice(0,2).toUpperCase();return(w[0][0]+w[1][0]).toUpperCase();}
 function fmt(h){return`${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h%1)*60)).padStart(2,"0")}`;}
 function fmtDurata(ore){if(!ore||ore<=0)return"";const h=Math.floor(ore),m=Math.round((ore-h)*60);return m===0?`${h}h`:`${h}:${String(m).padStart(2,"0")}`;}
 function timeStrToH(s){const[hh,mm]=s.split(":").map(Number);return hh+(mm||0)/60;}

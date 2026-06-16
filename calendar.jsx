@@ -89,12 +89,14 @@ function AvDraggableSlot({ev,col,numCols,color,slotH,colW,onEdit,onDragEnd,highl
 // ── CALENDAR GRID ─────────────────────────────────────────────────────────
 function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDay,overlayActive,slotH,colW,onGridClick,onTutDragEnd,onAvDragEnd,highlightEvId,onTutDragMove}){
   const HOURS=Array.from({length:13},(_,i)=>i+8);
+  const TOPGAP=16; // spazio tra l'intestazione del giorno e la prima riga (08:00) — dà aria alle etichette dei corsi che iniziano alle 8
   const isWE=d=>[0,6].includes(new Date(monthData.year,monthData.month,d).getDay());
   const getDN=d=>DAY_NAMES[new Date(monthData.year,monthData.month,d).getDay()];
   return(<div style={{overflow:"auto",background:"var(--bg)",flexShrink:1,minHeight:0}} className="cal-scroll">
     <div style={{display:"flex",minWidth:TIME_W+days.length*colW,background:"var(--bg)"}}>
       <div style={{width:TIME_W,flexShrink:0,position:"sticky",left:0,zIndex:30,background:"var(--bg)"}}>
         <div style={{height:60,borderBottom:"1px solid var(--border)",background:"var(--bg-sunken)"}}/>
+        <div style={{height:TOPGAP,background:"var(--bg)"}}/>
         <div style={{position:"relative",height:12*slotH}}>{HOURS.map(h=><div key={h} className="cal-time-col" style={{position:"absolute",top:(h-8)*slotH,width:"100%",paddingRight:4,textAlign:"right",borderTop:"1px solid var(--divider)",height:slotH,boxSizing:"border-box"}}>{String(h).padStart(2,"0")}:00</div>)}</div>
         <div style={{height:40,background:"var(--bg-sunken)",borderTop:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:8}}><span style={{fontSize:9.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Tot</span></div>
       </div>
@@ -109,6 +111,7 @@ function CalendarGrid({days,monthData,tutByDay,avOverlayByDay,avByDay,footerByDa
             <span style={{fontSize:10,color:wk?"var(--fg-muted)":"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em",fontWeight:600}}>{getDN(d)}</span>
             <span style={{fontWeight:700,fontSize:17,color:wk?"var(--fg-muted)":"var(--fg)",letterSpacing:"-0.01em"}}>{d}</span>
           </div>
+          <div style={{height:TOPGAP,background:wk?"var(--bg-weekend)":"var(--bg-elev)"}}/>
           <div onClick={e=>{if(!wasDrag())onGridClick&&onGridClick(d,e);}} style={{position:"relative",height:12*slotH,background:wk?"var(--bg-weekend)":"var(--bg-elev)",cursor:onGridClick?"crosshair":"default",overflow:"visible"}}>
             {HOURS.map(h=><div key={h} style={{position:"absolute",top:(h-8)*slotH,left:0,right:0,height:slotH,borderTop:"1px solid var(--divider)"}}/>)}
             {overlayActive&&tEvs.map((tev,i)=>{const pos=avPosMap[tev.name];if(pos){const colFrac=1/pos.numCols;const sub=tutOvSub.get(tev)||{subCol:0,subNumCols:1};const laneLeft=pos.col*colFrac*colW,laneW=colFrac*colW,subFrac=1/sub.subNumCols;return(<DraggableSlot key={"to"+i} ev={tev} col={0} numCols={1} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd&&tev._onEdit?u=>onTutDragEnd(tev.id,u):null} posOverride={{top:(tev.start-8)*slotH+OVR_PAD,left:laneLeft+sub.subCol*subFrac*laneW+OVR_PAD+1,width:subFrac*laneW-OVR_PAD*2-2,height:Math.max((tev.end-tev.start)*slotH-OVR_PAD*2,20)}} highlightError={highlightEvId===tev.id} onDragMove={onTutDragMove}/>);}else{const found=tLayout.find(x=>x.ev===tev)||{col:0,numCols:1};return(<DraggableSlot key={"tb"+i} ev={tev} col={found.col} numCols={found.numCols} color={tev._color||"var(--accent)"} tutorLabel={tev._tutorLabel} slotH={slotH} colW={colW} onEdit={tev._onEdit} onClick={tev._onClick} onDragEnd={onTutDragEnd&&tev._onEdit?u=>onTutDragEnd(tev.id,u):null} highlightError={highlightEvId===tev.id} onDragMove={onTutDragMove}/>);}})}

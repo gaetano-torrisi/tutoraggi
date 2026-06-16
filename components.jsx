@@ -273,3 +273,87 @@ function InlineCreateAvviso({avvisi,onSaveAvviso,onCreated,onCancel,onAddMessage
     </div>
   );
 }
+
+// ── CAL CHIP FILTER ───────────────────────────────────────────────────────
+// Gruppo filtro della filter bar del calendario: i corsi/tutor del mese
+// diventano pallini-iniziali allineati sulla barra (uno per elemento,
+// proporzionale al numero). Il pulsante col conteggio apre l'elenco filtro
+// (ricerca + mostra/nascondi tutti); "Espandi" mostra i chip col nome esteso
+// (la vista precedente). L'eccedenza di pallini si raccoglie in "+N".
+//   items: [{id, name, color, initials}]
+//   isActive(id) -> bool · onToggle(id) · onShowAll() · onHideAll()
+//   readOnly: legenda di sola lettura (niente toggle/elenco)
+function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,searchPlaceholder,emptyLabel,readOnly,soft}){
+  const[expanded,setExpanded]=useState(false);
+  const[popOpen,setPopOpen]=useState(false);
+  const[query,setQuery]=useState("");
+  const[maxDots,setMaxDots]=useState(99);
+  const wrapRef=useRef(null);const dotsRef=useRef(null);
+  const DOT_W=34; // pallino 28px + gap 6px
+
+  useLayoutEffect(()=>{
+    const el=dotsRef.current;if(!el||expanded)return;
+    const calc=()=>{const w=el.clientWidth;if(w>0)setMaxDots(Math.max(1,Math.floor((w+6)/DOT_W)));};
+    calc();const ro=new ResizeObserver(calc);ro.observe(el);return()=>ro.disconnect();
+  },[expanded,items.length]);
+
+  useEffect(()=>{
+    if(!popOpen)return;
+    const h=e=>{if(wrapRef.current&&!wrapRef.current.contains(e.target))setPopOpen(false);};
+    const k=e=>{if(e.key==="Escape")setPopOpen(false);};
+    document.addEventListener("mousedown",h);document.addEventListener("keydown",k);
+    return()=>{document.removeEventListener("mousedown",h);document.removeEventListener("keydown",k);};
+  },[popOpen]);
+
+  const total=items.length;
+  if(total===0)return<span className="cfb-empty">{emptyLabel||"Nessuno"}</span>;
+  const activeCount=items.filter(it=>isActive(it.id)).length;
+
+  let shown=items,hidden=0;
+  if(!expanded&&total>maxDots){shown=items.slice(0,Math.max(1,maxDots-1));hidden=total-shown.length;}
+  const q=query.trim().toLowerCase();
+  const filtered=q?items.filter(it=>it.name.toLowerCase().includes(q)):items;
+
+  // soft = stessa resa del calendario corsi (riempimento hexToRgba(color,.35) + bordo pieno);
+  // altrimenti pallino a tinta piena (come gli slot tutor, sempre pieni nel calendario).
+  const dot=it=>{const a=isActive(it.id);
+    const st=!a?{borderColor:it.color,color:"var(--fg-faint)"}:soft?{background:hexToRgba(it.color,.35),borderColor:it.color,color:"var(--fg)"}:{background:it.color,borderColor:it.color,color:"#fff"};
+    return(<button key={it.id} className={"cfb-dot"+(a?"":" inactive")} title={it.name}
+      onClick={readOnly?undefined:()=>onToggle(it.id)} style={{cursor:readOnly?"default":"pointer",...st}}>{it.initials}</button>);};
+  const chip=it=>{const a=isActive(it.id);return(
+    <button key={it.id} className={"cfb-chip"+(a?"":" inactive")} title={it.name}
+      onClick={readOnly?undefined:()=>onToggle(it.id)}
+      style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,soft?.35:.12):"transparent",borderColor:a?(soft?hexToRgba(it.color,.45):it.color):"var(--border)",color:"var(--fg)"}}>
+      <span className="cfb-chip-dot" style={a?(soft?{background:hexToRgba(it.color,.35),border:`1.5px solid ${it.color}`,color:"var(--fg)"}:{background:it.color}):{background:"var(--fg-faint)"}}>{it.initials}</span>
+      <span className="cfb-chip-nm">{it.name}</span></button>);};
+
+  return(
+    <div className="cfb-group" ref={wrapRef}>
+      <div className="cfb-trigger-wrap">
+        {readOnly
+          ?<span className="cfb-trigger static"><span className="cfb-lbl">{label}</span><span className="cfb-cnt">{total}</span></span>
+          :<button className={"cfb-trigger"+(popOpen?" open":"")} onClick={()=>setPopOpen(o=>!o)}><span className="cfb-lbl">{label}</span><span className="cfb-cnt">{activeCount}/{total}</span><Icon name="chevDown" size={13} color="var(--fg-subtle)"/></button>}
+        {!readOnly&&popOpen&&(
+          <div className="cfb-pop">
+            <div className="cfb-pop-head">
+              <div className="cfb-pop-title">Filtra {label.toLowerCase()} visibili
+                <span className="cfb-pop-bulk"><button onClick={onShowAll}>Mostra tutti</button><button onClick={onHideAll}>Nascondi tutti</button></span>
+              </div>
+              <div className="cfb-pop-search"><Icon name="search" size={13} color="var(--fg-subtle)"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={searchPlaceholder||"Cerca…"} autoFocus/></div>
+            </div>
+            <div className="cfb-pop-list">
+              {filtered.length?filtered.map(it=>{const a=isActive(it.id);return(
+                <div key={it.id} className={"cfb-pop-row"+(a?" active":"")} onClick={()=>onToggle(it.id)}>
+                  <span className="cfb-pop-rdot" style={soft?{background:hexToRgba(it.color,.35),border:`1.5px solid ${it.color}`,color:"var(--fg)"}:{background:it.color}}>{it.initials}</span>
+                  <span className="cfb-pop-nm">{it.name}</span>
+                  <span className="cfb-pop-tgl"/>
+                </div>);}):<div className="cfb-pop-empty">Nessun risultato</div>}
+            </div>
+          </div>)}
+      </div>
+      {expanded
+        ?<div className="cfb-named">{items.map(chip)}</div>
+        :<div className="cfb-dots" ref={dotsRef}>{shown.map(dot)}{hidden>0&&<button className="cfb-more" onClick={()=>setExpanded(true)} title={`Altri ${hidden}`}>+{hidden}</button>}</div>}
+      <button className={"cfb-expand"+(expanded?" on":"")} onClick={()=>setExpanded(e=>!e)}>{expanded?"Comprimi":"Espandi"}<Icon name="chevDown" size={12} color="currentColor"/></button>
+    </div>);
+}
