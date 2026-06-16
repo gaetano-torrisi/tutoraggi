@@ -591,14 +591,14 @@ function App({user}){
         <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer",flexShrink:0,alignSelf:"flex-start",marginTop:2}}>
           <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi corsi":"Mostra corsi"}
         </button>
-        {corsiForBar.length>0&&<><div className="filterbar-divider"/><CalChipFilter label="Corsi" readOnly
+        {corsiForBar.length>0&&<><div className="filterbar-divider"/><CalChipFilter label="Corsi" readOnly soft
           items={corsiForBar.map(a=>({id:a.id,name:a.nome,color:(a.colore&&a.colore.startsWith("#"))?a.colore:"#4f86c6",initials:deriveInitials(a.nome)}))}
           isActive={()=>true}/></>}
       </div>)}
       {isCalendar&&view==="avviso"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totAvOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
-        <CalChipFilter label="Corsi"
+        <CalChipFilter label="Corsi" soft
           items={corsiThisMonth.map(a=>({id:a.id,name:a.nome,color:(a.colore&&a.colore.startsWith("#"))?a.colore:"#4f86c6",initials:deriveInitials(a.nome)}))}
           isActive={id=>activeCorsi.has(id)} onToggle={toggleAv}
           onShowAll={()=>setActiveCorsi(p=>new Set([...p,...corsiThisMonth.map(a=>a.id)]))}

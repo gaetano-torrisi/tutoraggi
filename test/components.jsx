@@ -283,7 +283,7 @@ function InlineCreateAvviso({avvisi,onSaveAvviso,onCreated,onCancel,onAddMessage
 //   items: [{id, name, color, initials}]
 //   isActive(id) -> bool · onToggle(id) · onShowAll() · onHideAll()
 //   readOnly: legenda di sola lettura (niente toggle/elenco)
-function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,searchPlaceholder,emptyLabel,readOnly}){
+function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,searchPlaceholder,emptyLabel,readOnly,soft}){
   const[expanded,setExpanded]=useState(false);
   const[popOpen,setPopOpen]=useState(false);
   const[query,setQuery]=useState("");
@@ -314,15 +314,16 @@ function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,search
   const q=query.trim().toLowerCase();
   const filtered=q?items.filter(it=>it.name.toLowerCase().includes(q)):items;
 
-  const dot=it=>{const a=isActive(it.id);return(
-    <button key={it.id} className={"cfb-dot"+(a?"":" inactive")} title={it.name}
-      onClick={readOnly?undefined:()=>onToggle(it.id)}
-      style={{cursor:readOnly?"default":"pointer",...(a?{background:it.color,borderColor:it.color,color:"#fff"}:{borderColor:it.color})}}>
-      {it.initials}</button>);};
+  // soft = stessa resa del calendario corsi (riempimento hexToRgba(color,.35) + bordo pieno);
+  // altrimenti pallino a tinta piena (come gli slot tutor, sempre pieni nel calendario).
+  const dot=it=>{const a=isActive(it.id);
+    const st=!a?{borderColor:it.color,color:"var(--fg-faint)"}:soft?{background:hexToRgba(it.color,.35),borderColor:it.color,color:"var(--fg)"}:{background:it.color,borderColor:it.color,color:"#fff"};
+    return(<button key={it.id} className={"cfb-dot"+(a?"":" inactive")} title={it.name}
+      onClick={readOnly?undefined:()=>onToggle(it.id)} style={{cursor:readOnly?"default":"pointer",...st}}>{it.initials}</button>);};
   const chip=it=>{const a=isActive(it.id);return(
     <button key={it.id} className={"cfb-chip"+(a?"":" inactive")} title={it.name}
       onClick={readOnly?undefined:()=>onToggle(it.id)}
-      style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,.12):"transparent",borderColor:a?it.color:"var(--border)",color:"var(--fg)"}}>
+      style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,soft?.35:.12):"transparent",borderColor:a?it.color:"var(--border)",color:"var(--fg)"}}>
       <span className="cfb-chip-dot" style={{background:a?it.color:"var(--fg-faint)"}}>{it.initials}</span>
       <span className="cfb-chip-nm">{it.name}</span></button>);};
 
