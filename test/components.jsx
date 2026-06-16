@@ -324,7 +324,7 @@ function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,search
     <button key={it.id} className={"cfb-chip"+(a?"":" inactive")} title={it.name}
       onClick={readOnly?undefined:()=>onToggle(it.id)}
       style={{cursor:readOnly?"default":"pointer",background:a?hexToRgba(it.color,soft?.35:.12):"transparent",borderColor:a?it.color:"var(--border)",color:"var(--fg)"}}>
-      <span className="cfb-chip-dot" style={{background:a?it.color:"var(--fg-faint)"}}>{it.initials}</span>
+      <span className="cfb-chip-dot" style={a?(soft?{background:hexToRgba(it.color,.35),border:`1.5px solid ${it.color}`,color:"var(--fg)"}:{background:it.color}):{background:"var(--fg-faint)"}}>{it.initials}</span>
       <span className="cfb-chip-nm">{it.name}</span></button>);};
 
   return(
@@ -344,7 +344,7 @@ function CalChipFilter({label,items,isActive,onToggle,onShowAll,onHideAll,search
             <div className="cfb-pop-list">
               {filtered.length?filtered.map(it=>{const a=isActive(it.id);return(
                 <div key={it.id} className={"cfb-pop-row"+(a?" active":"")} onClick={()=>onToggle(it.id)}>
-                  <span className="cfb-pop-rdot" style={{background:it.color}}>{it.initials}</span>
+                  <span className="cfb-pop-rdot" style={soft?{background:hexToRgba(it.color,.35),border:`1.5px solid ${it.color}`,color:"var(--fg)"}:{background:it.color}}>{it.initials}</span>
                   <span className="cfb-pop-nm">{it.name}</span>
                   <span className="cfb-pop-tgl"/>
                 </div>);}):<div className="cfb-pop-empty">Nessun risultato</div>}
