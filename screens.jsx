@@ -234,7 +234,6 @@ function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],ca
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
       <div><div className="page-breadcrumb">Anagrafiche · {anagraficaCorsi.length} corsi registrati</div><h1 className="page-title">Corsi</h1><p className="page-desc">Corsi e attività formative collegate agli avvisi.</p></div>
       {canEdit&&<div style={{display:"flex",gap:8}}>
-        <button className="btn" data-variant="outline" style={{display:"flex",alignItems:"center",gap:6}}><Icon name="download" size={14}/>Esporta</button>
         <button className="btn" data-variant="accent" onClick={addNew} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="plus" size={14} color="#fff"/>Nuovo corso</button>
       </div>}
     </div>
