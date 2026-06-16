@@ -275,6 +275,7 @@ function App({user}){
   const monthPickerRef=useRef();
 
   const slotH=BASE_SLOT_H*ZOOM_LEVELS[zoomIdx];const colW=BASE_COL_W*ZOOM_LEVELS[zoomIdx];const month=MONTHS[monthIdx];
+  const today=new Date();const todayCalIdx=MONTHS.findIndex(m=>m.year===today.getFullYear()&&m.month===today.getMonth());
   const isSuperAdmin=role==="superadmin";const isAdmin=role==="admin"||isSuperAdmin;const isUser=role==="user"||isAdmin;const isViewer=role==="viewer";const canEdit=editMode&&!isViewer;
   const perms=isSuperAdmin?ALL_PERMS:{...(DEFAULT_ROLE_PERMS[role]||DEFAULT_ROLE_PERMS.viewer),...((settings.rolePermissions||{})[role]||{})};
   const isCalendar=activeScreen==="calendar"||activeScreen==="verifica";
@@ -458,6 +459,7 @@ function App({user}){
   const userInitials=(user?.email||"").slice(0,2).toUpperCase();
 
   function weekStartForDay(mIdx,day){const m=MONTHS[mIdx];const d=new Date(m.year,m.month,day);const dow=d.getDay()||7;d.setDate(d.getDate()-(dow-1));return d;}
+  function goToday(){if(todayCalIdx<0)return;if(activeScreen!=="calendar")setActiveScreen("calendar");navigateToError(MONTHS[todayCalIdx].key,null,today.getDate());}
   function navigateToError(monthKey,evId,day){clearTimeout(highlightTimerRef.current);const idx=monthKey?MONTHS.findIndex(m=>m.key===monthKey):monthIdx;if(idx>=0){if(day!=null){if(idx!==monthIdx){weekDayHintRef.current={idx,day};setMonthIdx(idx);}else setWeekStart(weekStartForDay(idx,day));}else if(idx!==monthIdx)setMonthIdx(idx);}setCenterTarget({evId,day,n:Date.now()});if(evId){setHighlightEvId(null);setTimeout(()=>{setHighlightEvId(evId);highlightTimerRef.current=setTimeout(()=>setHighlightEvId(null),3100);},0);}}
 
   function handleNavClick(id){
@@ -527,6 +529,8 @@ function App({user}){
             <button className={`tab-strip-btn${calView==="day"?" active":""}`} onClick={()=>setCalView("day")}>Giorno</button>
             <button className={`tab-strip-btn${calView==="week"?" active":""}`} onClick={()=>setCalView("week")}>Sett.</button>
             <button className={`tab-strip-btn${calView==="month"?" active":""}`} onClick={()=>setCalView("month")}>Mese</button>
+            <span style={{width:1,alignSelf:"stretch",background:"var(--divider)",margin:"0 2px"}}/>
+            <button className="tab-strip-btn" onClick={goToday} disabled={todayCalIdx<0} title={todayCalIdx<0?"La data odierna è fuori dal periodo del progetto":"Vai a oggi e centra la giornata odierna"} style={{display:"flex",alignItems:"center",gap:5,color:todayCalIdx<0?"var(--fg-faint)":"var(--accent-strong)",cursor:todayCalIdx<0?"not-allowed":"pointer"}}><Icon name="calendar" size={12} color={todayCalIdx<0?"var(--fg-faint)":"var(--accent-strong)"}/>Oggi</button>
           </div>
           {calView==="week"&&<button onClick={()=>navWeek(+1)} className="btn" data-variant="ghost" data-size="icon-sm" title="Settimana successiva"><Icon name="chevRight" size={14}/></button>}
         </div>
