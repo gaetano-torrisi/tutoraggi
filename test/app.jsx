@@ -582,19 +582,28 @@ function App({user}){
       {isCalendar&&view==="tutoraggio"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totTOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
-        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Tutor</span>
-        {tutors.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessun tutor</span>:[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>{const active=activeTutorIds===null||activeTutorIds.has(t.id),col=t.color||"var(--accent)";const hex=col.startsWith("#")?col:"#4f86c6";return<button key={t.id} onClick={()=>toggleTut(t.id)} className="tutor-chip" style={{border:`1px solid ${active?col:"var(--border)"}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)",opacity:active?1:.5}}><span className="tutor-chip-dot" style={{background:active?col:"var(--bg-sunken)"}}>{t.cognome[0]||""}</span>{t.cognome||t.nome}</button>;})}
+        <CalChipFilter label="Tutor"
+          items={[...tutors].sort((a,b)=>a.cognome.localeCompare(b.cognome)).map(t=>({id:t.id,name:`${t.cognome} ${t.nome}`.trim(),color:(t.color&&t.color.startsWith("#"))?t.color:"#4f86c6",initials:((t.cognome[0]||"")+(t.nome[0]||"")).toUpperCase()}))}
+          isActive={id=>activeTutorIds===null||activeTutorIds.has(id)} onToggle={toggleTut}
+          onShowAll={()=>setActiveTutorIds(null)} onHideAll={()=>setActiveTutorIds(new Set())}
+          searchPlaceholder="Cerca tutor…" emptyLabel="Nessun tutor"/>
         <div className="filterbar-divider"/>
-        <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer"}}>
+        <button onClick={()=>setShowOvr(o=>!o)} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:100,border:`1.5px solid ${showOvr?"var(--accent)":"var(--border)"}`,background:showOvr?"var(--accent)":"transparent",color:showOvr?"#fff":"var(--fg-muted)",fontSize:11.5,fontWeight:600,cursor:"pointer",flexShrink:0,alignSelf:"flex-start",marginTop:2}}>
           <Icon name={showOvr?"eyeOff":"eye"} size={13} color={showOvr?"#fff":"currentColor"}/>{showOvr?"Nascondi corsi":"Mostra corsi"}
         </button>
-        {corsiForBar.length>0&&<><div className="filterbar-divider"/><span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Corsi</span>{corsiForBar.map(a=>{const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<span key={a.id} className="avviso-chip" style={{background:hexToRgba(hex,.12),border:`1px solid ${hexToRgba(hex,.4)}`,color:"var(--fg)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</span>;})}</>}
+        {corsiForBar.length>0&&<><div className="filterbar-divider"/><CalChipFilter label="Corsi" readOnly
+          items={corsiForBar.map(a=>({id:a.id,name:a.nome,color:(a.colore&&a.colore.startsWith("#"))?a.colore:"#4f86c6",initials:deriveInitials(a.nome)}))}
+          isActive={()=>true}/></>}
       </div>)}
       {isCalendar&&view==="avviso"&&(<div className="filterbar">
         <div className="ore-display"><Icon name="clock" size={16} color="var(--accent)"/><div><div className="ore-value">{fmtOreMin(totAvOre)}</div><div className="ore-label">Ore mese</div></div></div>
         <div className="filterbar-divider"/>
-        <span style={{fontSize:10.5,fontWeight:700,color:"var(--fg-subtle)",textTransform:"uppercase",letterSpacing:".06em"}}>Corsi</span>
-        {corsiThisMonth.length===0?<span style={{fontSize:11,color:"var(--fg-faint)",fontStyle:"italic"}}>Nessuno</span>:corsiThisMonth.map(a=>{const active=activeCorsi.has(a.id);const hex=(a.colore||"#4f86c6").startsWith("#")?a.colore||"#4f86c6":"#4f86c6";return<button key={a.id} onClick={()=>toggleAv(a.id)} className="avviso-chip" style={{border:`1.5px solid ${hexToRgba(hex,active?.8:.3)}`,background:active?hexToRgba(hex,.12):"transparent",color:active?"var(--fg)":"var(--fg-muted)"}}><span style={{width:8,height:8,borderRadius:2,background:a.colore||"var(--accent)"}}/>{a.nome}</button>;})}
+        <CalChipFilter label="Corsi"
+          items={corsiThisMonth.map(a=>({id:a.id,name:a.nome,color:(a.colore&&a.colore.startsWith("#"))?a.colore:"#4f86c6",initials:deriveInitials(a.nome)}))}
+          isActive={id=>activeCorsi.has(id)} onToggle={toggleAv}
+          onShowAll={()=>setActiveCorsi(p=>new Set([...p,...corsiThisMonth.map(a=>a.id)]))}
+          onHideAll={()=>setActiveCorsi(p=>{const n=new Set(p);corsiThisMonth.forEach(a=>n.delete(a.id));return n;})}
+          searchPlaceholder="Cerca corso…" emptyLabel="Nessuno"/>
       </div>)}
 
       <div className="screen-area" style={showVerificaPanel?{flexDirection:"row"}:isCalendar&&calView!=="month"?{overflow:"hidden"}:{}}>
