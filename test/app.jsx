@@ -316,7 +316,6 @@ function App({user}){
       if(s.defaultZoom!=null)setZoomIdx(s.defaultZoom);
       if(s.defaultCalView)setCalView(s.defaultCalView);
       if(s.defaultCalMode)setView(s.defaultCalMode);
-      if(s.density)document.documentElement.setAttribute("data-density",s.density);
       if(s.appSubtitle){setAppSubtitle(s.appSubtitle);const el=document.getElementById("login-subtitle-text");if(el)el.textContent=s.appSubtitle;}
       if(s.logoBase64){localStorage.setItem("logoBase64",s.logoBase64);applyFavicon(s.logoBase64);}
       setLoading(false);});
