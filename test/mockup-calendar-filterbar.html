@@ -45,7 +45,7 @@ body{
 /* ════════ Meta header del mockup (non fa parte dell'app) ════════ */
 .mockup-meta{ max-width:1320px; margin:0 auto 18px; display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; }
 .mockup-meta h1{ font-family:"Fraunces","Inter Tight",serif; font-size:23px; font-weight:600; letter-spacing:-.01em; margin:0 0 4px; color:var(--fg); }
-.mockup-meta p{ margin:0; font-size:12.5px; color:var(--fg-subtle); max-width:600px; }
+.mockup-meta p{ margin:0; font-size:12.5px; color:var(--fg-subtle); max-width:620px; }
 .meta-controls{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .theme-toggle{ display:inline-flex; padding:3px; gap:2px; background:var(--bg-sunken); border:1px solid var(--border); border-radius:100px; }
 .theme-toggle button{ border:none;background:none;padding:7px 11px;border-radius:100px;font-size:11.5px;font-weight:700;color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:5px; }
@@ -91,41 +91,81 @@ body{
 .viz-pill{display:flex;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:100px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;}
 .avatar-mini{width:30px;height:30px;border-radius:999px;background:var(--brand-navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
 
-/* ══════════ FILTERBAR (proposta) ══════════ */
-.filterbar{ background:var(--bg-elev); border-bottom:1px solid var(--border); padding:9px 20px; display:flex; align-items:flex-start; gap:14px; flex-shrink:0; }
-.fb-ore{ display:flex; align-items:center; gap:8px; flex-shrink:0; height:34px; }
+/* ══════════ FILTERBAR (proposta: pallini-iniziali) ══════════ */
+.filterbar{ background:var(--bg-elev); border-bottom:1px solid var(--border); padding:9px 20px; display:flex; align-items:flex-start; gap:14px; flex-shrink:0; position:relative; z-index:40; }
+.fb-ore{ display:flex; align-items:center; gap:8px; flex-shrink:0; height:36px; }
 .fb-ore svg{flex-shrink:0;}
 .ore-value{ font-size:21px; font-weight:700; letter-spacing:-.02em; color:var(--fg); line-height:1; }
 .ore-label{ font-size:9.5px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; line-height:1.2; }
-.fb-divider{ width:1px; align-self:stretch; min-height:34px; background:var(--divider); flex-shrink:0; }
+.fb-divider{ width:1px; align-self:stretch; min-height:36px; background:var(--divider); flex-shrink:0; }
 
-/* gruppo chip (Corsi / Tutor / Legenda) */
+/* gruppo (Corsi / Tutor / Legenda) */
 .fb-group{ display:flex; align-items:flex-start; gap:10px; flex:1; min-width:0; }
-.fb-group-label{ display:flex; flex-direction:column; gap:1px; flex-shrink:0; padding-top:8px; }
-.fb-group-label .lbl{ font-size:10px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; line-height:1; }
-.fb-group-label .cnt{ font-family:"JetBrains Mono",monospace; font-size:10px; font-weight:600; color:var(--fg-faint); }
 
-/* contenitore chip: 1 riga di default, riempie fino al bordo destro */
-.fb-chips{ position:relative; flex:1; min-width:0; display:flex; align-items:center; gap:7px; overflow:hidden; height:34px; }
-.fb-chips.expanded{ flex-wrap:wrap; overflow:visible; height:auto; align-content:flex-start; }
+/* trigger pill: apre l'elenco filtro */
+.grp-trigger-wrap{ position:relative; flex-shrink:0; }
+.grp-trigger{ display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 12px; border-radius:100px; border:1.5px solid var(--border); background:var(--bg-elev); cursor:pointer; transition:all .15s; }
+.grp-trigger:hover{ border-color:var(--border-strong); background:var(--bg-hover); }
+.grp-trigger.open{ border-color:var(--accent); background:var(--accent-soft); }
+.grp-trigger .lbl{ font-size:10.5px; font-weight:700; color:var(--fg-subtle); text-transform:uppercase; letter-spacing:.06em; }
+.grp-trigger .cnt{ font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:700; color:var(--fg); }
+.grp-trigger svg{ color:var(--fg-subtle); transition:transform .15s; }
+.grp-trigger.open svg{ transform:rotate(180deg); }
+.grp-trigger.static{ cursor:default; background:transparent; border-color:transparent; padding-left:0; }
+.grp-trigger.static:hover{ background:transparent; }
 
-.chip{ display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px; border-radius:100px; cursor:pointer; font-size:11.5px; font-weight:600; border:1.5px solid transparent; transition:background .12s,border-color .12s,opacity .12s; flex-shrink:0; max-width:178px; }
-.chip .sw{ width:8px;height:8px;border-radius:2px;flex-shrink:0; }
-.chip .av-dot{ width:19px;height:19px;border-radius:999px;color:#fff;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:-3px; }
+/* fila di pallini-iniziali, riempie la barra in funzione del numero */
+.dots{ position:relative; flex:1; min-width:0; display:flex; align-items:center; gap:6px; overflow:hidden; height:36px; }
+.dots.expanded{ flex-wrap:wrap; overflow:visible; height:auto; gap:7px; align-content:flex-start; padding-top:1px; }
+
+.dot{ width:30px; height:30px; border-radius:999px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; letter-spacing:.02em; color:#fff; cursor:pointer; border:2px solid transparent; transition:transform .1s, box-shadow .1s, opacity .12s; box-shadow:var(--shadow-xs); }
+.dot:hover{ transform:translateY(-1px); box-shadow:var(--shadow-sm); }
+.dot.inactive{ background:transparent !important; color:var(--fg-faint); border-style:dashed; box-shadow:none; opacity:.85; }
+
+.more-dot{ width:30px; height:30px; border-radius:999px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:800; color:var(--fg-muted); background:var(--bg-sunken); border:1.5px dashed var(--border-strong); cursor:pointer; margin-left:auto; }
+.more-dot:hover{ background:var(--bg-hover); color:var(--fg); }
+
+/* chip con NOME (vista espansa = attuale) */
+.named{ flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding-top:1px; }
+.chip{ display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 11px 0 5px; border-radius:100px; cursor:pointer; font-size:11.5px; font-weight:600; border:1.5px solid transparent; transition:all .12s; max-width:280px; }
+.chip .cdot{ width:21px;height:21px;border-radius:999px;color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
 .chip .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.chip.inactive{ opacity:.45; }
+.chip.inactive{ opacity:.5; }
 
-.more-pill{ display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 11px; border-radius:100px; border:1.5px dashed var(--border-strong); background:var(--bg-sunken); color:var(--fg-muted); font-size:11px; font-weight:700; cursor:pointer; flex-shrink:0; white-space:nowrap; margin-left:auto; }
-.more-pill:hover{ background:var(--bg-hover); color:var(--fg); }
-
-.fb-expand{ display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-elev); color:var(--fg-muted); font-size:11px; font-weight:600; cursor:pointer; flex-shrink:0; white-space:nowrap; align-self:flex-start; margin-top:3px; }
+.fb-expand{ display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 11px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-elev); color:var(--fg-muted); font-size:11px; font-weight:600; cursor:pointer; flex-shrink:0; white-space:nowrap; align-self:flex-start; margin-top:3px; }
 .fb-expand:hover{ background:var(--bg-hover); color:var(--fg); border-color:var(--border-strong); }
 .fb-expand svg{ transition:transform .15s; }
 .fb-expand.on svg{ transform:rotate(180deg); }
 
-.overlay-pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--fg-muted);font-size:11.5px;font-weight:600;cursor:pointer;flex-shrink:0;align-self:flex-start;margin-top:2px;}
+.overlay-pill{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:100px;border:1.5px solid var(--border);background:transparent;color:var(--fg-muted);font-size:11.5px;font-weight:600;cursor:pointer;flex-shrink:0;align-self:flex-start;margin-top:2px;}
 
-/* ── Calendario (mock semplificato) ── */
+/* ── Popover elenco filtro (dallo screenshot) ── */
+.popover{ position:absolute; top:calc(100% + 9px); left:0; width:360px; background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:60; opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-6px) scale(.98); transform-origin:top left; transition:opacity .15s, transform .15s, visibility .15s; }
+.popover.open{ opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+.popover-head{ padding:12px 14px 10px; border-bottom:1px solid var(--divider); }
+.popover-title{ font-size:12px; font-weight:700; color:var(--fg); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.popover-bulk{ display:flex; gap:14px; }
+.popover-bulk button{ background:none; border:none; font-size:11px; font-weight:700; color:var(--accent-strong); cursor:pointer; padding:0; }
+.popover-bulk button:hover{ text-decoration:underline; }
+.popover-search{ position:relative; }
+.popover-search input{ width:100%; height:34px; padding:0 12px 0 34px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-sunken); color:var(--fg); font-size:12px; }
+.popover-search input:focus{ outline:none; border-color:var(--accent); background:var(--bg-elev); box-shadow:0 0 0 3px var(--accent-soft); }
+.popover-search svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--fg-subtle); pointer-events:none; }
+.popover-list{ max-height:300px; overflow-y:auto; padding:6px; }
+.popover-row{ display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:8px; cursor:pointer; user-select:none; }
+.popover-row:hover{ background:var(--bg-hover); }
+.popover-row .rdot{ width:24px;height:24px;border-radius:999px;flex-shrink:0;color:#fff;font-size:8.5px;font-weight:800;display:flex;align-items:center;justify-content:center; }
+.popover-row .pname{ flex:1; font-size:12px; font-weight:500; color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.popover-row.inactive .pname{ color:var(--fg-faint); }
+.popover-row.inactive .rdot{ opacity:.4; }
+.popover-row .phours{ font-family:"JetBrains Mono",monospace; font-size:10.5px; color:var(--fg-subtle); flex-shrink:0; }
+.tgl{ width:30px; height:18px; border-radius:999px; background:var(--border-strong); position:relative; flex-shrink:0; transition:background .15s; }
+.tgl::after{ content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:999px; background:#fff; transition:transform .15s; box-shadow:var(--shadow-xs); }
+.popover-row.active .tgl{ background:var(--accent); }
+.popover-row.active .tgl::after{ transform:translateX(12px); }
+.popover-empty{ padding:22px 14px; text-align:center; font-size:11.5px; color:var(--fg-faint); font-style:italic; }
+
+/* ── Calendario mock ── */
 .cal-wrap{ flex:1; min-height:0; overflow:auto; padding:16px 20px 20px; background:var(--bg); }
 .cal-grid{ position:relative; display:grid; grid-template-columns:54px repeat(10,minmax(86px,1fr)); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; background:var(--bg-elev); min-width:920px; }
 .cal-cell{ border-right:1px solid var(--divider); border-bottom:1px solid var(--divider); position:relative; }
@@ -137,11 +177,6 @@ body{
 .evt .t{ font-family:"JetBrains Mono",monospace; font-size:8.8px; font-weight:700; opacity:.7; display:block; }
 .evt .n{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
 
-/* callout */
-.callout{ position:absolute; z-index:55; background:var(--brand-navy); color:#fff; padding:9px 13px; border-radius:10px; font-size:11px; font-weight:600; box-shadow:var(--shadow-lg); max-width:250px; line-height:1.4; opacity:0; transform:translateY(4px); transition:opacity .2s,transform .2s; pointer-events:none; }
-.callout::after{ content:""; position:absolute; top:-5px; left:24px; width:10px; height:10px; background:var(--brand-navy); transform:rotate(45deg); }
-.callout.show{ opacity:1; transform:translateY(0); }
-
 /* ── Rationale ── */
 .rationale{ max-width:1320px; margin:26px auto 0; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
 .rationale .card{ background:var(--bg-elev); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 18px; box-shadow:var(--shadow-xs); }
@@ -152,7 +187,7 @@ body{
 .rationale b{ color:var(--fg); }
 @media (max-width:1040px){ .rationale{ grid-template-columns:1fr; } }
 
-.hint{ max-width:1320px; margin:14px auto 0; font-size:12px; color:var(--fg-subtle); display:flex; align-items:center; gap:8px; }
+.hint{ max-width:1320px; margin:14px auto 0; font-size:12px; color:var(--fg-subtle); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .hint kbd{ font-family:"JetBrains Mono",monospace; font-size:11px; background:var(--bg-sunken); border:1px solid var(--border); border-radius:5px; padding:2px 7px; color:var(--fg-muted); }
 </style>
 </head>
@@ -161,7 +196,7 @@ body{
 <div class="mockup-meta">
   <div>
     <h1>Filter bar del calendario — mockup di valutazione</h1>
-    <p>I corsi del mese riempiono una sola riga fino al bordo destro; l'eccedenza si raccoglie in <b>+N</b>. Il pulsante <b>Espandi</b> riapre la vista attuale (tutti i corsi a capo). Cambiando mese cambia l'elenco.</p>
+    <p>I corsi del mese diventano <b>pallini colorati con le iniziali</b>, allineati lungo la barra (uno per corso). Il pulsante <b>conteggio</b> apre l'elenco filtro con ricerca e mostra/nascondi tutti; <b>Espandi</b> apre i chip con nome esteso (vista attuale). Cambiando mese cambia l'elenco.</p>
   </div>
   <div class="meta-controls">
     <div class="theme-toggle" id="themeToggle">
@@ -173,7 +208,7 @@ body{
 
 <div class="hint">
   <span>Prova:</span>
-  <kbd>◀ ▶ mese</kbd> cambia l'elenco corsi · <kbd>Espandi</kbd> mostra tutti a capo · <kbd>click su un chip</kbd> lo mostra/nasconde dal calendario · <kbd>Tutoraggi / Corsi</kbd> cambia modulo
+  <kbd>◀ ▶ mese</kbd> cambia l'elenco · <kbd>click pallino</kbd> mostra/nasconde dal calendario · <kbd>Corsi 10/14 ⌄</kbd> apre l'elenco filtro · <kbd>Espandi</kbd> nomi per esteso · <kbd>Tutoraggi / Corsi</kbd> cambia modulo
 </div>
 
 <div class="app-frame">
@@ -222,62 +257,57 @@ body{
       <div class="avatar-mini">GA</div>
     </div>
 
-    <!-- FILTERBAR — renderizzata via JS -->
     <div class="filterbar" id="filterbar"></div>
 
-    <!-- Calendario mock -->
     <div class="cal-wrap">
       <div class="cal-grid" id="calGrid"></div>
     </div>
   </div>
-
-  <div class="callout" id="callout"></div>
 </div>
 
 <div class="rationale">
   <div class="card">
-    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12H3M21 6H3M21 18h-7"/></svg>Una riga, larga quanto serve</h3>
-    <p>I chip riempiono tutta la larghezza disponibile <b>fino al bordo destro</b>. Se i corsi del mese ci stanno, li vedi tutti senza espandere; se sono troppi, l'eccedenza diventa un <b>+N</b> invece di rubare righe al calendario.</p>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/></svg>Pallini lungo la barra</h3>
+    <p>Ogni corso del mese è un <b>pallino con le sue iniziali</b>, colorato come nel calendario. Occupano la barra in proporzione a quanti sono: pochi corsi → riga corta, molti → riga lunga. Click sul pallino = mostra/nasconde quel corso dal calendario.</p>
   </div>
   <div class="card">
-    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="17" rx="2"/></svg>Sempre filtrato per mese</h3>
-    <p>L'elenco mostra <b>solo i corsi del mese visualizzato</b>, com'è adesso. Cambiando mese con le frecce, i chip si aggiornano: alcuni mesi avranno pochi corsi (riga corta), altri molti (+N).</p>
+    <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Filtro a elenco</h3>
+    <p>Il pulsante con il <b>conteggio</b> (es. "Corsi 10/14") apre l'elenco filtro: <b>ricerca</b> per nome, <b>mostra/nascondi tutti</b> e i nomi completi con le ore — utile quando i corsi sono molti e le iniziali non bastano.</p>
   </div>
   <div class="card">
     <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 13 5 5 5-5M7 6l5 5 5-5"/></svg>Espandi = vista di oggi</h3>
-    <p>Il pulsante <b>Espandi</b> riporta esattamente al comportamento attuale: tutti i corsi elencati uno dopo l'altro, a capo su più righe. Niente viene perso, è solo nascosto finché non serve.</p>
+    <p>Il pulsante <b>Espandi</b> trasforma i pallini nei <b>chip con nome per esteso</b>, a capo su più righe: esattamente la barra attuale. Per leggere tutto in chiaro senza aprire l'elenco.</p>
   </div>
 </div>
 
 <script>
 /* ════════ Dati demo ════════ */
 const COURSES = {
-  c1:{id:"c1",name:"EHT — Benessere Aziendale: Etica e Collaborazione per un Futuro Sostenibile",hours:24,color:"#4F86C6"},
-  c2:{id:"c2",name:"Addetto amministrativo segretariale - 7248",hours:40,color:"#5FAE69"},
-  c3:{id:"c3",name:"Addetto amministrativo segretariale - 7258",hours:40,color:"#C9A227"},
-  c4:{id:"c4",name:"Mediatore interculturale - 7618",hours:32,color:"#D9622B"},
-  c5:{id:"c5",name:"Tecnico produzione pagine web - 7807",hours:48,color:"#7A4FC9"},
-  c6:{id:"c6",name:"Operatore riqualificazione energetica - 10309",hours:36,color:"#2FA39A"},
-  c7:{id:"c7",name:"Darwin - Uso dell'AI nei processi aziendali",hours:16,color:"#C0392B"},
-  c8:{id:"c8",name:"Beentouch - Uso dell'AI nei processi aziendali",hours:16,color:"#3E6FB8"},
-  c9:{id:"c9",name:"Winard - Uso dell'AI nei processi aziendali",hours:16,color:"#8E6C3A"},
-  c10:{id:"c10",name:"Sapegis - Uso dell'AI nei processi aziendali",hours:16,color:"#B5538A"},
-  c11:{id:"c11",name:"EHT - Uso dell'AI nei processi aziendali",hours:16,color:"#5B8C3E"},
-  c12:{id:"c12",name:"Logiscool - Coding e robotica - 8841",hours:28,color:"#1A6FB0"},
-  c13:{id:"c13",name:"Vertia - Sicurezza sui luoghi di lavoro - 9012",hours:20,color:"#C77B1A"},
-  c14:{id:"c14",name:"NovaTech - Competenze digitali avanzate - 9433",hours:24,color:"#4FA8D8"},
+  c1:{id:"c1",name:"EHT — Benessere Aziendale: Etica e Collaborazione per un Futuro Sostenibile",ini:"EH",hours:24,color:"#4F86C6"},
+  c2:{id:"c2",name:"Addetto amministrativo segretariale - 7248",ini:"A1",hours:40,color:"#5FAE69"},
+  c3:{id:"c3",name:"Addetto amministrativo segretariale - 7258",ini:"A2",hours:40,color:"#C9A227"},
+  c4:{id:"c4",name:"Mediatore interculturale - 7618",ini:"MI",hours:32,color:"#D9622B"},
+  c5:{id:"c5",name:"Tecnico produzione pagine web - 7807",ini:"TW",hours:48,color:"#7A4FC9"},
+  c6:{id:"c6",name:"Operatore riqualificazione energetica - 10309",ini:"OE",hours:36,color:"#2FA39A"},
+  c7:{id:"c7",name:"Darwin - Uso dell'AI nei processi aziendali",ini:"DA",hours:16,color:"#C0392B"},
+  c8:{id:"c8",name:"Beentouch - Uso dell'AI nei processi aziendali",ini:"BE",hours:16,color:"#3E6FB8"},
+  c9:{id:"c9",name:"Winard - Uso dell'AI nei processi aziendali",ini:"WI",hours:16,color:"#8E6C3A"},
+  c10:{id:"c10",name:"Sapegis - Uso dell'AI nei processi aziendali",ini:"SA",hours:16,color:"#B5538A"},
+  c11:{id:"c11",name:"EHT - Uso dell'AI nei processi aziendali",ini:"EU",hours:16,color:"#5B8C3E"},
+  c12:{id:"c12",name:"Logiscool - Coding e robotica - 8841",ini:"LO",hours:28,color:"#1A6FB0"},
+  c13:{id:"c13",name:"Vertia - Sicurezza sui luoghi di lavoro - 9012",ini:"VE",hours:20,color:"#C77B1A"},
+  c14:{id:"c14",name:"NovaTech - Competenze digitali avanzate - 9433",ini:"NO",hours:24,color:"#4FA8D8"},
 };
 const TUTORS = {
-  t1:{id:"t1",name:"Bianchi",hours:64,color:"#4F86C6"},
-  t2:{id:"t2",name:"Russo",hours:52,color:"#5FAE69"},
-  t3:{id:"t3",name:"Esposito",hours:40,color:"#C9A227"},
-  t4:{id:"t4",name:"Romano",hours:36,color:"#D9622B"},
-  t5:{id:"t5",name:"Colombo",hours:48,color:"#7A4FC9"},
-  t6:{id:"t6",name:"Ferrari",hours:28,color:"#2FA39A"},
-  t7:{id:"t7",name:"Greco",hours:22,color:"#C0392B"},
-  t8:{id:"t8",name:"Marino",hours:22,color:"#3E6FB8"},
+  t1:{id:"t1",name:"Bianchi Marco",ini:"BM",hours:64,color:"#4F86C6"},
+  t2:{id:"t2",name:"Russo Elena",ini:"RE",hours:52,color:"#5FAE69"},
+  t3:{id:"t3",name:"Esposito Luca",ini:"EL",hours:40,color:"#C9A227"},
+  t4:{id:"t4",name:"Romano Giulia",ini:"RG",hours:36,color:"#D9622B"},
+  t5:{id:"t5",name:"Colombo Sara",ini:"CS",hours:48,color:"#7A4FC9"},
+  t6:{id:"t6",name:"Ferrari Paolo",ini:"FP",hours:28,color:"#2FA39A"},
+  t7:{id:"t7",name:"Greco Anna",ini:"GA",hours:22,color:"#C0392B"},
+  t8:{id:"t8",name:"Marino Davide",ini:"MD",hours:22,color:"#3E6FB8"},
 };
-// quali corsi/tutor sono presenti in ciascun mese (scoping per mese, come l'app attuale)
 const MONTHS = [
   {label:"Maggio 2026", ore:"218h", courses:["c2","c3","c5","c7","c13"], tutors:["t1","t2","t3","t5"]},
   {label:"Giugno 2026", ore:"544h", courses:["c1","c2","c3","c4","c5","c6","c7","c8","c9","c10","c11","c13","c14"], tutors:["t1","t2","t3","t5","t6","t8"]},
@@ -285,190 +315,193 @@ const MONTHS = [
 ];
 
 /* ════════ Stato ════════ */
-let monthIdx = 1;                 // Giugno
-let view = "avviso";              // "avviso" | "tutoraggio"
-const activeMap = {};             // id -> bool (visibile sul calendario)
+let monthIdx = 1;
+let view = "avviso";
+const activeMap = {};
 Object.keys(COURSES).forEach(id=>activeMap[id]=true);
 Object.keys(TUTORS).forEach(id=>activeMap[id]=true);
-activeMap.c9=false; activeMap.c10=false; activeMap.t4=false; // qualche filtro spento per realismo
+activeMap.c9=false; activeMap.c10=false; activeMap.t4=false;
 const expanded = {corsi:false, tutor:false, legenda:false};
 let overlayOn = false;
+let openPop = null;       // chiave del popover aperto
+let search = {corsi:"", tutor:""};
 
-function initials(s){ return s.slice(0,2).toUpperCase(); }
 function curMonth(){ return MONTHS[monthIdx]; }
-
-/* ════════ Rendering filterbar ════════ */
-function svgChev(){ return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>'; }
+const svgChev = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg>';
 function svgClock(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>'; }
 function svgEye(off){ return off
   ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.5 5.6A10.7 10.7 0 0 1 12 5c7 0 11 7 11 7a13.2 13.2 0 0 1-2.3 3M6.1 6.1A13.4 13.4 0 0 0 1 12s4 7 11 7a10.6 10.6 0 0 0 4.4-.9"/></svg>'
   : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>'; }
 
-function courseChip(c){
-  const active = activeMap[c.id];
-  const bg = active ? c.color+"1f" : "transparent";
-  const bd = active ? c.color+"cc" : "var(--border)";
-  return `<button class="chip ${active?"":"inactive"}" data-toggle="${c.id}" title="${c.name}" style="background:${bg};border-color:${bd};color:var(--fg);"><span class="sw" style="background:${c.color}"></span><span class="nm">${c.name}</span></button>`;
+/* ── render di un pallino o di un chip con nome ── */
+function dotHtml(it){
+  const active=activeMap[it.id];
+  return `<button class="dot ${active?"":"inactive"}" data-toggle="${it.id}" title="${it.name}" style="${active?`background:${it.color};border-color:${it.color}`:`border-color:${it.color}`}">${it.ini}</button>`;
 }
-function tutorChip(t){
-  const active = activeMap[t.id];
-  const bg = active ? t.color+"1f" : "transparent";
-  const bd = active ? t.color : "var(--border)";
-  return `<button class="chip ${active?"":"inactive"}" data-toggle="${t.id}" title="${t.name}" style="background:${bg};border-color:${bd};color:var(--fg);"><span class="av-dot" style="background:${active?t.color:'var(--fg-faint)'}">${t.name[0]}</span><span class="nm">${t.name}</span></button>`;
-}
-function legendChip(c){
-  return `<span class="chip" style="background:${c.color}1f;border-color:${c.color}66;color:var(--fg);cursor:default;"><span class="sw" style="background:${c.color}"></span><span class="nm">${c.name}</span></span>`;
+function chipHtml(it){
+  const active=activeMap[it.id];
+  return `<button class="chip ${active?"":"inactive"}" data-toggle="${it.id}" title="${it.name}" style="background:${active?it.color+'1f':'transparent'};border-color:${active?it.color:'var(--border)'};color:var(--fg);"><span class="cdot" style="background:${active?it.color:'var(--fg-faint)'}">${it.ini}</span><span class="nm">${it.name}</span></button>`;
 }
 
-function buildGroup(key, label, items, chipFn, opts={}){
-  const total = items.length;
-  const active = opts.legend ? total : items.filter(x=>activeMap[x.id]).length;
-  const isExp = expanded[key];
-  const chipsHtml = items.map(chipFn).join("");
-  const expandBtn = `<button class="fb-expand ${isExp?"on":""}" data-expand="${key}">${isExp?"Comprimi":"Espandi"} ${svgChev()}</button>`;
+/* ── elenco filtro (popover) ── */
+function popoverHtml(key, items, label){
+  const q=(search[key]||"").toLowerCase();
+  const filtered=items.filter(it=>it.name.toLowerCase().includes(q));
+  const rows = filtered.length ? filtered.map(it=>`
+    <div class="popover-row ${activeMap[it.id]?"active":"inactive"}" data-toggle="${it.id}">
+      <span class="rdot" style="background:${it.color}">${it.ini}</span>
+      <span class="pname">${it.name}</span>
+      <span class="phours mono">${it.hours}h</span>
+      <span class="tgl"></span>
+    </div>`).join("") : `<div class="popover-empty">Nessun risultato</div>`;
+  return `<div class="popover ${openPop===key?"open":""}" data-popover="${key}">
+    <div class="popover-head">
+      <div class="popover-title">Filtra ${label} visibili<div class="popover-bulk"><button data-bulk="all" data-list="${key}">Mostra tutti</button><button data-bulk="none" data-list="${key}">Nascondi tutti</button></div></div>
+      <div class="popover-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Cerca ${label==='corsi'?'corso':'tutor'}…" data-search="${key}" value="${search[key]||""}"></div>
+    </div>
+    <div class="popover-list">${rows}</div>
+  </div>`;
+}
+
+/* ── gruppo: trigger + pallini/chip + espandi ── */
+function groupHtml(key, label, items, opts={}){
+  const total=items.length;
+  const active=items.filter(it=>activeMap[it.id]).length;
+  const isExp=expanded[key];
+  const body = isExp
+    ? `<div class="named" data-dots="${key}">${items.map(chipHtml).join("")}</div>`
+    : `<div class="dots" data-dots="${key}">${items.map(dotHtml).join("")}</div>`;
+
+  if(opts.legend){ // legenda: solo lettura, niente toggle/popover, ma espandi sì
+    return `<div class="fb-group">
+      <div class="grp-trigger-wrap"><button class="grp-trigger static"><span class="lbl">${label}</span><span class="cnt">${total}</span></button></div>
+      ${body}
+      ${total>0?`<button class="fb-expand ${isExp?"on":""}" data-expand="${key}">${isExp?"Comprimi":"Espandi"} ${svgChev}</button>`:""}
+    </div>`;
+  }
   return `<div class="fb-group">
-    <div class="fb-group-label"><span class="lbl">${label}</span><span class="cnt">${opts.legend?total:active+"/"+total}</span></div>
-    <div class="fb-chips ${isExp?"expanded":""}" data-chips="${key}">${chipsHtml}</div>
-    ${total>0?expandBtn:""}
+    <div class="grp-trigger-wrap">
+      <button class="grp-trigger ${openPop===key?"open":""}" data-pop="${key}"><span class="lbl">${label}</span><span class="cnt">${active}/${total}</span>${svgChev}</button>
+      ${popoverHtml(key, items, label.toLowerCase())}
+    </div>
+    ${body}
+    ${total>0?`<button class="fb-expand ${isExp?"on":""}" data-expand="${key}">${isExp?"Comprimi":"Espandi"} ${svgChev}</button>`:""}
   </div>`;
 }
 
 function renderFilterbar(){
-  const m = curMonth();
-  const fb = document.getElementById("filterbar");
+  const m=curMonth(), fb=document.getElementById("filterbar");
   let html = `<div class="fb-ore">${svgClock()}<div><div class="ore-value">${m.ore}</div><div class="ore-label">Ore mese</div></div></div><div class="fb-divider"></div>`;
-
   if(view==="avviso"){
-    const items = m.courses.map(id=>COURSES[id]);
-    html += buildGroup("corsi","Corsi",items,courseChip);
+    html += groupHtml("corsi","Corsi", m.courses.map(id=>COURSES[id]));
   } else {
-    const tItems = m.tutors.map(id=>TUTORS[id]);
-    html += buildGroup("tutor","Tutor",tItems,tutorChip);
+    html += groupHtml("tutor","Tutor", m.tutors.map(id=>TUTORS[id]));
     html += `<div class="fb-divider"></div><button class="overlay-pill" id="overlayBtn" style="${overlayOn?'border-color:var(--accent);background:var(--accent);color:#fff;':''}">${svgEye(overlayOn)}${overlayOn?"Nascondi corsi":"Mostra corsi"}</button>`;
-    if(overlayOn){
-      html += `<div class="fb-divider"></div>`;
-      const cItems = m.courses.map(id=>COURSES[id]);
-      html += buildGroup("legenda","Legenda corsi",cItems,legendChip,{legend:true});
-    }
+    if(overlayOn){ html += `<div class="fb-divider"></div>` + groupHtml("legenda","Legenda corsi", m.courses.map(id=>COURSES[id]), {legend:true}); }
   }
   fb.innerHTML = html;
+  wireFilterbar(fb);
+  requestAnimationFrame(()=>{
+    fb.querySelectorAll(".dots").forEach(el=>{ if(!expanded[el.dataset.dots]) fitDots(el); });
+  });
+}
 
-  // wire chip toggles
-  fb.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",()=>{
-    activeMap[b.dataset.toggle] = !activeMap[b.dataset.toggle];
+function wireFilterbar(fb){
+  fb.querySelectorAll("[data-toggle]").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    activeMap[b.dataset.toggle]=!activeMap[b.dataset.toggle];
     renderFilterbar(); renderCalendar();
   }));
-  // wire expand buttons
-  fb.querySelectorAll("[data-expand]").forEach(b=>b.addEventListener("click",()=>{
-    const k=b.dataset.expand; expanded[k]=!expanded[k]; renderFilterbar();
+  fb.querySelectorAll("[data-expand]").forEach(b=>b.addEventListener("click",()=>{ expanded[b.dataset.expand]=!expanded[b.dataset.expand]; renderFilterbar(); }));
+  fb.querySelectorAll("[data-pop]").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); openPop = openPop===b.dataset.pop ? null : b.dataset.pop; renderFilterbar(); }));
+  fb.querySelectorAll("[data-bulk]").forEach(b=>b.addEventListener("click",e=>{
+    e.stopPropagation();
+    const m=curMonth(); const ids = b.dataset.list==="corsi" ? m.courses : m.tutors;
+    ids.forEach(id=>activeMap[id]= b.dataset.bulk==="all");
+    renderFilterbar(); renderCalendar();
   }));
-  // overlay
-  const ov=document.getElementById("overlayBtn");
+  const ov=fb.querySelector("#overlayBtn");
   if(ov) ov.addEventListener("click",()=>{ overlayOn=!overlayOn; renderFilterbar(); });
-
-  // fit chips (overflow → +N) per gruppi non espansi
-  requestAnimationFrame(()=>{
-    fb.querySelectorAll(".fb-chips").forEach(el=>{
-      const key=el.dataset.chips;
-      if(expanded[key]) return; // espanso: wrap, niente +N
-      fitChips(el);
+  fb.querySelectorAll("[data-search]").forEach(inp=>{
+    inp.addEventListener("input",()=>{ search[inp.dataset.search]=inp.value; renderFilterbar();
+      requestAnimationFrame(()=>{ const el=fb.querySelector(`[data-popover="${inp.dataset.search}"] input`); if(el){el.focus(); el.setSelectionRange(el.value.length,el.value.length);} });
     });
+    inp.addEventListener("click",e=>e.stopPropagation());
   });
 }
 
-function fitChips(el){
-  // rimuovi eventuale +N precedente
-  el.querySelectorAll(".more-pill").forEach(p=>p.remove());
-  const chips=[...el.querySelectorAll(".chip")];
-  chips.forEach(c=>c.style.display="");
-  const full = el.clientWidth;
-  // primo passo: ci stanno tutti?
-  let overflow = chips.some(c=>c.offsetLeft + c.offsetWidth > full + 0.5);
+function fitDots(el){
+  el.querySelectorAll(".more-dot").forEach(p=>p.remove());
+  const dots=[...el.querySelectorAll(".dot")];
+  dots.forEach(d=>d.style.display="");
+  const full=el.clientWidth;
+  let overflow=dots.some(d=>d.offsetLeft+d.offsetWidth>full+0.5);
   if(!overflow) return;
-  // secondo passo: riserva spazio per il +N
-  const reserve = 70;
-  const avail = full - reserve;
+  const avail=full-40;
   let hidden=0;
-  chips.forEach(c=>{
-    if(c.offsetLeft + c.offsetWidth > avail){ c.style.display="none"; hidden++; }
-  });
+  dots.forEach(d=>{ if(d.offsetLeft+d.offsetWidth>avail){ d.style.display="none"; hidden++; } });
   if(hidden>0){
-    const pill=document.createElement("button");
-    pill.className="more-pill";
-    pill.innerHTML=`+${hidden} <span style="font-weight:600;opacity:.8">altri</span>`;
-    pill.title=`Mostra gli altri ${hidden} — apre la vista espansa`;
-    pill.addEventListener("click",()=>{ expanded[el.dataset.chips]=true; renderFilterbar(); });
-    el.appendChild(pill);
+    const more=document.createElement("button");
+    more.className="more-dot"; more.textContent=`+${hidden}`;
+    more.title=`Altri ${hidden} — apri Espandi o l'elenco`;
+    more.addEventListener("click",()=>{ expanded[el.dataset.dots]=true; renderFilterbar(); });
+    el.appendChild(more);
   }
 }
+
+/* chiudi popover cliccando fuori / Esc */
+document.addEventListener("click",e=>{ if(openPop && !e.target.closest(".grp-trigger-wrap")){ openPop=null; renderFilterbar(); } });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && openPop){ openPop=null; renderFilterbar(); } });
 
 /* ════════ Calendario mock ════════ */
 const DAYS=[["MAR","16"],["MER","17"],["GIO","18"],["VEN","19"],["SAB","20",true],["DOM","21",true],["LUN","22"],["MAR","23"],["MER","24"],["GIO","25"]];
 const HOURS=["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
-
 function renderCalendar(){
-  const grid=document.getElementById("calGrid");
-  const m=curMonth();
-  const ids = (view==="avviso" ? m.courses : m.tutors).filter(id=>activeMap[id]);
-  const dataset = view==="avviso" ? COURSES : TUTORS;
-
-  let html = `<div class="cal-cell cal-head" style="grid-column:1;grid-row:1;"></div>`;
+  const grid=document.getElementById("calGrid"), m=curMonth();
+  const ids=(view==="avviso"?m.courses:m.tutors).filter(id=>activeMap[id]);
+  const data=view==="avviso"?COURSES:TUTORS;
+  let html=`<div class="cal-cell cal-head" style="grid-column:1;grid-row:1;"></div>`;
   DAYS.forEach((d,i)=>{ html+=`<div class="cal-cell cal-head${d[2]?' weekend':''}" style="grid-column:${i+2};grid-row:1;">${d[0]}<span class="d">${d[1]}</span></div>`; });
   HOURS.forEach((h,r)=>{
     html+=`<div class="cal-cell cal-hourlbl" style="grid-column:1;grid-row:${r+2};">${h}</div>`;
     DAYS.forEach((d,i)=>{ html+=`<div class="cal-cell${d[2]?' weekend':''}" style="grid-column:${i+2};grid-row:${r+2};"></div>`; });
   });
-
-  // distribuisci eventi: ogni item attivo prende un paio di slot pseudo-casuali deterministici
   ids.forEach((id,k)=>{
-    const it=dataset[id], color=it.color;
-    const slots = [
-      {day:(k%5), row:2+(k%3), span:2+((k+1)%3)},
-      {day:6+((k+2)%4), row:2+((k+2)%4), span:2+(k%3)},
-    ];
-    slots.forEach(s=>{
-      if(s.day===4||s.day===5) return; // salta weekend
+    const it=data[id], color=it.color;
+    [{day:(k%5),row:2+(k%3),span:2+((k+1)%3)},{day:6+((k+2)%4),row:2+((k+2)%4),span:2+(k%3)}].forEach(s=>{
+      if(s.day===4||s.day===5) return;
       const startH=8+s.row-2;
-      html+=`<div class="evt" style="grid-column:${s.day+2};grid-row:${s.row} / span ${s.span};background:${color}26;border-left:3px solid ${color};">
-        <span class="t mono">${String(startH).padStart(2,'0')}:00</span><span class="n">${it.name.split(" - ")[0].split(" — ")[0]}</span>
-      </div>`;
+      html+=`<div class="evt" style="grid-column:${s.day+2};grid-row:${s.row} / span ${s.span};background:${color}26;border-left:3px solid ${color};"><span class="t mono">${String(startH).padStart(2,'0')}:00</span><span class="n">${it.name.split(" - ")[0].split(" — ")[0]}</span></div>`;
     });
   });
-
-  grid.style.gridTemplateRows = `36px repeat(${HOURS.length},44px)`;
-  grid.innerHTML = html;
+  grid.style.gridTemplateRows=`36px repeat(${HOURS.length},44px)`;
+  grid.innerHTML=html;
 }
 
-/* ════════ Topbar interazioni ════════ */
+/* ════════ Topbar ════════ */
 function setMonth(i){
   monthIdx=(i+MONTHS.length)%MONTHS.length;
   document.querySelector("#monthLabel span").textContent=curMonth().label;
-  expanded.corsi=false; expanded.tutor=false; expanded.legenda=false;
+  expanded.corsi=expanded.tutor=expanded.legenda=false; openPop=null;
   renderFilterbar(); renderCalendar();
 }
 document.getElementById("monthPrev").addEventListener("click",()=>setMonth(monthIdx-1));
 document.getElementById("monthNext").addEventListener("click",()=>setMonth(monthIdx+1));
-
 function setView(v){
-  view=v;
+  view=v; openPop=null;
   document.getElementById("viewTutoraggio").classList.toggle("active",v==="tutoraggio");
   document.getElementById("viewAvviso").classList.toggle("active",v==="avviso");
   renderFilterbar(); renderCalendar();
 }
 document.getElementById("viewTutoraggio").addEventListener("click",()=>setView("tutoraggio"));
 document.getElementById("viewAvviso").addEventListener("click",()=>setView("avviso"));
-
 document.getElementById("themeToggle").addEventListener("click",e=>{
   const btn=e.target.closest("button"); if(!btn)return;
   document.documentElement.setAttribute("data-theme",btn.dataset.t);
   document.querySelectorAll("#themeToggle button").forEach(b=>b.classList.toggle("active",b===btn));
 });
+window.addEventListener("resize",()=>{ document.querySelectorAll(".dots").forEach(el=>{ if(!expanded[el.dataset.dots]) fitDots(el); }); });
 
-window.addEventListener("resize",()=>{
-  document.querySelectorAll(".fb-chips").forEach(el=>{ if(!expanded[el.dataset.chips]) fitChips(el); });
-});
-
-/* init */
 renderFilterbar();
 renderCalendar();
 </script>
