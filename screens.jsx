@@ -136,9 +136,10 @@ function VerificaScreen({corsi=[],tutors=[],tutEvents={},anagraficaCorsi=[],onNa
 }
 
 // ── ANAGRAFICA TUTOR SCREEN ───────────────────────────────────────────────
-function AnaTutorsScreen({tutors,tutEvents,anagraficaCorsi,onSaveTutor,canEdit}){
-  const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
+function AnaTutorsScreen({tutors,tutEvents,anagraficaCorsi,onSaveTutor,canEdit,canBulkVerify,onVerifyAllTutor}){
+  const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);const[verifying,setVerifying]=useState(false);
   function getTutOre(tId){let o=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)o+=(ev.ore||0);return o;}
+  function getTutUnverified(tId){let u=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)if(!ev.verified)u++;return u;}
   function getTutSlots(tId){let s=0;const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))s+=evs.length;return s;}
   function getTutAvvisiSet(tId){const n=new Set();const td=tutEvents[tId]||{};for(const[,evs]of Object.entries(td))for(const ev of evs)n.add(ev.name);return n;}
   const avOreByName={};anagraficaCorsi.forEach(a=>{let t=0;for(const[,ms]of Object.entries(tutEvents))for(const[,evs]of Object.entries(ms))for(const ev of evs)if(ev.name===a.nome)t+=ev.ore||0;avOreByName[a.nome]=t;});
@@ -149,6 +150,8 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaCorsi,onSaveTutor,canEdit})
   function addNew(){const usedColors=tutors.map(t=>t.color).filter(Boolean);const freeColor=PALETTE.find(c=>!usedColors.includes(c))||PALETTE[0];const newItem={id:`tutor-${Date.now()}`,nome:"",cognome:"",cf:"",azienda:"",color:freeColor};setForm({...newItem});setSelected(newItem);setIsNew(true);setEditing(true);}
   async function deleteSelected(){if(!selected||!confirm(`Eliminare "${selected.cognome} ${selected.nome}"?`))return;const newList=tutors.filter(t=>t.id!==selected.id);await onSaveTutor(newList,"delete",selected);setSelected(newList[0]||null);}
   const usedColors=tutors.filter(t=>t.id!==selected?.id).map(t=>t.color).filter(Boolean);
+  const selUnverified=selected?getTutUnverified(selected.id):0;
+  async function handleVerifyAll(){if(!selected)return;const n=getTutUnverified(selected.id);if(n===0)return;if(!confirm(`Verificare tutti i ${n} slot non ancora verificati del tutor «${selected.cognome} ${selected.nome}»?\n\nTutti gli slot a calendario di questo tutor verranno segnati come verificati.`))return;setVerifying(true);await onVerifyAllTutor(selected.id);setVerifying(false);}
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
       <div><div className="page-breadcrumb">Anagrafiche · {tutors.length} tutor registrati</div><h1 className="page-title">Tutor</h1><p className="page-desc">Gestisci l'elenco dei tutor del tuo ente. Ogni tutor ha un colore univoco usato in tutta l'app.</p></div>
@@ -181,9 +184,10 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaCorsi,onSaveTutor,canEdit})
               <div style={{width:56,height:56,borderRadius:999,background:selected.color||"var(--accent)",color:"#fff",fontWeight:700,fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{(selected.cognome[0]||"")+(selected.nome[0]||"")}</div>
               <div><h2 style={{fontSize:24,fontWeight:700,letterSpacing:"-0.02em",color:"var(--fg)",marginBottom:2}}>{selected.cognome} {selected.nome}</h2><div style={{fontSize:12,color:"var(--fg-muted)"}}>{selected.azienda||"Nessuna azienda"}</div></div>
             </div>
-            {canEdit&&<div style={{display:"flex",gap:8,flexShrink:0}}>
-              <button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>
-              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>
+            {(canEdit||canBulkVerify)&&<div style={{display:"flex",gap:8,flexShrink:0}}>
+              {canBulkVerify&&<button className="btn" data-variant="outline" onClick={handleVerifyAll} disabled={verifying||selUnverified===0} title={selUnverified===0?"Tutti gli slot di questo tutor sono già verificati":`Verifica in blocco i ${selUnverified} slot non ancora verificati`} style={{display:"flex",alignItems:"center",gap:6}}>{verifying?<><Icon name="loader" size={13}/>Verifica…</>:<><Icon name="shieldCheck" size={13} color={selUnverified===0?"var(--fg-faint)":"var(--success)"}/>Verifica tutor{selUnverified>0?` (${selUnverified})`:""}</>}</button>}
+              {canEdit&&<button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>}
+              {canEdit&&<button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>}
             </div>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
@@ -217,8 +221,8 @@ function AnaTutorsScreen({tutors,tutEvents,anagraficaCorsi,onSaveTutor,canEdit})
 }
 
 // ── ANAGRAFICA CORSI SCREEN ──────────────────────────────────────────────
-function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],canEdit}){
-  const[q,setQ]=useState("");const[statoFilter,setStatoFilter]=useState("all");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);
+function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],canEdit,canBulkVerify,onVerifyAllCorso}){
+  const[q,setQ]=useState("");const[statoFilter,setStatoFilter]=useState("all");const[selected,setSelected]=useState(null);const[editing,setEditing]=useState(false);const[isNew,setIsNew]=useState(false);const[form,setForm]=useState({});const[saving,setSaving]=useState(false);const[verifying,setVerifying]=useState(false);
   const corsiById={};corsi.forEach(co=>corsiById[co.id]=co);
   const avEntitaById={};avvisiEntita.forEach(av=>avEntitaById[av.id]=av);
   function getOre(ana){const co=corsiById[ana.id];return co?co.events.reduce((s,e)=>s+(e.ore||0),0):0;}
@@ -230,6 +234,9 @@ function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],ca
   function addNew(){const free=PALETTE.find(c=>!anagraficaCorsi.map(a=>a.colore).includes(c))||PALETTE[0];const newItem={id:`av-${Date.now()}`,nome:"",codice:"",colore:free,durataOre:"",stato:"In corso",dataInizio:"",dataFine:"",sede:"",note:"",avvisoId:""};setForm({...newItem});setSelected(newItem);setIsNew(true);setEditing(true);}
   async function deleteSelected(){if(!selected||!confirm(`Eliminare "${selected.nome}"?`))return;const newList=anagraficaCorsi.filter(a=>a.id!==selected.id);await onSaveAnaCorso(newList,"delete",selected);setSelected(newList[0]||null);}
   const usedColors=anagraficaCorsi.filter(a=>a.id!==selected?.id).map(a=>a.colore).filter(Boolean);
+  function getUnverified(ana){const co=corsiById[ana?.id];return co?co.events.filter(e=>!e.verified).length:0;}
+  const selUnverified=selected?getUnverified(selected):0;
+  async function handleVerifyAll(){if(!selected)return;const n=getUnverified(selected);if(n===0)return;if(!confirm(`Verificare tutti i ${n} slot non ancora verificati del corso «${selected.nome}»?\n\nTutti gli slot a calendario di questo corso verranno segnati come verificati.`))return;setVerifying(true);await onVerifyAllCorso(selected.id);setVerifying(false);}
   return(<div style={{display:"flex",flexDirection:"column",flex:1,minHeight:0}}>
     <div className="page-header" style={{flexWrap:"wrap",gap:12}}>
       <div><div className="page-breadcrumb">Anagrafiche · {anagraficaCorsi.length} corsi registrati</div><h1 className="page-title">Corsi</h1><p className="page-desc">Corsi e attività formative collegate agli avvisi.</p></div>
@@ -266,9 +273,10 @@ function AnaCorsiScreen({corsi,anagraficaCorsi,onSaveAnaCorso,avvisiEntita=[],ca
               <h2 style={{fontSize:26,fontWeight:700,letterSpacing:"-0.02em",color:"var(--fg)",marginBottom:6}}>{selected.nome}</h2>
               <p style={{fontSize:13,color:"var(--fg-muted)",maxWidth:540,lineHeight:1.55}}>{selected.note||"Nessuna nota."}</p>
             </div>
-            {canEdit&&<div style={{display:"flex",gap:8,flexShrink:0}}>
-              <button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>
-              <button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>
+            {(canEdit||canBulkVerify)&&<div style={{display:"flex",gap:8,flexShrink:0}}>
+              {canBulkVerify&&<button className="btn" data-variant="outline" onClick={handleVerifyAll} disabled={verifying||selUnverified===0} title={selUnverified===0?"Tutti gli slot di questo corso sono già verificati":`Verifica in blocco i ${selUnverified} slot non ancora verificati`} style={{display:"flex",alignItems:"center",gap:6}}>{verifying?<><Icon name="loader" size={13}/>Verifica…</>:<><Icon name="shieldCheck" size={13} color={selUnverified===0?"var(--fg-faint)":"var(--success)"}/>Verifica corso{selUnverified>0?` (${selUnverified})`:""}</>}</button>}
+              {canEdit&&<button className="btn" data-variant="outline" onClick={startEdit} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="edit" size={13}/>Modifica</button>}
+              {canEdit&&<button className="btn" data-variant="danger" onClick={deleteSelected} style={{display:"flex",alignItems:"center",gap:6}}><Icon name="trash" size={13} color="var(--danger)"/>Elimina</button>}
             </div>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
@@ -907,6 +915,7 @@ function GestionePermessi({rolePermissions,onSave}){
       {key:"deleteSlot",label:"Elimina slot",desc:"Rimuove slot non verificati dal calendario"},
       {key:"editVerified",label:"Modifica slot verificati",desc:"Può toccare slot già verificati da un admin"},
       {key:"verifySlot",label:"Verifica / de-verifica slot",desc:"Mostra la checkbox di verifica nel modale di modifica"},
+      {key:"bulkVerify",label:"Verifica massiva corso / tutor",desc:"Verifica in blocco tutti gli slot di un corso o tutor dall'anagrafica"},
     ]},
     {label:"Strumenti",icon:"sparkles",items:[
       {key:"useAiImport",label:"Usa AI Import",desc:"Accesso all'assistente di importazione automatica da documenti"},

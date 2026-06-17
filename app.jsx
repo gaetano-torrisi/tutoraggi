@@ -432,6 +432,8 @@ function App({user}){
   async function overwriteCorsoEvents(corsoId,events){pushUndo(tutEvRef.current,corsiRef.current);const co=corsiRef.current.find(c=>c.id===corsoId)||{id:corsoId,events:[]};const newEvs=events.map((ev,i)=>({id:`ave-${Date.now()}-${i}`,month:ev.month,day:ev.day,start:ev.start,end:ev.end,ore:ev.ore}));const kept=co.events.filter(e=>!events.some(n=>n.month===e.month&&n.day===e.day));const merged=[...kept,...newEvs];const upd=corsiRef.current.some(c=>c.id===corsoId)?corsiRef.current.map(c=>c.id===corsoId?{...c,events:merged}:c):[...corsiRef.current,{id:corsoId,events:merged}];corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(c=>c.id===corsoId));fsLog(user.email,"ai_overwrite_corso",`Sovrascritti ${events.length} slot corso`);}
   async function editCorso(coId,evId,evData,verifyInfo){pushUndo(tutEvRef.current,corsiRef.current);const oldEv=corsiRef.current.find(co=>co.id===coId)?.events.find(e=>e.id===evId);const coName=anaCorsiRef.current.find(a=>a.id===coId)?.nome||coId;const upd=corsiRef.current.map(co=>co.id!==coId?co:{...co,events:co.events.map(e=>e.id===evId?{...e,...evData}:e)});corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(a=>a.id===coId));const oMk=oldEv?.month,nMk=evData.month||oMk;const desc=`${coName} · ${fmtDateIT(nMk,evData.day??oldEv?.day)} · ${fmtSlotRange(evData.start??oldEv?.start,evData.end??oldEv?.end)}`;const changes=oldEv?diffSlotChanges(oldEv,evData,{mk:oMk,mkNew:nMk}):[];if(verifyInfo&&verifyInfo.wasVerified!==verifyInfo.nowVerified){const logType=verifyInfo.nowVerified?"verify_corso":"unverify_corso";fsLog(user.email,logType,`${verifyInfo.nowVerified?"Verificato":"Verifica rimossa"} · ${desc}`,changes);}else{fsLog(user.email,"edit_corso",`Modificato slot corso · ${desc}`,changes);}}
   async function deleteCorso(coId,evId){pushUndo(tutEvRef.current,corsiRef.current);const oldEv=corsiRef.current.find(co=>co.id===coId)?.events.find(e=>e.id===evId);const coName=anaCorsiRef.current.find(a=>a.id===coId)?.nome||coId;const upd=corsiRef.current.map(co=>co.id!==coId?co:{...co,events:co.events.filter(e=>e.id!==evId)});corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(a=>a.id===coId));fsLog(user.email,"delete_corso",oldEv?`Eliminato slot corso · ${coName} · ${fmtDateIT(oldEv.month,oldEv.day)} · ${fmtSlotRange(oldEv.start,oldEv.end)}`:"Eliminato slot corso");}
+  async function verifyAllCorso(coId){const co=corsiRef.current.find(c=>c.id===coId);if(!co||!co.events.length)return{count:0};const toVerify=co.events.filter(e=>!e.verified).length;if(!toVerify)return{count:0};pushUndo(tutEvRef.current,corsiRef.current);const stamp=new Date().toISOString();const updEvents=co.events.map(e=>e.verified?e:{...e,verified:true,verifiedBy:user.email,verifiedAt:stamp});const upd=corsiRef.current.map(c=>c.id===coId?{...c,events:updEvents}:c);corsiRef.current=upd;setCorsi(upd);await fsSaveCorso(upd.find(c=>c.id===coId));const coName=anaCorsiRef.current.find(a=>a.id===coId)?.nome||coId;fsLog(user.email,"verify_corso",`Verifica massiva · ${coName} · ${toVerify} slot verificati`);return{count:toVerify};}
+  async function verifyAllTutor(tutorId){const months=tutEvRef.current[tutorId];if(!months)return{count:0};const stamp=new Date().toISOString();let count=0;const cur=structuredClone(tutEvRef.current);const touched=[];for(const[mk,evs]of Object.entries(months)){let changed=false;cur[tutorId][mk]=evs.map(e=>{if(e.verified)return e;count++;changed=true;return{...e,verified:true,verifiedBy:user.email,verifiedAt:stamp};});if(changed)touched.push(mk);}if(!count)return{count:0};pushUndo(tutEvRef.current,corsiRef.current);tutEvRef.current=cur;setTutEvents(cur);for(const mk of touched)await fsSaveTutEvents(tutorId,mk,cur[tutorId][mk]);fsLog(user.email,"verify_tut",`Verifica massiva · ${getTLbl(tutorId)} · ${count} slot verificati`);return{count};}
 
   async function handleSaveTutor(newList,action,tutor){setTutors(newList);setActiveTutorIds(null);if(action==="delete"&&tutor){await fsDeleteTutorDoc(tutor.id);await fsDeleteTutEventsDoc(tutor.id);const cur={...tutEvRef.current};delete cur[tutor.id];tutEvRef.current=cur;setTutEvents(cur);}else if(tutor)await fsSaveTutorDoc(tutor);else await fsSaveTutors(newList);if(action==="add")fsLog(user.email,"add_tutor_ana",`Aggiunto tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="edit")fsLog(user.email,"edit_tutor_ana",`Modificato tutor "${tutor.cognome} ${tutor.nome}"`);else if(action==="delete")fsLog(user.email,"delete_tutor_ana",`Eliminato tutor "${tutor.cognome} ${tutor.nome}"`);}
   async function handleSaveAnaCorso(newList,action,item){
@@ -473,36 +475,34 @@ function App({user}){
   const sidebarW=sidebarCollapsed?64:248;
   const containerW=sidebarW+(showAi?320:0);
   return(<div className="app-shell">
-    <div className="sidebar-container" style={{width:containerW,transition:"width .3s ease"}}>
+    <div className="sidebar-container" style={{width:containerW,transition:"width .25s ease"}}>
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
-        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">Tutor<span className="ia">IA</span></span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>}
+        <div className="sidebar-logo-text" style={{opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:220,overflow:"hidden",transition:"opacity .15s ease, max-width .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}><span className="sidebar-logo-name">Tutor<span className="ia">IA</span></span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>
       </div>
       <nav className="sidebar-nav">
         {NAV_GROUPS.map(({group,items})=>(
           <div key={group} className="sidebar-group">
-            {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
+            <div className="sidebar-group-label" style={{opacity:sidebarCollapsed?0:1,maxHeight:sidebarCollapsed?"0":"30px",overflow:"hidden",padding:sidebarCollapsed?"0":undefined,transition:"opacity .15s ease, max-height .25s ease, padding .25s ease"}}>{group}</div>
             {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
               <button key={item.id} className={`sidebar-item${(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
                 {(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
                 <Icon name={item.icon} size={16} color={(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--accent)":"var(--fg-subtle)"}/>
-                {!sidebarCollapsed&&<span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
+                <span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)",opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:160,overflow:"hidden",whiteSpace:"nowrap",transition:"opacity .15s ease, max-width .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}>{item.label}</span>
               </button>
             ))}
           </div>
         ))}
       </nav>
       <div className="sidebar-footer">
-        {!sidebarCollapsed&&(
-          <div className="theme-toggle">
+        <div className="theme-toggle" style={{opacity:sidebarCollapsed?0:1,maxHeight:sidebarCollapsed?"0":"50px",overflow:"hidden",marginBottom:sidebarCollapsed?0:undefined,transition:"opacity .15s ease, max-height .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}>
             <button className={`theme-btn${theme==="light"?" active":""}`} onClick={()=>setTheme("light")} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
             <button className={`theme-btn${theme==="dark"?" active":""}`} onClick={()=>setTheme("dark")} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
           </div>
-        )}
         <button className="collapse-btn" onClick={()=>setSidebarCollapsed(c=>!c)}>
           <Icon name={sidebarCollapsed?"chevRight":"chevLeft"} size={13}/>
-          {!sidebarCollapsed&&"Riduci"}
+          <span style={{opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:80,overflow:"hidden",whiteSpace:"nowrap",transition:"opacity .15s ease, max-width .25s ease"}}>Riduci</span>
         </button>
       </div>
     </aside>
@@ -613,8 +613,8 @@ function App({user}){
         <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflowX:"hidden",overflowY:isCalendar&&calView!=="month"?"hidden":"auto",minHeight:0}}>
         {isCalendar&&calView==="month"&&<MonthView month={month} tutByDay={view==="tutoraggio"?mTByDay:null} avByDay={view==="avviso"?mAvByDay:null} onDayClick={canEdit?d=>setModal({type:"add",mode:view,prefill:{day:d,start:9,end:10}}):null}/>}
         {isCalendar&&calView!=="month"&&<CalendarGrid days={vdays} monthData={month} tutByDay={view==="tutoraggio"?tByDay:null} avOverlayByDay={view==="tutoraggio"?ovByDay:null} avByDay={view==="avviso"?corsiByDay:null} footerByDay={view==="tutoraggio"?Object.fromEntries(Object.entries(dayTOre).map(([d,o])=>[d,fmtOreMin(o)])):{}} overlayActive={showOvr} slotH={slotH} colW={colW} onGridClick={canEdit?handleGridClick:null} onTutDragEnd={canEdit?(evId,u)=>{const origEv=allTEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editTutoraggio(evId,u);if(origEv){const coName=origEv.name;const newDay=u.day??origEv.day;const coDay=corsiEvs.find(a=>a.corsoName===coName&&a.day===newDay);let warn=null;if(newDay!==origEv.day&&!coDay)warn=`Slot spostato fuori dal giorno previsto — verrà segnalato in Verifica`;else if(coDay&&((u.start??origEv.start)<coDay.start||(u.end??origEv.end)>coDay.end))warn=`Fuori orario: "${coName}" è ${fmt(coDay.start)}–${fmt(coDay.end)}`;setDragWarn(warn);if(warn){clearTimeout(dragWarnTimerRef.current);dragWarnTimerRef.current=setTimeout(()=>setDragWarn(null),5000);}}}:null} onAvDragEnd={canEdit?(coId,evId,u)=>{const origEv=visCorsiEvs.find(e=>e.id===evId);if(!perms.editSlot||(origEv?.verified&&!perms.editVerified))return;editCorso(coId,evId,{month:u.month||month.key,day:u.day,start:u.start,end:u.end,ore:u.ore||(u.end-u.start)});}:null} highlightEvId={highlightEvId} onTutDragMove={canEdit?handleTutDragMove:null}/>}
-        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onSaveTutor={handleSaveTutor} canEdit={perms.editAnagrafica}/>}
-        {activeScreen==="ana-corsi"&&<AnaCorsiScreen corsi={corsi} anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={handleSaveAnaCorso} avvisiEntita={avvisi} canEdit={perms.editAnagrafica}/>}
+        {activeScreen==="ana-tutors"&&<AnaTutorsScreen tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onSaveTutor={handleSaveTutor} canEdit={perms.editAnagrafica} canBulkVerify={perms.bulkVerify} onVerifyAllTutor={verifyAllTutor}/>}
+        {activeScreen==="ana-corsi"&&<AnaCorsiScreen corsi={corsi} anagraficaCorsi={anagraficaCorsi} onSaveAnaCorso={handleSaveAnaCorso} avvisiEntita={avvisi} canEdit={perms.editAnagrafica} canBulkVerify={perms.bulkVerify} onVerifyAllCorso={verifyAllCorso}/>}
         {activeScreen==="ana-avvisi"&&<AnaAvvisiScreen avvisi={avvisi} onSaveAvviso={handleSaveAvviso} canEdit={perms.editAnagrafica}/>}
         {activeScreen==="settings"&&<SettingsScreen role={role} settings={settings} corsi={corsi} tutors={tutors} tutEvents={tutEvents} anagraficaCorsi={anagraficaCorsi} onSaveSettings={handleSaveSettings} isSuperAdmin={isSuperAdmin} isAdmin={isAdmin} isUser={isUser} perms={perms} theme={theme} setTheme={setTheme} currentUser={user} profileTarget={profileTarget}/>}
         </div>
