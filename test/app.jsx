@@ -473,36 +473,34 @@ function App({user}){
   const sidebarW=sidebarCollapsed?64:248;
   const containerW=sidebarW+(showAi?320:0);
   return(<div className="app-shell">
-    <div className="sidebar-container" style={{width:containerW,transition:"width .3s ease"}}>
+    <div className="sidebar-container" style={{width:containerW,transition:"width .25s ease"}}>
     <aside className={`sidebar${sidebarCollapsed?" collapsed":""}`}>
       <div className="sidebar-logo">
         <img src={settings.logoBase64||"assets/appmark-color.png"} width="32" height="32" alt="TutorIA" style={{flexShrink:0,borderRadius:6}}/>
-        {!sidebarCollapsed&&<div className="sidebar-logo-text"><span className="sidebar-logo-name">Tutor<span className="ia">IA</span></span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>}
+        <div className="sidebar-logo-text" style={{opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:220,overflow:"hidden",transition:"opacity .15s ease, max-width .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}><span className="sidebar-logo-name">Tutor<span className="ia">IA</span></span><span className="sidebar-logo-sub">{appSubtitle||"EHT · Harmonic Innovation Group"}</span></div>
       </div>
       <nav className="sidebar-nav">
         {NAV_GROUPS.map(({group,items})=>(
           <div key={group} className="sidebar-group">
-            {!sidebarCollapsed&&<div className="sidebar-group-label">{group}</div>}
+            <div className="sidebar-group-label" style={{opacity:sidebarCollapsed?0:1,maxHeight:sidebarCollapsed?"0":"30px",overflow:"hidden",padding:sidebarCollapsed?"0":undefined,transition:"opacity .15s ease, max-height .25s ease, padding .25s ease"}}>{group}</div>
             {items.filter(item=>(item.id!=="ai"||perms.useAiImport)&&(item.id!=="insights"||perms.useInsights)&&(item.id!=="verifica"||perms.useVerifica)).map(item=>(
               <button key={item.id} className={`sidebar-item${(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?" active":""}${sidebarCollapsed?" collapsed-mode":""}`} onClick={()=>handleNavClick(item.id)} title={sidebarCollapsed?item.label:""}>
                 {(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))&&<span style={{position:"absolute",left:0,top:8,bottom:8,width:3,background:"var(--accent)",borderRadius:"0 3px 3px 0"}}/>}
                 <Icon name={item.icon} size={16} color={(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--accent)":"var(--fg-subtle)"}/>
-                {!sidebarCollapsed&&<span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)"}}>{item.label}</span>}
+                <span style={{color:(activeScreen===item.id||(item.id==="ai"&&showAi)||(item.id==="insights"&&showInsights))?"var(--fg)":"var(--fg-muted)",opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:160,overflow:"hidden",whiteSpace:"nowrap",transition:"opacity .15s ease, max-width .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}>{item.label}</span>
               </button>
             ))}
           </div>
         ))}
       </nav>
       <div className="sidebar-footer">
-        {!sidebarCollapsed&&(
-          <div className="theme-toggle">
+        <div className="theme-toggle" style={{opacity:sidebarCollapsed?0:1,maxHeight:sidebarCollapsed?"0":"50px",overflow:"hidden",marginBottom:sidebarCollapsed?0:undefined,transition:"opacity .15s ease, max-height .25s ease",pointerEvents:sidebarCollapsed?"none":"auto"}}>
             <button className={`theme-btn${theme==="light"?" active":""}`} onClick={()=>setTheme("light")} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="sun" size={12}/>Light</button>
             <button className={`theme-btn${theme==="dark"?" active":""}`} onClick={()=>setTheme("dark")} style={{display:"flex",alignItems:"center",gap:5}}><Icon name="moon" size={12}/>Dark</button>
           </div>
-        )}
         <button className="collapse-btn" onClick={()=>setSidebarCollapsed(c=>!c)}>
           <Icon name={sidebarCollapsed?"chevRight":"chevLeft"} size={13}/>
-          {!sidebarCollapsed&&"Riduci"}
+          <span style={{opacity:sidebarCollapsed?0:1,maxWidth:sidebarCollapsed?0:80,overflow:"hidden",whiteSpace:"nowrap",transition:"opacity .15s ease, max-width .25s ease"}}>Riduci</span>
         </button>
       </div>
     </aside>
