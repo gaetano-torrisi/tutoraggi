@@ -321,6 +321,9 @@ function App({user}){
       if(s.logoBase64){localStorage.setItem("logoBase64",s.logoBase64);applyFavicon(s.logoBase64);}
       setLoading(false);});
     db.collection("authorizedEmails").doc(user.email.toLowerCase()).get().then(snap=>{if(snap.exists)setRole(snap.data().role||"user");}).catch(()=>{});
+    // Marcatore "registrato": al primo accesso crea il doc userProfiles (se manca), così Gestione utenti
+    // distingue gli utenti solo autorizzati da quelli che hanno già effettuato l'accesso. Idempotente.
+    db.collection("userProfiles").doc(user.uid).set({email:user.email},{merge:true}).catch(()=>{});
   },[]);
 
   useEffect(()=>{function h(e){if(monthPickerRef.current&&!monthPickerRef.current.contains(e.target))setShowMonthPicker(false);}document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[]);
