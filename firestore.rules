@@ -126,6 +126,17 @@ service cloud.firestore {
       allow write: if canEditAppData();
     }
 
+    // ── Profili utente (dati anagrafici personali, doc per UID) ──
+    // L'esistenza del doc è anche il marcatore "ha già effettuato l'accesso"
+    // mostrato in Gestione utenti. Ognuno gestisce SOLO il proprio profilo;
+    // gli admin/superadmin leggono e modificano tutti (pannello utenti, import/backup).
+    match /userProfiles/{uid} {
+      allow get: if isAdmin() || (signedIn() && uid == request.auth.uid);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() || (signedIn() && uid == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
     // NOTA [S2]: settings/app è leggibile da tutti gli utenti autorizzati
     // (serve per tema/logo/colori) ma contiene anche le chiavi API in chiaro,
     // quindi resta leggibile da chiunque sia autorizzato. Per proteggerle
